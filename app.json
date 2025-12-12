@@ -17,10 +17,17 @@
           }
         }
       ],
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": true,
+          "supportsPictureInPicture": true
+        }
+      ],
       "expo-router",
       "expo-font",
       "expo-build-properties",
-      "expo-web-browser"
+      "expo-web-browser",
     ],
     "android": {
       "edgeToEdgeEnabled": true,
