@@ -1,30 +1,45 @@
-import { useEventListener } from "expo";
-import { useVideoPlayer, VideoView } from "expo-video";
-import { StyleSheet, View } from "react-native";
-import { useWindowDimensions } from "react-native";
+import React from "react";
+import { ActivityIndicator, StyleSheet } from "react-native";
+import { Video } from "react-native-video";
 
-// const videoSource =
-//   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-
-export default function VideoScreen(props: { src: string }) {
-  const { width, height } = useWindowDimensions();
-  const player = useVideoPlayer(props.src, (player) => {
-    player.loop = true;
-    player.play();
-    player.timeUpdateEventInterval = 1;
-  });
-  useEventListener(player, "timeUpdate", (payload) => {
-    // console.log("Player status changed: ", payload.currentTime);
-  });
+export default function VideoScreen({ uri }: { uri: string }) {
   return (
-    <VideoView
-      style={{ width, height }}
-      player={player}
-      nativeControls
-      fullscreenOptions={{
-        enable: true,
-      }}
-      allowsPictureInPicture
-    />
+    <>
+      <ActivityIndicator style={styles.activityIndicator} size={"large"} />
+      <Video
+        source={{
+          uri: uri,
+          metadata: {
+            title: "Custom Title",
+            subtitle: "Custom Subtitle",
+            description: "Custom Description",
+            imageUri:
+              "https://pbs.twimg.com/profile_images/1498641868397191170/6qW2XkuI_400x400.png",
+          },
+        }}
+        style={[styles.fullScreen, StyleSheet.absoluteFillObject]}
+        muted={false}
+        controls
+        fullscreen
+        resizeMode={"contain"}
+      />
+    </>
   );
 }
+
+const styles = StyleSheet.create({
+  fullScreen: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  },
+  activityIndicator: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+});
