@@ -3,12 +3,12 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import { StyleSheet, View } from "react-native";
 import { useWindowDimensions } from "react-native";
 
-const videoSource =
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+// const videoSource =
+//   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
-export default function VideoScreen() {
+export default function VideoScreen(props: { src: string }) {
   const { width, height } = useWindowDimensions();
-  const player = useVideoPlayer(videoSource, (player) => {
+  const player = useVideoPlayer(props.src, (player) => {
     player.loop = true;
     player.play();
     player.timeUpdateEventInterval = 1;

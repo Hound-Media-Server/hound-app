@@ -17,7 +17,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="movie/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="tv/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="(stream)/stream" options={{ headerShown: false }} />
+        <Stack.Screen name="stream/[id]" options={{ headerShown: false }} />
       </Stack>
     </QueryClientProvider>
   );

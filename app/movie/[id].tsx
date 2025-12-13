@@ -1,11 +1,10 @@
 import { View, Text, ScrollView, Button } from "react-native";
 import React from "react";
-import { Link, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MovieDetails() {
   const { id } = useLocalSearchParams();
-
   return (
     <SafeAreaView className="flex-1 bg-black">
       <View className="flex-1">
