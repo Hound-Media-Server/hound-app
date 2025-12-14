@@ -16,7 +16,7 @@ export default function Stream() {
   }, []);
   return (
     <View className="flex-1 bg-black justify-center items-center">
-      <VideoScreen src={url} />
+      <VideoScreen uri={url} />
     </View>
   );
 }
