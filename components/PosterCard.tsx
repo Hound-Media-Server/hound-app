@@ -2,27 +2,36 @@ import { View, Text, TouchableHighlight } from "react-native";
 import React from "react";
 import { Image } from "react-native";
 import { Route, useRouter } from "expo-router";
+import { ThemedText } from "./ThemedText";
 
-export default function PosterCard({ item }: any) {
+export default function PosterCard({ item, showDescription }: any) {
   const router = useRouter();
   if (!item) return;
-  if (item.media_type !== "movie" && item.media_type !== "tvshow") {
-    alert("Invalid item type, should be movie/tv");
-    return;
+  let imgSource = item.thumbnail_url;
+  if (item.profile_path) {
+    imgSource = item.profile_path;
   }
   return (
     <TouchableHighlight
-      onPress={() =>
+      disabled={!item.media_type} // disable for cast view for now
+      onPress={() => {
+        // cast/credits case
+        if (!item.media_type) return;
         router.navigate(
           `/${item.media_type === "movie" ? "movie" : "tv"}/${item.media_source + "-" + item.source_id}` as Route
-        )
-      }
+        );
+      }}
     >
-      <View className="flex-1 w-[140px] h-[220px] me-3">
+      <View className="flex-1 w-[140px] me-5">
         <Image
           className="w-[140px] h-[210px] rounded-lg"
-          source={{ uri: item.thumbnail_url }}
+          source={{ uri: imgSource }}
         />
+        {showDescription && (
+          <ThemedText className="text-gray-200 mt-2 text-start">
+            {item.original_name}
+          </ThemedText>
+        )}
       </View>
     </TouchableHighlight>
   );

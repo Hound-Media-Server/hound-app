@@ -28,6 +28,7 @@
       "expo-font",
       "expo-build-properties",
       "expo-web-browser",
+      "expo-secure-store"
     ],
     "android": {
       "edgeToEdgeEnabled": true,
@@ -52,6 +53,12 @@
     },
     "newArchEnabled": true,
     "name": "hound-app",
-    "slug": "hound-app"
+    "slug": "hound-app",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1906e8aa-5f95-48be-b39b-07340f2e9e78"
+      }
+    }
   }
 }

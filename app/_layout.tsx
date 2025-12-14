@@ -1,6 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { useEffect } from "react";
+import { SessionProvider, useSession } from "../services/ctx";
 import "./../global.css";
+import { Platform, View, Text } from "react-native";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -10,15 +13,46 @@ const queryClient = new QueryClient({
   },
 });
 
-export default function RootLayout() {
+function RootLayoutNav() {
+  const { session, isLoading } = useSession();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+    const inSignIn = segments[0] === "sign-in";
+
+    if (!session && !inSignIn) {
+      router.replace("/sign-in");
+    } else if (session && inSignIn) {
+      router.replace("/");
+    }
+  }, [session, segments, isLoading]);
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="movie/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="tv/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="stream/[id]" options={{ headerShown: false }} />
-      </Stack>
-    </QueryClientProvider>
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="movie/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="tv/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="stream/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  // if (Platform.OS === "web") {
+  //   return (
+  //     <View className="flex-1 justify-center items-center">
+  //       <Text className="text-3xl">Web is not supported</Text>
+  //     </View>
+  //   );
+  // }
+  return (
+    <SessionProvider>
+      <QueryClientProvider client={queryClient}>
+        <RootLayoutNav />
+      </QueryClientProvider>
+    </SessionProvider>
   );
 }

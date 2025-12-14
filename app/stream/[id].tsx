@@ -1,13 +1,17 @@
-import { View, Text } from "react-native";
-import React from "react";
+import { View, Text, Platform } from "react-native";
+import React, { use } from "react";
 import VideoScreen from "@/components/VideoScreen";
 import { useEffect } from "react";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { useLocalSearchParams } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import { useSession } from "@/services/ctx";
 
 export default function Stream() {
   const { id } = useLocalSearchParams();
-  const url = "http://10.0.2.2:8000/api/v1/stream/" + id;
+  const { session } = useSession();
+  if (!session) return;
+  let url = `${session?.host}/api/v1/stream/${id}`;
   useEffect(() => {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
     return () => {

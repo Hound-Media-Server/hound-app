@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   useTrendingMovies,
   useTrendingShows,
-} from "./../../api/catalogService";
+} from "./../../services/catalogService";
 import HorizontalList from "@/components/HorizontalList";
 import { Link, Route } from "expo-router";
 
