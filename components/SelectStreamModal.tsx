@@ -6,22 +6,41 @@ import {
   ScrollView,
   TouchableHighlight,
 } from "react-native";
-import { useMovieProviders } from "@/services/providerService";
+import {
+  useMovieProviders,
+  useShowProviders,
+} from "@/services/providerService";
 import React from "react";
 import { Link, router } from "expo-router";
 
 export default function SelectStreamModal({
   id,
+  media_type,
+  season_number,
+  episode_number,
   modalVisible,
   setModalVisible,
 }: {
   id: string;
+  media_type: string;
+  season_number?: number;
+  episode_number?: number;
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
 }) {
-  const { data: providers, isLoading, error } = useMovieProviders(id);
+  const {
+    data: providers,
+    isLoading,
+    error,
+  } = media_type === "movie"
+    ? useMovieProviders(id, modalVisible)
+    : useShowProviders(id, modalVisible);
   if (isLoading) {
-    return <Text>Loading...</Text>;
+    return (
+      <View className="w-full h-full bg-primary">
+        <Text className="text-white">Loading providers...</Text>
+      </View>
+    );
   }
   if (error) {
     return <Text>Error: {error.message}</Text>;
@@ -38,7 +57,7 @@ export default function SelectStreamModal({
         setModalVisible(!modalVisible);
       }}
     >
-      <View className="flex-1 justify-center items-center m-5 opacity-95">
+      <View className="flex-1 justify-center items-center opacity-95">
         <View className="bg-white p-4 rounded-lg w-full min-h-10">
           <ScrollView>
             <Text className="text-lg font-bold">Select Stream</Text>
@@ -46,6 +65,7 @@ export default function SelectStreamModal({
               .slice(0, 20)
               .map((stream: any) => (
                 <TouchableHighlight
+                  key={stream.infohash}
                   onPress={() => {
                     router.navigate(`/stream/${stream.encoded_data}`);
                     setModalVisible(false);

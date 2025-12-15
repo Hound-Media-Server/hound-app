@@ -1,4 +1,4 @@
-import { View, Text, Platform } from "react-native";
+import { View } from "react-native";
 import React, { use } from "react";
 import VideoScreen from "@/components/VideoScreen";
 import { useEffect } from "react";

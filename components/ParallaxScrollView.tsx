@@ -1,32 +1,32 @@
-import type { PropsWithChildren, ReactElement } from 'react';
-import { StyleSheet, useColorScheme } from 'react-native';
+import { LinearGradient } from "expo-linear-gradient";
+import type { PropsWithChildren, ReactElement } from "react";
+import { type NativeScrollEvent, View, type ViewProps } from "react-native";
 import Animated, {
   interpolate,
   useAnimatedRef,
   useAnimatedStyle,
   useScrollViewOffset,
-} from 'react-native-reanimated';
+} from "react-native-reanimated";
 
-import { ThemedView } from '@/components/ThemedView';
-import { useScale } from '@/hooks/useScale';
-
-type Props = PropsWithChildren<{
+interface Props extends ViewProps {
   headerImage: ReactElement;
-  headerBackgroundColor: { dark: string; light: string };
-}>;
+  logo?: ReactElement;
+  episodePoster?: ReactElement;
+  headerHeight?: number;
+  onEndReached?: (() => void) | null | undefined;
+}
 
 export default function ParallaxScrollView({
   children,
   headerImage,
-  headerBackgroundColor,
+  episodePoster,
+  headerHeight = 350,
+  logo,
+  onEndReached,
+  ...props
 }: Props) {
-  const colorScheme = useColorScheme() ?? 'light';
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const scrollOffset = useScrollViewOffset(scrollRef);
-  const scale = useScale();
-  const styles = useParallaxScrollViewStyles();
-
-  const HEADER_HEIGHT = 125 * scale;
 
   const headerAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -34,54 +34,98 @@ export default function ParallaxScrollView({
         {
           translateY: interpolate(
             scrollOffset.value,
-            [-HEADER_HEIGHT, 0, HEADER_HEIGHT],
-            [-HEADER_HEIGHT / 2, 0, HEADER_HEIGHT * 0.75],
+            [-headerHeight, 0, headerHeight],
+            [-headerHeight / 2, 0, headerHeight * 0.75]
           ),
         },
         {
           scale: interpolate(
             scrollOffset.value,
-            [-HEADER_HEIGHT, 0, HEADER_HEIGHT],
-            [2, 1, 1],
+            [-headerHeight, 0, headerHeight],
+            [2, 1, 1]
           ),
         },
       ],
     };
   });
 
+  function isCloseToBottom({
+    layoutMeasurement,
+    contentOffset,
+    contentSize,
+  }: NativeScrollEvent) {
+    return (
+      layoutMeasurement.height + contentOffset.y >= contentSize.height - 20
+    );
+  }
+
   return (
-    <ThemedView style={styles.container}>
-      <Animated.ScrollView ref={scrollRef} scrollEventThrottle={16}>
+    <View className="flex-1 bg-primary" {...props}>
+      <Animated.ScrollView
+        style={{
+          position: "relative",
+        }}
+        showsVerticalScrollIndicator={false}
+        ref={scrollRef}
+        scrollEventThrottle={16}
+        onScroll={(e) => {
+          if (isCloseToBottom(e.nativeEvent)) onEndReached?.();
+        }}
+      >
+        {logo && (
+          <View
+            style={{
+              top: headerHeight - 200,
+              height: 130,
+            }}
+            className="absolute left-0 w-full z-40 px-4 flex justify-center items-center"
+          >
+            {logo}
+          </View>
+        )}
+
         <Animated.View
           style={[
-            styles.header,
-            { backgroundColor: headerBackgroundColor[colorScheme] },
+            {
+              height: headerHeight,
+              backgroundColor: "black",
+            },
             headerAnimatedStyle,
           ]}
         >
           {headerImage}
         </Animated.View>
-        <ThemedView style={styles.content}>{children}</ThemedView>
+
+        <View
+          style={{
+            top: -50,
+            marginBottom: -50,
+          }}
+          className="relative flex-1  bg-transparent"
+        >
+          <LinearGradient
+            colors={["transparent", "rgba(9,4,41,0.5)", "rgba(9,4,41,1)"]}
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              top: -210,
+              height: 300,
+            }}
+          />
+          <LinearGradient
+            colors={["rgba(9,4,41,1)", "rgba(9,4,41,1)"]}
+            className="h-full"
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              top: 85,
+            }}
+          />
+          {children}
+        </View>
       </Animated.ScrollView>
-    </ThemedView>
+    </View>
   );
 }
-
-const useParallaxScrollViewStyles = function () {
-  const scale = useScale();
-  return StyleSheet.create({
-    container: {
-      flex: 1,
-    },
-    header: {
-      height: 125 * scale,
-      overflow: 'hidden',
-    },
-    content: {
-      flex: 1,
-      padding: 32 * scale,
-      gap: 16 * scale,
-      overflow: 'hidden',
-    },
-  });
-};

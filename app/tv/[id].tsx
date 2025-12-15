@@ -1,25 +1,94 @@
-import { View, Text, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  Button,
+  ImageBackground,
+  TouchableHighlight,
+  TouchableOpacity,
+} from "react-native";
 import React from "react";
 import { useLocalSearchParams } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useShowDetails } from "@/services/mediaDetailsService";
+import { ThemedText } from "@/components/ThemedText";
+import HorizontalList from "@/components/HorizontalList";
+import SelectStreamModal from "@/components/SelectStreamModal";
+import ParallaxScrollView from "@/components/ParallaxScrollView";
 
 export default function TVDetails() {
+  const [selectStreamModalVisible, setSelectStreamModalVisible] =
+    React.useState(false);
   const { id } = useLocalSearchParams();
+  const { data: details, isLoading, error } = useShowDetails(id as string);
 
+  if (isLoading) {
+    return <View className="w-full h-full bg-primary" />;
+  }
+  if (error) {
+    return <Text>Error: {error.message}</Text>;
+  }
+  const creators = details?.created_by
+    ?.map((item: any) => item.name)
+    .join(", ");
   return (
-    <SafeAreaView className="flex-1 bg-black">
-      <View className="flex-1">
-        <ScrollView
-          className="flex-1 ps-5"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            minHeight: "100%",
-            paddingBottom: 10,
-          }}
+    <>
+      <View className="flex-1 relative bg-primary">
+        <ParallaxScrollView
+          headerHeight={300}
+          headerImage={
+            <ImageBackground
+              source={{ uri: details?.backdrop_url }}
+              className="absolute w-full h-96"
+              resizeMode="cover"
+            />
+          }
         >
-          <Text className="text-white">TV Details: {id}</Text>
-        </ScrollView>
+          <View className="ms-5 sm:px-8 md:px-24">
+            <TouchableOpacity
+              onPress={() => setSelectStreamModalVisible(true)}
+              activeOpacity={0.75}
+              className="p-2 mb-3 bg-secondary rounded-2xl w-[70px] items-center sm:w-[80px] sm:rounded-3xl"
+            >
+              <ThemedText className="text-primary text-[14px] md:text-[18px]">
+                ▶︎ Play
+              </ThemedText>
+            </TouchableOpacity>
+            <View className="me-5">
+              <ThemedText className="text-white text-3xl leading-[36px]">
+                {details?.media_title}
+                <ThemedText className="text-gray-400 text-2xl leading-[32px]">
+                  {" (" + details?.first_air_date?.split("-")[0] + ")"}
+                </ThemedText>
+              </ThemedText>
+              <ThemedText className="text-secondary mt-1 opacity-80 sm:text-lg">
+                {details?.genres?.map((item: any) => item.name).join(", ")}
+              </ThemedText>
+              <ThemedText className="text-gray-400 mt-1 sm:text-lg">
+                {creators}
+              </ThemedText>
+              <ThemedText className="text-gray-300 text-md sm:text-lg mt-1">
+                {details?.overview}
+              </ThemedText>
+            </View>
+            {details?.credits?.cast?.length > 0 && (
+              <View className="mt-2">
+                <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
+                  Cast
+                </ThemedText>
+                <HorizontalList
+                  itemData={details?.credits?.cast}
+                  showDescription={true}
+                />
+              </View>
+            )}
+          </View>
+        </ParallaxScrollView>
       </View>
-    </SafeAreaView>
+      <SelectStreamModal
+        id={id as string}
+        modalVisible={selectStreamModalVisible}
+        setModalVisible={setSelectStreamModalVisible}
+      />
+    </>
   );
 }

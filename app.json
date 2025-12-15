@@ -1,6 +1,7 @@
 {
   "expo": {
     "scheme": "routertv",
+    "backgroundColor": "#000000",
     "plugins": [
       [
         "@react-native-tvos/config-tv",

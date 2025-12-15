@@ -9,12 +9,11 @@ import {
 } from "react-native";
 import React from "react";
 import { useLocalSearchParams } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useMovieDetails } from "@/services/mediaDetailsService";
-import { LinearGradient } from "expo-linear-gradient";
 import { ThemedText } from "@/components/ThemedText";
 import HorizontalList from "@/components/HorizontalList";
 import SelectStreamModal from "@/components/SelectStreamModal";
+import ParallaxScrollView from "@/components/ParallaxScrollView";
 
 export default function MovieDetails() {
   const [selectStreamModalVisible, setSelectStreamModalVisible] =
@@ -24,7 +23,7 @@ export default function MovieDetails() {
   const { data: details, isLoading, error } = useMovieDetails(id as string);
 
   if (isLoading) {
-    return <Text>Loading...</Text>;
+    return <View className="w-full h-full bg-primary" />;
   }
   if (error) {
     return <Text>Error: {error.message}</Text>;
@@ -44,58 +43,48 @@ export default function MovieDetails() {
     info.push(creators);
   }
   return (
-    <SafeAreaView className="flex-1 bg-black">
-      <View className="flex-1">
-        <ScrollView
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            minHeight: "100%",
-            paddingBottom: 10,
-          }}
-        >
-          <ImageBackground
-            source={{ uri: details?.backdrop_url }}
-            className="absolute w-full h-96"
-            resizeMode="cover"
-          >
-            <LinearGradient
-              colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.55)", "rgba(0,0,0,1)"]}
-              className="absolute inset-x-0 bottom-0 h-full"
+    <>
+      <View className="flex-1 relative bg-primary">
+        <ParallaxScrollView
+          headerHeight={300}
+          headerImage={
+            <ImageBackground
+              source={{ uri: details?.backdrop_url }}
+              className="absolute w-full h-96"
+              resizeMode="cover"
             />
-          </ImageBackground>
-          <View className="mt-52 ms-5">
+          }
+        >
+          <View className="ms-5 sm:px-8 md:px-24">
             <TouchableOpacity
               onPress={() => setSelectStreamModalVisible(true)}
               activeOpacity={0.75}
-              className="mt-20 p-2 mb-3 bg-secondary rounded-2xl w-20 items-center"
+              className="p-2 mb-3 bg-secondary rounded-2xl w-[70px] items-center sm:w-[80px] sm:rounded-3xl"
             >
-              <ThemedText className="text-primary text-[14px]">
+              <ThemedText className="text-primary text-[14px] md:text-[18px]">
                 ▶︎ Play
               </ThemedText>
             </TouchableOpacity>
             <View className="me-5">
-              <Text>
-                <ThemedText className="text-white text-3xl">
-                  {details?.media_title}
+              <ThemedText className="text-white text-3xl leading-[36px]">
+                {details?.media_title}
+                <ThemedText className="text-gray-400 text-2xl leading-[32px]">
+                  {" (" + details?.release_date.split("-")[0] + ")"}
                 </ThemedText>
-                <ThemedText className="text-gray-400 text-2xl">
-                  {"  (" + details?.release_date.split("-")[0] + ")"}
-                </ThemedText>
-              </Text>
-              <ThemedText className="text-secondary mt-1 opacity-80">
+              </ThemedText>
+              <ThemedText className="text-secondary mt-1 opacity-80 sm:text-lg">
                 {details?.genres?.map((item: any) => item.name).join(", ")}
               </ThemedText>
-              <ThemedText className="text-gray-400 mt-1">
+              <ThemedText className="text-gray-400 mt-1 sm:text-lg">
                 {info.join(" ⸱ ")}
               </ThemedText>
-              <ThemedText className="text-gray-300 text-md mt-1">
+              <ThemedText className="text-gray-300 text-md sm:text-lg mt-1">
                 {details?.overview}
               </ThemedText>
             </View>
             {details?.credits?.cast?.length > 0 && (
               <View className="mt-2">
-                <ThemedText className="text-gray-200 mt-1 mb-2 text-xl">
+                <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
                   Cast
                 </ThemedText>
                 <HorizontalList
@@ -105,13 +94,14 @@ export default function MovieDetails() {
               </View>
             )}
           </View>
-        </ScrollView>
+        </ParallaxScrollView>
       </View>
       <SelectStreamModal
         id={id as string}
+        media_type="movie"
         modalVisible={selectStreamModalVisible}
         setModalVisible={setSelectStreamModalVisible}
       />
-    </SafeAreaView>
+    </>
   );
 }
