@@ -101,7 +101,7 @@ export default function ParallaxScrollView({
             top: -50,
             marginBottom: -50,
           }}
-          className="relative flex-1  bg-transparent"
+          className="relative flex-1 bg-transparent"
         >
           <LinearGradient
             colors={["transparent", "rgba(9,4,41,0.5)", "rgba(9,4,41,1)"]}
@@ -113,9 +113,8 @@ export default function ParallaxScrollView({
               height: 300,
             }}
           />
-          <LinearGradient
-            colors={["rgba(9,4,41,1)", "rgba(9,4,41,1)"]}
-            className="h-full"
+          <View
+            className="h-full bg-primary"
             style={{
               position: "absolute",
               left: 0,

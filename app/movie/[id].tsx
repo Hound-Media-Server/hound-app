@@ -59,7 +59,7 @@ export default function MovieDetails() {
             <TouchableOpacity
               onPress={() => setSelectStreamModalVisible(true)}
               activeOpacity={0.75}
-              className="p-2 mb-3 bg-secondary rounded-2xl w-[70px] items-center sm:w-[80px] sm:rounded-3xl"
+              className="p-2 mb-3 bg-secondary rounded-2xl w-[80px] items-center sm:w-[80px] sm:rounded-3xl"
             >
               <ThemedText className="text-primary text-[14px] md:text-[18px]">
                 ▶︎ Play
