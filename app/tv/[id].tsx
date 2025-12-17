@@ -1,28 +1,32 @@
 import {
   View,
   Text,
-  ScrollView,
-  Button,
   ImageBackground,
-  TouchableHighlight,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { useShowDetails } from "@/services/mediaDetailsService";
 import { ThemedText } from "@/components/ThemedText";
 import HorizontalList from "@/components/HorizontalList";
 import SelectStreamModal from "@/components/SelectStreamModal";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
+import SeasonSection from "@/components/media_page/SeasonSection";
 
 export default function TVDetails() {
   const [selectStreamModalVisible, setSelectStreamModalVisible] =
     React.useState(false);
   const { id } = useLocalSearchParams();
+  // fetch show details
   const { data: details, isLoading, error } = useShowDetails(id as string);
 
   if (isLoading) {
-    return <View className="w-full h-full bg-primary" />;
+    return (
+      <View className="w-full h-full bg-primary justify-center items-center">
+        <ActivityIndicator color="white" size="large" />
+      </View>
+    );
   }
   if (error) {
     return <Text>Error: {error.message}</Text>;
@@ -43,7 +47,7 @@ export default function TVDetails() {
             />
           }
         >
-          <View className="ms-5 sm:px-8 md:px-24">
+          <View className="ms-5 me-5 sm:px-8 md:px-24">
             <TouchableOpacity
               onPress={() => setSelectStreamModalVisible(true)}
               activeOpacity={0.75}
@@ -77,7 +81,20 @@ export default function TVDetails() {
                 </ThemedText>
                 <HorizontalList
                   itemData={details?.credits?.cast}
+                  itemType="cast"
                   showDescription={true}
+                />
+              </View>
+            )}
+            {details?.seasons?.length > 0 && (
+              <View className="mt-2">
+                <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
+                  Seasons
+                </ThemedText>
+                <SeasonSection
+                  tmdbID={id as string}
+                  seasons={details?.seasons}
+                  defaultSeason={details?.seasons[0].season_number}
                 />
               </View>
             )}
@@ -86,6 +103,7 @@ export default function TVDetails() {
       </View>
       <SelectStreamModal
         id={id as string}
+        media_type="tv"
         modalVisible={selectStreamModalVisible}
         setModalVisible={setSelectStreamModalVisible}
       />

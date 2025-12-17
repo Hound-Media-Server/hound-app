@@ -6,6 +6,7 @@ import {
   ImageBackground,
   TouchableHighlight,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import React from "react";
 import { useLocalSearchParams } from "expo-router";
@@ -23,7 +24,11 @@ export default function MovieDetails() {
   const { data: details, isLoading, error } = useMovieDetails(id as string);
 
   if (isLoading) {
-    return <View className="w-full h-full bg-primary" />;
+    return (
+      <View className="w-full h-full bg-primary justify-center items-center">
+        <ActivityIndicator color="white" size="large" />
+      </View>
+    );
   }
   if (error) {
     return <Text>Error: {error.message}</Text>;
@@ -90,6 +95,7 @@ export default function MovieDetails() {
                 <HorizontalList
                   itemData={details?.credits?.cast}
                   showDescription={true}
+                  itemType="cast"
                 />
               </View>
             )}
@@ -98,7 +104,7 @@ export default function MovieDetails() {
       </View>
       <SelectStreamModal
         id={id as string}
-        media_type="movie"
+        mediaType="movie"
         modalVisible={selectStreamModalVisible}
         setModalVisible={setSelectStreamModalVisible}
       />

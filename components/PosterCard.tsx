@@ -4,7 +4,15 @@ import { Image } from "react-native";
 import { Route, useRouter } from "expo-router";
 import { ThemedText } from "./ThemedText";
 
-export default function PosterCard({ item, showDescription }: any) {
+export default function PosterCard({
+  item,
+  title,
+  subtitle,
+}: {
+  item: any;
+  title?: string;
+  subtitle?: string;
+}) {
   const router = useRouter();
   if (!item) return;
   let imgSource = item.thumbnail_url;
@@ -24,12 +32,19 @@ export default function PosterCard({ item, showDescription }: any) {
     >
       <View className="flex-1 w-[140px] me-5">
         <Image
-          className="w-[140px] h-[210px] rounded-lg"
+          className="w-[140px] h-[210px] rounded-lg bg-gray-300"
           source={{ uri: imgSource }}
         />
-        {showDescription && (
-          <ThemedText className="text-gray-200 mt-2 text-start">
-            {item.original_name}
+        {title && (
+          <>
+            <ThemedText className="text-gray-200 mt-2 text-start">
+              {title}
+            </ThemedText>
+          </>
+        )}
+        {subtitle && (
+          <ThemedText className="text-gray-400 text-sm text-start">
+            {subtitle}
           </ThemedText>
         )}
       </View>

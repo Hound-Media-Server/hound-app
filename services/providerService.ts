@@ -8,8 +8,8 @@ const fetchMovieProviders = (id: string): Promise<any> => {
   return apiClient(`/movie/${id}/providers`); 
 };
 
-const fetchShowProviders = (id: string): Promise<any> => {
-  return apiClient(`/tv/${id}/providers`);
+const fetchShowProviders = (id: string, seasonNumber?: number, episodeNumber?: number): Promise<any> => {
+  return apiClient(`/tv/${id}/providers?season=${seasonNumber}&episode=${episodeNumber}`);
 };
 
 // Fetching should only run when modal is open, so pass opened
@@ -23,10 +23,10 @@ export const useMovieProviders = (id: string, enabled: boolean) => {
   });
 };
 
-export const useShowProviders = (id: string, enabled: boolean) => {
+export const useShowProviders = (id: string, enabled: boolean, seasonNumber?: number, episodeNumber?: number) => {
   return useQuery({
-    queryKey: ['show-providers', id],
-    queryFn: () => fetchShowProviders(id),
+    queryKey: ['show-providers', id, seasonNumber, episodeNumber],
+    queryFn: () => fetchShowProviders(id, seasonNumber, episodeNumber),
     enabled: enabled,
     staleTime: 1000 * 60 * 5,
   });

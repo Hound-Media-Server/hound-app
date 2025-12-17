@@ -13,11 +13,15 @@ const fetchShowDetails = (id: string): Promise<any> => {
   return apiClient(`/tv/${id}`);
 };
 
+const fetchSeasonDetails = (id: string, seasonNum: number): Promise<any> => {
+  return apiClient(`/tv/${id}/season/${seasonNum}`);
+};
+
 export const useMovieDetails = (id: string) => {
   return useQuery({
     queryKey: ['movie-details', id],
     queryFn: () => fetchMovieDetails(id),
-    staleTime: 1000 * 60 * 5, // cache for 5 mins
+    staleTime: 1000 * 60 * 5,
   });
 };
 
@@ -25,6 +29,14 @@ export const useShowDetails = (id: string) => {
   return useQuery({
     queryKey: ['show-details', id],
     queryFn: () => fetchShowDetails(id),
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const useSeasonDetails = (id: string, seasonNum: number) => {
+  return useQuery({
+    queryKey: ['season-details', id, seasonNum],
+    queryFn: () => fetchSeasonDetails(id, seasonNum),
     staleTime: 1000 * 60 * 5,
   });
 };

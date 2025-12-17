@@ -5,6 +5,7 @@ import {
   Pressable,
   ScrollView,
   TouchableHighlight,
+  Alert,
 } from "react-native";
 import {
   useMovieProviders,
@@ -15,26 +16,30 @@ import { Link, router } from "expo-router";
 
 export default function SelectStreamModal({
   id,
-  media_type,
-  season_number,
-  episode_number,
+  mediaType,
+  seasonNumber,
+  episodeNumber,
   modalVisible,
   setModalVisible,
 }: {
   id: string;
-  media_type: string;
-  season_number?: number;
-  episode_number?: number;
+  mediaType: string;
+  seasonNumber?: number;
+  episodeNumber?: number;
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
 }) {
+  if (mediaType != "movie" && mediaType != "tv") {
+    Alert.alert("Invalid media type");
+    return;
+  }
   const {
     data: providers,
     isLoading,
     error,
-  } = media_type === "movie"
+  } = mediaType === "movie"
     ? useMovieProviders(id, modalVisible)
-    : useShowProviders(id, modalVisible);
+    : useShowProviders(id, modalVisible, seasonNumber, episodeNumber);
   if (isLoading) {
     return (
       <View className="w-full h-full bg-primary">
@@ -57,29 +62,27 @@ export default function SelectStreamModal({
         setModalVisible(!modalVisible);
       }}
     >
-      <View className="flex-1 justify-center items-center opacity-95">
-        <View className="bg-white p-4 rounded-lg w-full min-h-10">
-          <ScrollView>
-            <Text className="text-lg font-bold">Select Stream</Text>
-            {providers?.data?.providers[0].streams
-              .slice(0, 20)
-              .map((stream: any) => (
-                <TouchableHighlight
-                  key={stream.infohash}
-                  onPress={() => {
-                    router.navigate(`/stream/${stream.encoded_data}`);
-                    setModalVisible(false);
-                  }}
-                  className="mb-10"
-                >
-                  <Text>{stream.file_name}</Text>
-                </TouchableHighlight>
-              ))}
-          </ScrollView>
+      <View className="flex-1 justify-center items-center opacity-95 bg-white p-4 rounded-lg w-full min-h-10">
+        <ScrollView>
+          <Text className="text-lg font-bold">Select Stream</Text>
+          {providers?.data?.providers[0].streams
+            .slice(0, 20)
+            .map((stream: any) => (
+              <TouchableHighlight
+                key={stream.infohash}
+                onPress={() => {
+                  router.navigate(`/stream/${stream.encoded_data}`);
+                  setModalVisible(false);
+                }}
+                className="mb-10"
+              >
+                <Text>{stream.file_name}</Text>
+              </TouchableHighlight>
+            ))}
           <Pressable onPress={() => setModalVisible(!modalVisible)}>
             <Text className="text-lg">Hide Modal</Text>
           </Pressable>
-        </View>
+        </ScrollView>
       </View>
     </Modal>
   );

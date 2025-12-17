@@ -1,17 +1,20 @@
-import { View, Text, FlatList } from "react-native";
+import { View, Text, FlatList, ActivityIndicator } from "react-native";
 import React from "react";
 import PosterCard from "./PosterCard";
+import { ThemedText } from "./ThemedText";
 
 interface HorizontalListProps {
   useQuery?: () => any;
-  title?: string;
+  itemType?: string;
+  header?: string;
   itemData?: any;
   showDescription?: boolean;
 }
 
 export default function HorizontalList({
   useQuery,
-  title,
+  itemType,
+  header,
   itemData,
   showDescription,
 }: HorizontalListProps) {
@@ -19,20 +22,33 @@ export default function HorizontalList({
   if (!data && useQuery) {
     const { data: queryData, isLoading, error } = useQuery();
     if (isLoading) {
-      return <Text className="text-white bg-black">Loading {title}...</Text>;
+      return (
+        <View className="me-5">
+          {header && (
+            <ThemedText className="text-white text-2xl mb-3">
+              {header}
+            </ThemedText>
+          )}
+          <View className="w-full h-[100px] justify-center items-center">
+            <ActivityIndicator color="white" size="large" />
+          </View>
+        </View>
+      );
     }
     if (error) {
       return (
-        <Text className="text-white bg-black">
-          Error fetching {title}: {error.message}
-        </Text>
+        <ThemedText className="text-white bg-black">
+          Error fetching {header}: {error.message}
+        </ThemedText>
       );
     }
     data = queryData;
   }
   return (
     <>
-      {title && <Text className="text-white text-2xl mb-3">{title}</Text>}
+      {header && (
+        <ThemedText className="text-white text-2xl mb-3">{header}</ThemedText>
+      )}
       <FlatList
         keyExtractor={(item) => {
           if (item.media_source && item.source_id) {
@@ -43,9 +59,24 @@ export default function HorizontalList({
         data={data}
         horizontal
         showsHorizontalScrollIndicator={false}
-        renderItem={(item) => (
-          <PosterCard item={item.item} showDescription={showDescription} />
-        )}
+        renderItem={(item) => {
+          if (itemType === "cast") {
+            return (
+              <PosterCard
+                item={item.item}
+                title={showDescription ? item.item.name : ""}
+                subtitle={showDescription ? item.item.character : ""}
+              />
+            );
+          }
+          return (
+            <PosterCard
+              item={item.item}
+              title={showDescription ? item.item.media_title : ""}
+              subtitle={""}
+            />
+          );
+        }}
       />
     </>
   );
