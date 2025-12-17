@@ -1,7 +1,8 @@
-import { View, Text, FlatList, ActivityIndicator } from "react-native";
+import { View, Text, ActivityIndicator } from "react-native";
 import React from "react";
 import PosterCard from "./PosterCard";
 import { ThemedText } from "./ThemedText";
+import { FlashList } from "@shopify/flash-list";
 
 interface HorizontalListProps {
   useQuery?: () => any;
@@ -49,8 +50,8 @@ export default function HorizontalList({
       {header && (
         <ThemedText className="text-white text-2xl mb-3">{header}</ThemedText>
       )}
-      <FlatList
-        keyExtractor={(item) => {
+      <FlashList
+        keyExtractor={(item: any) => {
           if (item.media_source && item.source_id) {
             return item.media_source + item.source_id;
           }

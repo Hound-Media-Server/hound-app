@@ -1,14 +1,9 @@
-import {
-  View,
-  Image,
-  FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
+import { View, Image, TouchableOpacity, ActivityIndicator } from "react-native";
 import React from "react";
 import { ThemedText } from "../ThemedText";
 import { useSeasonDetails } from "@/services/mediaDetailsService";
 import SelectStreamModal from "../SelectStreamModal";
+import { FlashList } from "@shopify/flash-list";
 
 export default function SeasonSection({
   tmdbID,
@@ -38,16 +33,15 @@ export default function SeasonSection({
       </ThemedText>
     );
   }
-
   return (
     <>
       <View>
-        <FlatList
+        <FlashList
           data={seasons}
           horizontal
           showsHorizontalScrollIndicator={false}
           className="mb-3"
-          renderItem={({ item }) => (
+          renderItem={({ item }: { item: any }) => (
             <TouchableOpacity
               onPress={() => setSelectedSeasonNum(item.season_number)}
               className={
@@ -70,10 +64,10 @@ export default function SeasonSection({
           keyExtractor={(item) => item.id}
         />
         {!isLoading ? (
-          <FlatList
+          <FlashList
             data={seasonDetails.season.episodes}
             showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
+            renderItem={({ item }: { item: any }) => (
               <EpisodeCard
                 episode={item}
                 setSelectStreamModalVisible={setSelectStreamModalVisible}
@@ -137,7 +131,7 @@ function EpisodeCard({
             resizeMode="cover"
           />
         </TouchableOpacity>
-        <View className="flex-1 pt-1">
+        <View className="flex-1 justify-center">
           <ThemedText>
             <ThemedText className="text-secondary">
               {episode.episode_number + " • "}

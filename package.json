@@ -16,6 +16,7 @@
   "dependencies": {
     "@expo-google-fonts/cabin": "^0.4.2",
     "@expo/vector-icons": "^15.0.2",
+    "@shopify/flash-list": "2.0.2",
     "@tanstack/react-query": "^5.90.12",
     "expo": "^54.0.20",
     "expo-build-properties": "~1.0.9",

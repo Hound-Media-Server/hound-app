@@ -100,10 +100,11 @@ export default function TVDetails() {
             )}
           </View>
         </ParallaxScrollView>
+        <View className="ms-5 me-5 sm:px-8 md:px-24"></View>
       </View>
       <SelectStreamModal
         id={id as string}
-        media_type="tv"
+        mediaType="tv"
         modalVisible={selectStreamModalVisible}
         setModalVisible={setSelectStreamModalVisible}
       />
