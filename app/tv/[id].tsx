@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import React, { useEffect } from "react";
+import React from "react";
 import { useLocalSearchParams } from "expo-router";
 import { useShowDetails } from "@/services/mediaDetailsService";
 import { ThemedText } from "@/components/ThemedText";
@@ -17,6 +17,8 @@ import SeasonSection from "@/components/media_page/SeasonSection";
 export default function TVDetails() {
   const [selectStreamModalVisible, setSelectStreamModalVisible] =
     React.useState(false);
+  const [streamSeasonNum, setStreamSeasonNum] = React.useState<number>();
+  const [streamEpisodeNum, setStreamEpisodeNum] = React.useState<number>();
   const { id } = useLocalSearchParams();
   // fetch show details
   const { data: details, isLoading, error } = useShowDetails(id as string);
@@ -34,6 +36,11 @@ export default function TVDetails() {
   const creators = details?.created_by
     ?.map((item: any) => item.name)
     .join(", ");
+  // if first season is specials, move it to the end
+  const seasonsData =
+    details?.seasons?.[0]?.season_number === 0
+      ? [...details.seasons.slice(1), details.seasons[0]]
+      : details?.seasons;
   return (
     <>
       <View className="flex-1 relative bg-primary">
@@ -47,7 +54,7 @@ export default function TVDetails() {
             />
           }
         >
-          <View className="ms-5 me-5 sm:px-8 md:px-24">
+          <View className="px-5 sm:px-8 md:px-24">
             <TouchableOpacity
               onPress={() => setSelectStreamModalVisible(true)}
               activeOpacity={0.75}
@@ -79,11 +86,13 @@ export default function TVDetails() {
                 <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
                   Cast
                 </ThemedText>
-                <HorizontalList
-                  itemData={details?.credits?.cast}
-                  itemType="cast"
-                  showDescription={true}
-                />
+                <View className="-mx-5 sm:-mx-8 md:-mx-24">
+                  <HorizontalList
+                    itemData={details?.credits?.cast}
+                    itemType="cast"
+                    showDescription={true}
+                  />
+                </View>
               </View>
             )}
             {details?.seasons?.length > 0 && (
@@ -93,8 +102,11 @@ export default function TVDetails() {
                 </ThemedText>
                 <SeasonSection
                   tmdbID={id as string}
-                  seasons={details?.seasons}
-                  defaultSeason={details?.seasons[0].season_number}
+                  seasons={seasonsData}
+                  defaultSeason={seasonsData[0]?.season_number}
+                  setSelectStreamModalVisible={setSelectStreamModalVisible}
+                  setStreamSeasonNum={setStreamSeasonNum}
+                  setStreamEpisodeNum={setStreamEpisodeNum}
                 />
               </View>
             )}
@@ -107,6 +119,8 @@ export default function TVDetails() {
         mediaType="tv"
         modalVisible={selectStreamModalVisible}
         setModalVisible={setSelectStreamModalVisible}
+        seasonNumber={streamSeasonNum}
+        episodeNumber={streamEpisodeNum}
       />
     </>
   );

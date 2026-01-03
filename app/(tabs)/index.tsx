@@ -27,7 +27,7 @@ export default function Index() {
       <Text className="text-secondary text-3xl text-center mb-5">Hound</Text>
       <View className="flex-1">
         <ScrollView
-          className="flex-1 ps-5"
+          className="flex-1"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingBottom: 10,
@@ -37,6 +37,7 @@ export default function Index() {
           }
         >
           <HorizontalList useQuery={useTrendingShows} header="Trending Shows" />
+          <View className="mb-5" />
           <HorizontalList
             useQuery={useTrendingMovies}
             header="Trending Movies"

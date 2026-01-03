@@ -30,9 +30,9 @@ export default function PosterCard({
         );
       }}
     >
-      <View className="flex-1 w-[140px] me-5">
+      <View className="flex-1 w-[120px]">
         <Image
-          className="w-[140px] h-[210px] rounded-lg bg-gray-300"
+          className="w-[120px] h-[180px] rounded-lg bg-gray-300"
           source={{ uri: imgSource }}
         />
         {title && (

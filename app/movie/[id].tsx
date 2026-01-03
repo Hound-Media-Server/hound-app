@@ -1,10 +1,7 @@
 import {
   View,
   Text,
-  ScrollView,
-  Button,
   ImageBackground,
-  TouchableHighlight,
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
@@ -60,7 +57,7 @@ export default function MovieDetails() {
             />
           }
         >
-          <View className="ms-5 sm:px-8 md:px-24">
+          <View className="px-5 sm:px-8 md:px-24">
             <TouchableOpacity
               onPress={() => setSelectStreamModalVisible(true)}
               activeOpacity={0.75}
@@ -92,11 +89,13 @@ export default function MovieDetails() {
                 <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
                   Cast
                 </ThemedText>
-                <HorizontalList
-                  itemData={details?.credits?.cast}
-                  showDescription={true}
-                  itemType="cast"
-                />
+                <View className="-mx-5 sm:-mx-8 md:-mx-24">
+                  <HorizontalList
+                    itemData={details?.credits?.cast}
+                    showDescription={true}
+                    itemType="cast"
+                  />
+                </View>
               </View>
             )}
           </View>

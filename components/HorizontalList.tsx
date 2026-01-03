@@ -48,7 +48,9 @@ export default function HorizontalList({
   return (
     <>
       {header && (
-        <ThemedText className="text-white text-2xl mb-3">{header}</ThemedText>
+        <ThemedText className="text-white text-2xl mb-3 ps-5">
+          {header}
+        </ThemedText>
       )}
       <FlashList
         keyExtractor={(item: any) => {
@@ -60,6 +62,8 @@ export default function HorizontalList({
         data={data}
         horizontal
         showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20 }}
+        ItemSeparatorComponent={() => <View style={{ width: 20 }} />}
         renderItem={(item) => {
           if (itemType === "cast") {
             return (

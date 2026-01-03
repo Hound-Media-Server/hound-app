@@ -34,7 +34,10 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="movie/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="tv/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="stream/[id]" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="stream/[encoded_data]"
+        options={{ headerShown: false }}
+      />
       <Stack.Screen name="sign-in" options={{ headerShown: false }} />
     </Stack>
   );

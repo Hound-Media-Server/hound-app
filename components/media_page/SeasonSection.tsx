@@ -1,30 +1,71 @@
-import { View, Image, TouchableOpacity, ActivityIndicator } from "react-native";
-import React from "react";
+import {
+  View,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  FlatList,
+} from "react-native";
+import React, { useRef, useEffect } from "react";
 import { ThemedText } from "../ThemedText";
 import { useSeasonDetails } from "@/services/mediaDetailsService";
 import SelectStreamModal from "../SelectStreamModal";
 import { FlashList } from "@shopify/flash-list";
+import {
+  useShowWatchData,
+  useShowWatchProgress,
+  WatchProgress,
+} from "@/services/watchDataService";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function SeasonSection({
   tmdbID,
   seasons,
   defaultSeason,
+  setSelectStreamModalVisible,
+  setStreamSeasonNum,
+  setStreamEpisodeNum,
 }: {
   tmdbID: string;
   seasons: any;
   defaultSeason: number;
+  setSelectStreamModalVisible: (visible: boolean) => void;
+  setStreamSeasonNum: (num: number | undefined) => void;
+  setStreamEpisodeNum: (num: number | undefined) => void;
 }) {
   const [selectedSeasonNum, setSelectedSeasonNum] =
     React.useState(defaultSeason);
-  const [streamSeasonNum, setStreamSeasonNum] = React.useState(0);
-  const [streamEpisodeNum, setStreamEpisodeNum] = React.useState(0);
+  const [episodeListHeight, setEpisodeListHeight] = React.useState<
+    number | null
+  >(null);
   const {
     data: seasonDetails,
     isLoading,
     error,
   } = useSeasonDetails(tmdbID, selectedSeasonNum);
-  const [selectStreamModalVisible, setSelectStreamModalVisible] =
-    React.useState(false);
+  const { data: watchedEpisodeIDs } = useShowWatchData(
+    tmdbID,
+    selectedSeasonNum
+  );
+  const { data: watchProgress } = useShowWatchProgress(
+    tmdbID,
+    selectedSeasonNum
+  );
+  const flatListRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    if (seasons && seasons.length > 0) {
+      const index = seasons.findIndex(
+        (s: any) => s.season_number === defaultSeason
+      );
+      if (index !== -1) {
+        flatListRef.current?.scrollToIndex({
+          index,
+          animated: true,
+          viewPosition: 0.25,
+        });
+      }
+    }
+  }, []);
 
   if (error) {
     return (
@@ -36,75 +77,98 @@ export default function SeasonSection({
   return (
     <>
       <View>
-        <FlashList
-          data={seasons}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="mb-3"
-          renderItem={({ item }: { item: any }) => (
-            <TouchableOpacity
-              onPress={() => setSelectedSeasonNum(item.season_number)}
-              className={
-                "me-3 rounded-xl p-2 opacity-85 " +
-                (item?.season_number === selectedSeasonNum
-                  ? "bg-secondary"
-                  : "bg-gray-200")
-              }
-              activeOpacity={0.75}
-            >
-              {
-                <ThemedText className="text-primary">
-                  {item.season_number === 0
-                    ? "Specials"
-                    : "Season " + item.season_number}
-                </ThemedText>
-              }
-            </TouchableOpacity>
-          )}
-          keyExtractor={(item) => item.id}
-        />
-        {!isLoading ? (
+        <View className="mb-5 -mx-5 sm:-mx-8 md:-mx-24">
+          <FlatList
+            data={seasons}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20 }}
+            ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
+            renderItem={({ item }: { item: any }) => (
+              <TouchableOpacity
+                onPress={() => setSelectedSeasonNum(item.season_number)}
+                className={
+                  "rounded-xl p-2 opacity-85 " +
+                  (item?.season_number === selectedSeasonNum
+                    ? "bg-secondary"
+                    : "bg-gray-200")
+                }
+                activeOpacity={0.75}
+              >
+                {
+                  <ThemedText className="text-primary">
+                    {item.season_number === 0
+                      ? "Specials"
+                      : "Season " + item.season_number}
+                  </ThemedText>
+                }
+              </TouchableOpacity>
+            )}
+            keyExtractor={(item) => item.id}
+            ref={flatListRef}
+            onScrollToIndexFailed={(info) => {
+              setTimeout(() => {
+                flatListRef.current?.scrollToIndex({
+                  index: info.index,
+                  animated: false,
+                  viewPosition: 0.25,
+                });
+              }, 100);
+            }}
+          />
+        </View>
+        <View
+          style={{ minHeight: episodeListHeight ?? undefined }}
+          onLayout={(e) => {
+            if (!episodeListHeight) {
+              setEpisodeListHeight(e.nativeEvent.layout.height);
+            }
+          }}
+        >
           <FlashList
-            data={seasonDetails.season.episodes}
+            data={seasonDetails?.season?.episodes}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }: { item: any }) => (
               <EpisodeCard
                 episode={item}
+                watched={watchedEpisodeIDs?.includes(item.id) || false}
+                watchProgress={watchProgress?.get(item.id.toString()) || null}
                 setSelectStreamModalVisible={setSelectStreamModalVisible}
                 setStreamSeasonNum={setStreamSeasonNum}
                 setStreamEpisodeNum={setStreamEpisodeNum}
               />
             )}
             keyExtractor={(item) => item.id}
+            ListHeaderComponent={
+              isLoading ? (
+                <View className="h-[200px] justify-center items-center">
+                  <ActivityIndicator color="white" size="large" />
+                </View>
+              ) : (
+                <></>
+              )
+            }
           />
-        ) : (
-          <View className="h-[500px] justify-center items-center">
-            <ActivityIndicator color="white" size="large" />
-          </View>
-        )}
+        </View>
       </View>
-      <SelectStreamModal
-        id={tmdbID}
-        mediaType="tv"
-        modalVisible={selectStreamModalVisible}
-        setModalVisible={setSelectStreamModalVisible}
-        seasonNumber={streamSeasonNum}
-        episodeNumber={streamEpisodeNum}
-      />
     </>
   );
 }
 
 function EpisodeCard({
   episode,
+  watched,
+  watchProgress,
   setSelectStreamModalVisible,
   setStreamSeasonNum,
   setStreamEpisodeNum,
 }: {
   episode: any;
+  watched: boolean;
+  watchProgress: WatchProgress | null;
   setSelectStreamModalVisible: (visible: boolean) => void;
-  setStreamSeasonNum: (seasonNumber: number) => void;
-  setStreamEpisodeNum: (episodeNumber: number) => void;
+  setStreamSeasonNum: (seasonNumber: number | undefined) => void;
+  setStreamEpisodeNum: (episodeNumber: number | undefined) => void;
 }) {
   var info: string[] = [];
   if (episode.runtime) {
@@ -115,42 +179,65 @@ function EpisodeCard({
   }
   return (
     <>
-      <View className="flex-row mb-4">
-        <TouchableOpacity
-          onPress={() => {
-            setStreamSeasonNum(episode.season_number);
-            setStreamEpisodeNum(episode.episode_number);
-            setSelectStreamModalVisible(true);
-          }}
-        >
-          <Image
-            className="w-[90px] h-[90px] me-3 rounded-md sm:w-[120px] sm:h-[120px] bg-gray-300"
-            source={{
-              uri: episode.still_path,
+      <View className="flex-row mb-3">
+        <View className="relative rounded-md bg-black me-3">
+          <TouchableOpacity
+            onPress={() => {
+              setStreamSeasonNum(episode.season_number);
+              setStreamEpisodeNum(episode.episode_number);
+              setSelectStreamModalVisible(true);
             }}
-            resizeMode="cover"
-          />
-        </TouchableOpacity>
+            activeOpacity={0.7}
+          >
+            <Image
+              className="w-[140px] h-[105px] rounded-md sm:w-[160px] sm:h-[120px] opacity-90"
+              source={{
+                uri: episode.still_path,
+              }}
+              resizeMode="cover"
+            />
+            <View className="absolute inset-0 flex items-center justify-center rounded-md mr-3">
+              <Ionicons
+                name="play"
+                size={38}
+                color="white"
+                style={{ opacity: 0.65 }}
+              />
+            </View>
+          </TouchableOpacity>
+        </View>
         <View className="flex-1 justify-center">
           <ThemedText>
             <ThemedText className="text-secondary">
               {episode.episode_number + " • "}
             </ThemedText>
-            <ThemedText className="text-white text-md sm:text-lg">
+            <ThemedText className="text-white text-base">
               {episode.name}
             </ThemedText>
           </ThemedText>
-          <ThemedText className="text-gray-400 text-xs sm:text-sm">
+          <ThemedText className="text-gray-400 sm:text-sm">
             {info.join(" ⸱ ")}
           </ThemedText>
-          <ThemedText
-            className="text-gray-300 text-xs sm:text-sm"
-            numberOfLines={3}
-          >
-            {episode.overview}
-          </ThemedText>
+          {watchProgress ? (
+            <ThemedText className="text-secondary opacity-85 text-sm">
+              {Math.ceil(
+                (watchProgress.total_duration_seconds -
+                  watchProgress.current_progress_seconds) /
+                  60
+              ) + "m left"}
+            </ThemedText>
+          ) : watched ? (
+            <ThemedText className="text-white text-sm opacity-85">
+              Watched
+            </ThemedText>
+          ) : (
+            ""
+          )}
         </View>
       </View>
+      <ThemedText className="text-gray-400 mb-4 text-sm">
+        {episode.overview}
+      </ThemedText>
     </>
   );
 }
