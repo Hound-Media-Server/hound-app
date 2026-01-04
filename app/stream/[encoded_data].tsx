@@ -1,6 +1,6 @@
 import { View } from "react-native";
 import React, { use } from "react";
-import VideoScreen from "@/components/VideoScreen";
+import VideoScreen from "@/components/video/VideoScreen";
 import { useEffect } from "react";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { useLocalSearchParams } from "expo-router";

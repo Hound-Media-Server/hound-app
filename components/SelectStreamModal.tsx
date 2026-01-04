@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableHighlight,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import {
   useMovieProviders,
@@ -46,9 +47,6 @@ export default function SelectStreamModal({
     Alert.alert("Error", error.message);
     setModalVisible(false);
   }
-  if (!isLoading && providers?.data?.providers[0].streams.length === 0) {
-    return <ThemedText className="text-white">No streams available</ThemedText>;
-  }
   return (
     <Modal
       animationType="fade"
@@ -66,36 +64,34 @@ export default function SelectStreamModal({
           </Pressable>
         </View>
         {isLoading ? (
-          <ThemedText className="text-white">Loading providers...</ThemedText>
+          <ActivityIndicator color="white" size="large" className="mt-10" />
         ) : (
           <View>
-            {providers?.data?.providers[0].streams.length === 0 ? (
-              <ThemedText className="text-white">
+            {providers?.data?.providers[0]?.streams?.length > 0 ? (
+              <View>
+                {providers?.data?.providers[0]?.streams.map((stream: any) => (
+                  <TouchableHighlight
+                    key={stream.info_hash}
+                    onPress={() => {
+                      router.navigate(`/stream/${stream.encoded_data}`);
+                      setModalVisible(false);
+                    }}
+                  >
+                    <View className="bg-slate-800 mb-2 rounded-lg p-3">
+                      <ThemedText className="text-white text-[16px] mb-1">
+                        {stream.title}
+                      </ThemedText>
+                      <ThemedText className="text-gray-300">
+                        {stream.description}
+                      </ThemedText>
+                    </View>
+                  </TouchableHighlight>
+                ))}
+              </View>
+            ) : (
+              <ThemedText className="text-white text-lg">
                 No streams available
               </ThemedText>
-            ) : (
-              <View>
-                {providers?.data?.providers[0].streams
-                  .slice(0, 20)
-                  .map((stream: any) => (
-                    <TouchableHighlight
-                      key={stream.infohash}
-                      onPress={() => {
-                        router.navigate(`/stream/${stream.encoded_data}`);
-                        setModalVisible(false);
-                      }}
-                    >
-                      <View className="bg-slate-800 mb-2 rounded-lg p-3">
-                        <ThemedText className="text-white text-[16px] mb-1">
-                          {stream.title}
-                        </ThemedText>
-                        <ThemedText className="text-gray-300">
-                          {stream.description}
-                        </ThemedText>
-                      </View>
-                    </TouchableHighlight>
-                  ))}
-              </View>
             )}
           </View>
         )}

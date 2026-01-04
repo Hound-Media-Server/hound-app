@@ -77,9 +77,11 @@ export default function MovieDetails() {
               <ThemedText className="text-secondary mt-1 opacity-80 sm:text-lg">
                 {details?.genres?.map((item: any) => item.name).join(", ")}
               </ThemedText>
-              <ThemedText className="text-gray-400 mt-1 sm:text-lg">
-                {info.join(" ⸱ ")}
-              </ThemedText>
+              {info.length > 0 && (
+                <ThemedText className="text-gray-400 mt-1 sm:text-lg">
+                  {info.join(" ⸱ ")}
+                </ThemedText>
+              )}
               <ThemedText className="text-gray-300 text-md sm:text-lg mt-1">
                 {details?.overview}
               </ThemedText>
@@ -89,7 +91,7 @@ export default function MovieDetails() {
                 <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
                   Cast
                 </ThemedText>
-                <View className="-mx-5 sm:-mx-8 md:-mx-24">
+                <View className="-mx-5">
                   <HorizontalList
                     itemData={details?.credits?.cast}
                     showDescription={true}

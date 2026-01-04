@@ -3,7 +3,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { SessionProvider, useSession } from "../services/ctx";
 import "./../global.css";
-import { Platform, View, Text } from "react-native";
+import { StatusBar } from "expo-status-bar";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,9 +51,11 @@ export default function RootLayout() {
   //     </View>
   //   );
   // }
+
   return (
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
+        <StatusBar style="light" translucent backgroundColor="transparent" />
         <RootLayoutNav />
       </QueryClientProvider>
     </SessionProvider>

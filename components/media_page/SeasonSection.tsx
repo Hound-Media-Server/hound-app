@@ -77,7 +77,7 @@ export default function SeasonSection({
   return (
     <>
       <View>
-        <View className="mb-5 -mx-5 sm:-mx-8 md:-mx-24">
+        <View className="mb-5 -mx-5">
           <FlatList
             data={seasons}
             horizontal
@@ -196,7 +196,7 @@ function EpisodeCard({
               }}
               resizeMode="cover"
             />
-            <View className="absolute inset-0 flex items-center justify-center rounded-md mr-3">
+            <View className="absolute inset-0 flex items-center justify-center rounded-md">
               <Ionicons
                 name="play"
                 size={38}

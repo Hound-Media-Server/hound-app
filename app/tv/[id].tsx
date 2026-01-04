@@ -74,19 +74,21 @@ export default function TVDetails() {
               <ThemedText className="text-secondary mt-1 opacity-80 sm:text-lg">
                 {details?.genres?.map((item: any) => item.name).join(", ")}
               </ThemedText>
-              <ThemedText className="text-gray-400 mt-1 sm:text-lg">
-                {creators}
-              </ThemedText>
+              {creators && (
+                <ThemedText className="text-gray-400 mt-1 sm:text-lg">
+                  {creators}
+                </ThemedText>
+              )}
               <ThemedText className="text-gray-300 text-md sm:text-lg mt-1">
                 {details?.overview}
               </ThemedText>
             </View>
             {details?.credits?.cast?.length > 0 && (
               <View className="mt-2">
-                <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
+                <ThemedText className=" text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
                   Cast
                 </ThemedText>
-                <View className="-mx-5 sm:-mx-8 md:-mx-24">
+                <View className="-mx-5">
                   <HorizontalList
                     itemData={details?.credits?.cast}
                     itemType="cast"
