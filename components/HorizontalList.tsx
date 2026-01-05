@@ -25,7 +25,7 @@ export default function HorizontalList({
     if (isLoading) {
       return (
         <View className="me-5">
-          {header && (
+          {!!header && (
             <ThemedText className="text-white text-2xl mb-3">
               {header}
             </ThemedText>
@@ -47,7 +47,7 @@ export default function HorizontalList({
   }
   return (
     <>
-      {header && (
+      {!!header && (
         <ThemedText className="text-white text-2xl mb-3 ps-5">
           {header}
         </ThemedText>

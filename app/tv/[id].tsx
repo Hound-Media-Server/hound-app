@@ -4,6 +4,7 @@ import {
   ImageBackground,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import React from "react";
 import { useLocalSearchParams } from "expo-router";
@@ -13,15 +14,129 @@ import HorizontalList from "@/components/HorizontalList";
 import SelectStreamModal from "@/components/SelectStreamModal";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import SeasonSection from "@/components/media_page/SeasonSection";
+import { useShowContinueWatching } from "@/services/watchDataService";
+import { fetchShowProviders } from "@/services/providerService";
+import { router, useFocusEffect } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function TVDetails() {
+  const queryClient = useQueryClient();
   const [selectStreamModalVisible, setSelectStreamModalVisible] =
     React.useState(false);
   const [streamSeasonNum, setStreamSeasonNum] = React.useState<number>();
   const [streamEpisodeNum, setStreamEpisodeNum] = React.useState<number>();
   const { id } = useLocalSearchParams();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      queryClient.invalidateQueries({
+        queryKey: ["show-continue-watching", id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["show-watch-data", id] });
+      queryClient.invalidateQueries({ queryKey: ["show-watch-progress", id] });
+    }, [id, queryClient])
+  );
+
   // fetch show details
   const { data: details, isLoading, error } = useShowDetails(id as string);
+  const { data: continueWatching, isLoading: isContinueLoading } =
+    useShowContinueWatching(id as string);
+
+  const watchAction = continueWatching?.watch_action;
+  const resumeStartTime =
+    (watchAction?.watch_action_type === "resume"
+      ? watchAction.watch_progress?.current_progress_seconds
+      : 0) || 0;
+
+  let playLabel = "▶︎ Play";
+  if (watchAction) {
+    if (
+      watchAction.watch_action_type === "resume" &&
+      watchAction.watch_progress
+    ) {
+      const s = watchAction.watch_progress.season_number;
+      const e = watchAction.watch_progress.episode_number;
+      if (s && e) {
+        playLabel = `▶︎ Resume S${s}E${e}`;
+      } else {
+        playLabel = "▶︎ Resume";
+      }
+    } else if (
+      watchAction.watch_action_type === "next_episode" &&
+      watchAction.next_episode
+    ) {
+      const s = watchAction.next_episode.season_number;
+      const e = watchAction.next_episode.episode_number;
+      if (s && e) {
+        playLabel = `▶︎ Play S${s}E${e}`;
+      }
+    }
+  } else if (!isContinueLoading) {
+    // evaluate necessity of checking if first episode for all tmdb shows are
+    // s1e1 or if there are edge cases
+    playLabel = "▶︎ Play S1E1";
+  }
+
+  const handlePlayPress = async () => {
+    let targetSeason: number | undefined;
+    let targetEpisode: number | undefined;
+    let encodedData: string | null = null;
+    let startTime: number = 0;
+
+    if (watchAction) {
+      if (
+        watchAction.watch_action_type === "resume" &&
+        watchAction.watch_progress
+      ) {
+        targetSeason = watchAction.watch_progress.season_number;
+        targetEpisode = watchAction.watch_progress.episode_number;
+        encodedData = watchAction.watch_progress.encoded_data;
+        startTime = watchAction.watch_progress.current_progress_seconds;
+      } else if (
+        watchAction.watch_action_type === "next_episode" &&
+        watchAction.next_episode
+      ) {
+        targetSeason = watchAction.next_episode.season_number;
+        targetEpisode = watchAction.next_episode.episode_number;
+      }
+    } else {
+      // Start at S1E1
+      targetSeason = 1;
+      targetEpisode = 1;
+    }
+
+    if (targetSeason !== undefined && targetEpisode !== undefined) {
+      if (encodedData) {
+        try {
+          const providersRes = await fetchShowProviders(
+            id as string,
+            targetSeason,
+            targetEpisode
+          );
+          const streams = providersRes?.data?.providers?.[0]?.streams || [];
+          const match = streams.find(
+            (s: any) => s.encoded_data === encodedData
+          );
+          if (match) {
+            router.navigate(
+              `/stream/${match.encoded_data}?id=${id}&type=tv&title=${details?.media_title}&season=${targetSeason}&episode=${targetEpisode}&startTime=${startTime}`
+            );
+            return;
+          }
+        } catch (e) {
+          console.error("Error matching stream:", e);
+        }
+      }
+      // if stream doesn't exist in providers response, open select stream modal
+      setStreamSeasonNum(targetSeason);
+      setStreamEpisodeNum(targetEpisode);
+      setSelectStreamModalVisible(true);
+    } else {
+      Alert.alert(
+        "Invalid Season or Episode. Please report this issue on Github"
+      );
+    }
+  };
 
   if (isLoading) {
     return (
@@ -56,12 +171,12 @@ export default function TVDetails() {
         >
           <View className="px-5 sm:px-8 md:px-24">
             <TouchableOpacity
-              onPress={() => setSelectStreamModalVisible(true)}
+              onPress={handlePlayPress}
               activeOpacity={0.75}
-              className="p-2 mb-3 bg-secondary rounded-2xl w-[70px] items-center sm:w-[80px] sm:rounded-3xl"
+              className="p-2 mb-3 bg-secondary rounded-2xl w-[120px] sm:w-[150px] items-center"
             >
-              <ThemedText className="text-primary text-[14px] md:text-[18px]">
-                ▶︎ Play
+              <ThemedText className="text-primary text-md sm:text-lg">
+                {playLabel}
               </ThemedText>
             </TouchableOpacity>
             <View className="me-5">
@@ -74,7 +189,7 @@ export default function TVDetails() {
               <ThemedText className="text-secondary mt-1 opacity-80 sm:text-lg">
                 {details?.genres?.map((item: any) => item.name).join(", ")}
               </ThemedText>
-              {creators && (
+              {!!creators && (
                 <ThemedText className="text-gray-400 mt-1 sm:text-lg">
                   {creators}
                 </ThemedText>
@@ -83,7 +198,7 @@ export default function TVDetails() {
                 {details?.overview}
               </ThemedText>
             </View>
-            {details?.credits?.cast?.length > 0 && (
+            {!!details?.credits?.cast?.length && (
               <View className="mt-2">
                 <ThemedText className=" text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
                   Cast
@@ -97,7 +212,7 @@ export default function TVDetails() {
                 </View>
               </View>
             )}
-            {details?.seasons?.length > 0 && (
+            {!!details?.seasons?.length && (
               <View className="mt-2">
                 <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
                   Seasons
@@ -123,6 +238,7 @@ export default function TVDetails() {
         setModalVisible={setSelectStreamModalVisible}
         seasonNumber={streamSeasonNum}
         episodeNumber={streamEpisodeNum}
+        startTime={resumeStartTime}
       />
     </>
   );

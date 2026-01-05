@@ -4,11 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 /*
     id is in format tmdb-1234, etc.
 */
-const fetchMovieProviders = (id: string): Promise<any> => {
+export const fetchMovieProviders = (id: string): Promise<any> => {
   return apiClient(`/movie/${id}/providers`); 
 };
 
-const fetchShowProviders = (id: string, seasonNumber?: number, episodeNumber?: number): Promise<any> => {
+export const fetchShowProviders = (id: string, seasonNumber?: number, episodeNumber?: number): Promise<any> => {
   return apiClient(`/tv/${id}/providers?season=${seasonNumber}&episode=${episodeNumber}`);
 };
 

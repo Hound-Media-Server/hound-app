@@ -35,14 +35,12 @@ export default function PosterCard({
           className="w-[120px] h-[180px] rounded-lg bg-gray-300"
           source={{ uri: imgSource }}
         />
-        {title && (
-          <>
-            <ThemedText className="text-gray-200 mt-2 text-start">
-              {title}
-            </ThemedText>
-          </>
+        {!!title && (
+          <ThemedText className="text-gray-200 mt-2 text-start">
+            {title}
+          </ThemedText>
         )}
-        {subtitle && (
+        {!!subtitle && (
           <ThemedText className="text-gray-400 text-sm text-start">
             {subtitle}
           </ThemedText>

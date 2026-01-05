@@ -8,7 +8,6 @@ import {
 import React, { useRef, useEffect } from "react";
 import { ThemedText } from "../ThemedText";
 import { useSeasonDetails } from "@/services/mediaDetailsService";
-import SelectStreamModal from "../SelectStreamModal";
 import { FlashList } from "@shopify/flash-list";
 import {
   useShowWatchData,
@@ -42,7 +41,7 @@ export default function SeasonSection({
     isLoading,
     error,
   } = useSeasonDetails(tmdbID, selectedSeasonNum);
-  const { data: watchedEpisodeIDs } = useShowWatchData(
+  const { data: watchedEpisodeData } = useShowWatchData(
     tmdbID,
     selectedSeasonNum
   );
@@ -131,7 +130,7 @@ export default function SeasonSection({
             renderItem={({ item }: { item: any }) => (
               <EpisodeCard
                 episode={item}
-                watched={watchedEpisodeIDs?.includes(item.id) || false}
+                watchedAt={watchedEpisodeData?.get(item.id) || null}
                 watchProgress={watchProgress?.get(item.id.toString()) || null}
                 setSelectStreamModalVisible={setSelectStreamModalVisible}
                 setStreamSeasonNum={setStreamSeasonNum}
@@ -157,14 +156,14 @@ export default function SeasonSection({
 
 function EpisodeCard({
   episode,
-  watched,
+  watchedAt,
   watchProgress,
   setSelectStreamModalVisible,
   setStreamSeasonNum,
   setStreamEpisodeNum,
 }: {
   episode: any;
-  watched: boolean;
+  watchedAt: string | null;
   watchProgress: WatchProgress | null;
   setSelectStreamModalVisible: (visible: boolean) => void;
   setStreamSeasonNum: (seasonNumber: number | undefined) => void;
@@ -226,13 +225,11 @@ function EpisodeCard({
                   60
               ) + "m left"}
             </ThemedText>
-          ) : watched ? (
-            <ThemedText className="text-white text-sm opacity-85">
-              Watched
+          ) : watchedAt ? (
+            <ThemedText className="text-gray-200 text-sm opacity-85">
+              {"Last watched " + watchedAt}
             </ThemedText>
-          ) : (
-            ""
-          )}
+          ) : null}
         </View>
       </View>
       <ThemedText className="text-gray-400 mb-4 text-sm">

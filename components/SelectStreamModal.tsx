@@ -24,6 +24,7 @@ export default function SelectStreamModal({
   episodeNumber,
   modalVisible,
   setModalVisible,
+  startTime,
 }: {
   id: string;
   mediaType: string;
@@ -31,6 +32,7 @@ export default function SelectStreamModal({
   episodeNumber?: number;
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
+  startTime?: number;
 }) {
   if (mediaType != "movie" && mediaType != "tv") {
     Alert.alert("Invalid media type");
@@ -73,7 +75,14 @@ export default function SelectStreamModal({
                   <TouchableHighlight
                     key={stream.info_hash}
                     onPress={() => {
-                      router.navigate(`/stream/${stream.encoded_data}`);
+                      const query = `id=${id}&type=${mediaType}${
+                        seasonNumber ? `&season=${seasonNumber}` : ""
+                      }${episodeNumber ? `&episode=${episodeNumber}` : ""}${
+                        startTime ? `&startTime=${startTime}` : ""
+                      }`;
+                      router.navigate(
+                        `/stream/${stream.encoded_data}?${query}`
+                      );
                       setModalVisible(false);
                     }}
                   >
