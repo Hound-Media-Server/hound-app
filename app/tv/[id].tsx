@@ -42,7 +42,7 @@ export default function TVDetails() {
   const { data: continueWatching, isLoading: isContinueLoading } =
     useShowContinueWatching(id as string);
 
-  const watchAction = continueWatching?.watch_action;
+  const watchAction = continueWatching;
   const resumeStartTime =
     (watchAction?.watch_action_type === "resume"
       ? watchAction.watch_progress?.current_progress_seconds

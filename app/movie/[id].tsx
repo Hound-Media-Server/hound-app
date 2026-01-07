@@ -39,7 +39,7 @@ export default function MovieDetails() {
   const { data: continueWatching } = useMovieContinueWatching(id as string);
   const { data: movieWatchData } = useMovieWatchData(id as string);
 
-  const watchAction = continueWatching?.watch_action;
+  const watchAction = continueWatching;
 
   let playLabel = "▶︎ Play";
   if (watchAction) {

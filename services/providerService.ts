@@ -20,6 +20,7 @@ export const useMovieProviders = (id: string, enabled: boolean) => {
     queryFn: () => fetchMovieProviders(id),
     enabled: enabled,
     staleTime: 1000 * 60 * 5, // cache for 5 mins
+    select: (data: any) => data.data,
   });
 };
 
@@ -29,5 +30,6 @@ export const useShowProviders = (id: string, enabled: boolean, seasonNumber?: nu
     queryFn: () => fetchShowProviders(id, seasonNumber, episodeNumber),
     enabled: enabled,
     staleTime: 1000 * 60 * 5,
+    select: (data: any) => data.data,
   });
 };

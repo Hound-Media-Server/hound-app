@@ -69,9 +69,9 @@ export default function SelectStreamModal({
           <ActivityIndicator color="white" size="large" className="mt-10" />
         ) : (
           <View>
-            {providers?.data?.providers[0]?.streams?.length > 0 ? (
+            {providers?.providers[0]?.streams?.length > 0 ? (
               <View>
-                {providers?.data?.providers[0]?.streams.map((stream: any) => (
+                {providers.providers[0]?.streams.map((stream: any) => (
                   <TouchableHighlight
                     key={stream.info_hash}
                     onPress={() => {

@@ -14,6 +14,7 @@ export const useTrendingMovies = () => {
     queryKey: ['trending-movies'],
     queryFn: fetchTrendingMovies,
     staleTime: 1000 * 60 * 5, // cache for 5 mins
+    select: (data: any) => data.data,
   });
 };
 
@@ -22,5 +23,6 @@ export const useTrendingShows = () => {
     queryKey: ['trending-shows'],
     queryFn: fetchTrendingShows,
     staleTime: 1000 * 60 * 5,
+    select: (data: any) => data.data,
   });
 };

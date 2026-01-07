@@ -36,7 +36,7 @@ export interface WatchAction {
 
 export interface ContinueWatchingResponse {
     status: string;
-    watch_action: WatchAction | null;
+    data: WatchAction | null;
 }
 
 const fetchMovieWatchData = (id: string) => {
@@ -147,6 +147,7 @@ export const useMovieContinueWatching = (id: string) => {
         queryKey: ['movie-continue-watching', id],
         queryFn: () => fetchMovieContinueWatching(id),
         staleTime: 1000 * 60 * 5,
+        select: (data: any) => data.data,
     });
 }
 
@@ -155,6 +156,7 @@ export const useShowContinueWatching = (id: string) => {
         queryKey: ['show-continue-watching', id],
         queryFn: () => fetchShowContinueWatching(id),
         staleTime: 1000 * 60 * 5,
+        select: (data: any) => data.data,
     });
 }
 
