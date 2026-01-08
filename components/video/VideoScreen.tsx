@@ -3,7 +3,7 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import { useWindowDimensions } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
 import { StatusBar } from "expo-status-bar";
-import { useLayoutEffect, useEffect } from "react";
+import { useLayoutEffect, useEffect, useRef } from "react";
 import { updatePlaybackProgress } from "@/services/watchDataService";
 
 export default function VideoScreen(props: {
@@ -16,12 +16,22 @@ export default function VideoScreen(props: {
   encodedData: string;
 }) {
   const { width, height } = useWindowDimensions();
+  const initialSeekDone = useRef(false);
+
   const player = useVideoPlayer(props.src, (player) => {
     player.loop = false;
     player.play();
     player.timeUpdateEventInterval = 1;
-    if (props.startTime) {
+  });
+
+  useEventListener(player, "statusChange", ({ status, error }) => {
+    if (
+      status === "readyToPlay" &&
+      props.startTime &&
+      !initialSeekDone.current
+    ) {
       player.currentTime = props.startTime;
+      initialSeekDone.current = true;
     }
   });
 

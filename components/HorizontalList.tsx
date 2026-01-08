@@ -3,6 +3,7 @@ import React from "react";
 import PosterCard from "./PosterCard";
 import { ThemedText } from "./ThemedText";
 import { FlashList } from "@shopify/flash-list";
+import ContinueWatchingCard from "./ContinueWatchingCard";
 
 interface HorizontalListProps {
   useQuery?: () => any;
@@ -73,6 +74,9 @@ export default function HorizontalList({
                 subtitle={showDescription ? item.item.character : ""}
               />
             );
+          }
+          if (itemType === "episode") {
+            return <ContinueWatchingCard item={item.item} />;
           }
           return (
             <PosterCard

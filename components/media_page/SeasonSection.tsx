@@ -14,22 +14,20 @@ import {
   useShowWatchProgress,
   WatchProgress,
 } from "@/services/watchDataService";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { getSelectStreamUrl } from "@/utils/navigation";
 
 export default function SeasonSection({
   tmdbID,
   seasons,
   defaultSeason,
-  setSelectStreamModalVisible,
-  setStreamSeasonNum,
-  setStreamEpisodeNum,
+  mediaTitle,
 }: {
   tmdbID: string;
   seasons: any;
   defaultSeason: number;
-  setSelectStreamModalVisible: (visible: boolean) => void;
-  setStreamSeasonNum: (num: number | undefined) => void;
-  setStreamEpisodeNum: (num: number | undefined) => void;
+  mediaTitle?: string;
 }) {
   const [selectedSeasonNum, setSelectedSeasonNum] =
     React.useState(defaultSeason);
@@ -132,9 +130,8 @@ export default function SeasonSection({
                 episode={item}
                 watchedAt={watchedEpisodeData?.get(item.id) || null}
                 watchProgress={watchProgress?.get(item.id.toString()) || null}
-                setSelectStreamModalVisible={setSelectStreamModalVisible}
-                setStreamSeasonNum={setStreamSeasonNum}
-                setStreamEpisodeNum={setStreamEpisodeNum}
+                tmdbID={tmdbID}
+                mediaTitle={mediaTitle}
               />
             )}
             keyExtractor={(item) => item.id}
@@ -158,16 +155,14 @@ function EpisodeCard({
   episode,
   watchedAt,
   watchProgress,
-  setSelectStreamModalVisible,
-  setStreamSeasonNum,
-  setStreamEpisodeNum,
+  tmdbID,
+  mediaTitle,
 }: {
   episode: any;
   watchedAt: string | null;
   watchProgress: WatchProgress | null;
-  setSelectStreamModalVisible: (visible: boolean) => void;
-  setStreamSeasonNum: (seasonNumber: number | undefined) => void;
-  setStreamEpisodeNum: (episodeNumber: number | undefined) => void;
+  tmdbID: string;
+  mediaTitle?: string;
 }) {
   var info: string[] = [];
   if (episode.runtime) {
@@ -182,9 +177,15 @@ function EpisodeCard({
         <View className="relative rounded-md bg-black me-3">
           <TouchableOpacity
             onPress={() => {
-              setStreamSeasonNum(episode.season_number);
-              setStreamEpisodeNum(episode.episode_number);
-              setSelectStreamModalVisible(true);
+              router.navigate(
+                getSelectStreamUrl({
+                  id: tmdbID,
+                  type: "tv",
+                  season: episode.season_number,
+                  episode: episode.episode_number,
+                  title: mediaTitle,
+                })
+              );
             }}
             activeOpacity={0.7}
           >

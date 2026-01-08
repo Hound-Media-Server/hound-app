@@ -3,6 +3,7 @@ import React, { useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  useContinueWatching,
   useTrendingMovies,
   useTrendingShows,
 } from "./../../services/catalogService";
@@ -42,6 +43,13 @@ export default function Index() {
             useQuery={useTrendingMovies}
             header="Trending Movies"
           />
+          <View className="mb-5" />
+          <HorizontalList
+            useQuery={useContinueWatching}
+            header="Continue Watching"
+            itemType="episode"
+          />
+          <View className="mb-[100px]" />
         </ScrollView>
       </View>
     </SafeAreaView>

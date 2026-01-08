@@ -39,6 +39,14 @@ function RootLayoutNav() {
         options={{ headerShown: false }}
       />
       <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="select-stream"
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
     </Stack>
   );
 }

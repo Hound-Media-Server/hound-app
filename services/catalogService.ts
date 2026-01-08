@@ -9,6 +9,10 @@ const fetchTrendingShows = (): Promise<any> => {
   return apiClient('/tv/trending');
 };
 
+export const fetchContinueWatching = (): Promise<any> => {
+  return apiClient("/continue_watching");
+};
+
 export const useTrendingMovies = () => {
   return useQuery({
     queryKey: ['trending-movies'],
@@ -23,6 +27,14 @@ export const useTrendingShows = () => {
     queryKey: ['trending-shows'],
     queryFn: fetchTrendingShows,
     staleTime: 1000 * 60 * 5,
+    select: (data: any) => data.data,
+  });
+};
+
+export const useContinueWatching = () => {
+  return useQuery({
+    queryKey: ["continue-watching"],
+    queryFn: fetchContinueWatching,
     select: (data: any) => data.data,
   });
 };

@@ -10,7 +10,6 @@ import { useLocalSearchParams } from "expo-router";
 import { useMovieDetails } from "@/services/mediaDetailsService";
 import { ThemedText } from "@/components/ThemedText";
 import HorizontalList from "@/components/HorizontalList";
-import SelectStreamModal from "@/components/SelectStreamModal";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import {
   useMovieContinueWatching,
@@ -19,11 +18,10 @@ import {
 import { fetchMovieProviders } from "@/services/providerService";
 import { router, useFocusEffect } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { getSelectStreamUrl, getStreamUrl } from "@/utils/navigation";
 
 export default function MovieDetails() {
   const queryClient = useQueryClient();
-  const [selectStreamModalVisible, setSelectStreamModalVisible] =
-    React.useState(false);
   const { id } = useLocalSearchParams();
 
   useFocusEffect(
@@ -69,7 +67,12 @@ export default function MovieDetails() {
         const match = streams.find((s: any) => s.encoded_data === encodedData);
         if (match) {
           router.navigate(
-            `/stream/${match.encoded_data}?id=${id}&type=movie&title=${details?.media_title}&startTime=${startTime}`
+            getStreamUrl(match.encoded_data, {
+              id: id as string,
+              type: "movie",
+              title: details?.media_title,
+              startTime: startTime,
+            })
           );
           return;
         }
@@ -78,7 +81,14 @@ export default function MovieDetails() {
       }
     }
 
-    setSelectStreamModalVisible(true);
+    router.navigate(
+      getSelectStreamUrl({
+        id: id as string,
+        type: "movie",
+        startTime: watchAction?.watch_progress?.current_progress_seconds || 0,
+        title: details?.media_title,
+      })
+    );
   };
 
   if (isLoading) {
@@ -169,13 +179,6 @@ export default function MovieDetails() {
           </View>
         </ParallaxScrollView>
       </View>
-      <SelectStreamModal
-        id={id as string}
-        mediaType="movie"
-        modalVisible={selectStreamModalVisible}
-        setModalVisible={setSelectStreamModalVisible}
-        startTime={watchAction?.watch_progress?.current_progress_seconds || 0}
-      />
     </>
   );
 }

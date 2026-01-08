@@ -7,24 +7,19 @@ import {
   Alert,
 } from "react-native";
 import React from "react";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { useShowDetails } from "@/services/mediaDetailsService";
 import { ThemedText } from "@/components/ThemedText";
 import HorizontalList from "@/components/HorizontalList";
-import SelectStreamModal from "@/components/SelectStreamModal";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import SeasonSection from "@/components/media_page/SeasonSection";
 import { useShowContinueWatching } from "@/services/watchDataService";
 import { fetchShowProviders } from "@/services/providerService";
-import { router, useFocusEffect } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { getSelectStreamUrl, getStreamUrl } from "@/utils/navigation";
 
 export default function TVDetails() {
   const queryClient = useQueryClient();
-  const [selectStreamModalVisible, setSelectStreamModalVisible] =
-    React.useState(false);
-  const [streamSeasonNum, setStreamSeasonNum] = React.useState<number>();
-  const [streamEpisodeNum, setStreamEpisodeNum] = React.useState<number>();
   const { id } = useLocalSearchParams();
 
   useFocusEffect(
@@ -119,7 +114,14 @@ export default function TVDetails() {
           );
           if (match) {
             router.navigate(
-              `/stream/${match.encoded_data}?id=${id}&type=tv&title=${details?.media_title}&season=${targetSeason}&episode=${targetEpisode}&startTime=${startTime}`
+              getStreamUrl(match.encoded_data, {
+                id: id as string,
+                type: "tv",
+                title: details?.media_title,
+                season: targetSeason,
+                episode: targetEpisode,
+                startTime: startTime,
+              })
             );
             return;
           }
@@ -128,9 +130,16 @@ export default function TVDetails() {
         }
       }
       // if stream doesn't exist in providers response, open select stream modal
-      setStreamSeasonNum(targetSeason);
-      setStreamEpisodeNum(targetEpisode);
-      setSelectStreamModalVisible(true);
+      router.navigate(
+        getSelectStreamUrl({
+          id: id as string,
+          type: "tv",
+          season: targetSeason,
+          episode: targetEpisode,
+          startTime: resumeStartTime,
+          title: details?.media_title,
+        })
+      );
     } else {
       Alert.alert(
         "Invalid Season or Episode. Please report this issue on Github"
@@ -221,9 +230,7 @@ export default function TVDetails() {
                   tmdbID={id as string}
                   seasons={seasonsData}
                   defaultSeason={seasonsData[0]?.season_number}
-                  setSelectStreamModalVisible={setSelectStreamModalVisible}
-                  setStreamSeasonNum={setStreamSeasonNum}
-                  setStreamEpisodeNum={setStreamEpisodeNum}
+                  mediaTitle={details?.media_title}
                 />
               </View>
             )}
@@ -231,15 +238,6 @@ export default function TVDetails() {
         </ParallaxScrollView>
         <View className="ms-5 me-5 sm:px-8 md:px-24"></View>
       </View>
-      <SelectStreamModal
-        id={id as string}
-        mediaType="tv"
-        modalVisible={selectStreamModalVisible}
-        setModalVisible={setSelectStreamModalVisible}
-        seasonNumber={streamSeasonNum}
-        episodeNumber={streamEpisodeNum}
-        startTime={resumeStartTime}
-      />
     </>
   );
 }
