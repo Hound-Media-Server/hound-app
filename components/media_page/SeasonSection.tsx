@@ -15,8 +15,8 @@ import {
   WatchProgress,
 } from "@/services/watchDataService";
 import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import { getSelectStreamUrl } from "@/utils/navigation";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 export default function SeasonSection({
   tmdbID,
@@ -190,18 +190,56 @@ function EpisodeCard({
             activeOpacity={0.7}
           >
             <Image
-              className="w-[140px] h-[105px] rounded-md sm:w-[160px] sm:h-[120px] opacity-90"
+              className="w-[145px] h-[100px] rounded-md sm:w-[160px] sm:h-[100px] opacity-90"
               source={{
                 uri: episode.still_path,
               }}
               resizeMode="cover"
             />
+            {watchProgress && (
+              <>
+                <View className="absolute bottom-0 left-0 right-0 h-1 bg-gray-600/50 rounded-b-md overflow-hidden">
+                  <View
+                    className="h-full bg-secondary/80"
+                    style={{
+                      width: `${Math.min(
+                        (watchProgress.current_progress_seconds /
+                          watchProgress.total_duration_seconds) *
+                          100,
+                        100
+                      )}%`,
+                    }}
+                  />
+                </View>
+                <View className="absolute bottom-2 right-1 bg-black/50 px-1.5 py-0.5 rounded-md">
+                  <ThemedText className="text-white text-xs">
+                    {Math.ceil(
+                      (watchProgress.total_duration_seconds -
+                        watchProgress.current_progress_seconds) /
+                        60
+                    )}
+                    m left
+                  </ThemedText>
+                </View>
+              </>
+            )}
+            {watchedAt && (
+              <View className="absolute top-1 left-1 items-center justify-center">
+                <View className="absolute w-4 h-4 bg-black/40 rounded-full" />
+                <MaterialIcons
+                  name="check-circle"
+                  size={22}
+                  color="yellow"
+                  className="opacity-75"
+                />
+              </View>
+            )}
             <View className="absolute inset-0 flex items-center justify-center rounded-md">
               <Ionicons
                 name="play"
                 size={38}
                 color="white"
-                style={{ opacity: 0.65 }}
+                className="opacity-65"
               />
             </View>
           </TouchableOpacity>
@@ -218,15 +256,7 @@ function EpisodeCard({
           <ThemedText className="text-gray-400 sm:text-sm">
             {info.join(" ⸱ ")}
           </ThemedText>
-          {watchProgress ? (
-            <ThemedText className="text-secondary opacity-85 text-sm">
-              {Math.ceil(
-                (watchProgress.total_duration_seconds -
-                  watchProgress.current_progress_seconds) /
-                  60
-              ) + "m left"}
-            </ThemedText>
-          ) : watchedAt ? (
+          {watchedAt ? (
             <ThemedText className="text-gray-200 text-sm opacity-85">
               {"Last watched " + watchedAt}
             </ThemedText>

@@ -6,7 +6,7 @@ import { formatRelativeTime } from './dateUtils';
     For fetching watched media and resume progress
 */
 export interface WatchProgress {
-    episode_id: string;
+    episode_source_id: string;
     stream_protocol: string;
     encoded_data: string;
     season_number: number;
@@ -18,7 +18,7 @@ export interface WatchProgress {
 export interface NextEpisode {
     season_number: number;
     episode_number: number;
-    episode_id: string;
+    episode_source_id: string;
 }
 
 export interface WatchAction {
@@ -135,7 +135,7 @@ export const useShowWatchProgress = (id: string, seasonNum: number) => {
         select: (data: any) => {
             const progressMap = new Map<string, WatchProgress>();
             data.data?.map((item: WatchProgress) => {
-                progressMap.set(item.episode_id, item);
+                progressMap.set(item.episode_source_id, item);
             });
             return progressMap;
         },
