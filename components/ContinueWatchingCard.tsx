@@ -61,10 +61,16 @@ export default function ContinueWatchingCard({ item }: { item: any }) {
       }}
     >
       <View className="flex-1 w-[200px]">
-        <Image
-          className="w-[200px] h-[112px] rounded-lg bg-gray-300"
-          source={{ uri: imgSource }}
-        />
+        {imgSource ? (
+          <Image
+            className="w-[200px] h-[112px] rounded-lg bg-gray-300"
+            source={{ uri: imgSource }}
+          />
+        ) : (
+          <View className="w-[200px] h-[112px] rounded-lg bg-zinc-800 border border-zinc-700 items-center justify-center">
+            <ThemedText className="text-gray-500">No Image</ThemedText>
+          </View>
+        )}
         {!!title && (
           <ThemedText className="text-gray-200 mt-2 text-start">
             {title}

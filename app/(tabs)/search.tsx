@@ -48,6 +48,7 @@ export default function Search() {
   }, [searchQuery, query]);
 
   const { data, isLoading, error } = useSearch(debouncedSearchQuery);
+
   const isSearching =
     isLoading ||
     (searchQuery.length > 0 && searchQuery !== debouncedSearchQuery);
@@ -63,7 +64,14 @@ export default function Search() {
         />
       </View>
       {searchQuery && (
-        <View className="w-full p-5">
+        <View className="flex-1 w-full p-5">
+          {error && (
+            <View className="mb-4 p-4 bg-red-900/50 border border-red-500 rounded-lg">
+              <ThemedText className="text-red-200">
+                Search failed: {(error as Error).message}
+              </ThemedText>
+            </View>
+          )}
           <ScrollView
             className="flex-1"
             showsVerticalScrollIndicator={false}

@@ -29,7 +29,9 @@ export default function MovieDetails() {
       queryClient.invalidateQueries({
         queryKey: ["movie-continue-watching", id],
       });
-      queryClient.invalidateQueries({ queryKey: ["movie-watch-data", id] });
+      queryClient.invalidateQueries({
+        queryKey: ["movie-watch-data", id],
+      });
     }, [id, queryClient])
   );
 
@@ -121,11 +123,15 @@ export default function MovieDetails() {
         <ParallaxScrollView
           headerHeight={300}
           headerImage={
-            <ImageBackground
-              source={{ uri: details?.backdrop_url }}
-              className="absolute w-full h-96"
-              resizeMode="cover"
-            />
+            details?.backdrop_url ? (
+              <ImageBackground
+                source={{ uri: details?.backdrop_url }}
+                className="absolute w-full h-96"
+                resizeMode="cover"
+              />
+            ) : (
+              <View className="absolute w-full h-96 bg-zinc-900 border-b border-zinc-800" />
+            )
           }
         >
           <View className="px-5 sm:px-8 md:px-24">

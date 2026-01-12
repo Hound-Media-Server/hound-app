@@ -27,8 +27,12 @@ export default function TVDetails() {
       queryClient.invalidateQueries({
         queryKey: ["show-continue-watching", id],
       });
-      queryClient.invalidateQueries({ queryKey: ["show-watch-data", id] });
-      queryClient.invalidateQueries({ queryKey: ["show-watch-progress", id] });
+      queryClient.invalidateQueries({
+        queryKey: ["show-watch-data", id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["show-watch-progress", id],
+      });
     }, [id, queryClient])
   );
 
@@ -171,11 +175,15 @@ export default function TVDetails() {
         <ParallaxScrollView
           headerHeight={300}
           headerImage={
-            <ImageBackground
-              source={{ uri: details?.backdrop_url }}
-              className="absolute w-full h-96"
-              resizeMode="cover"
-            />
+            details?.backdrop_url ? (
+              <ImageBackground
+                source={{ uri: details?.backdrop_url }}
+                className="absolute w-full h-96"
+                resizeMode="cover"
+              />
+            ) : (
+              <View className="absolute w-full h-96 bg-zinc-900 border-b border-zinc-800" />
+            )
           }
         >
           <View className="px-5 sm:px-8 md:px-24">
