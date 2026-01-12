@@ -5,9 +5,13 @@ export interface LoginResponse {
   username: string;
 }
 
-export async function login(host: string, username: string, password: string): Promise<LoginResponse> {
+export async function login(
+  host: string,
+  username: string,
+  password: string,
+): Promise<LoginResponse> {
   let baseUrl = host.trim();
-  if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+  if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
     baseUrl = `http://${baseUrl}`;
   }
   baseUrl = baseUrl.replace(/\/$/, "");
@@ -24,10 +28,10 @@ export async function login(host: string, username: string, password: string): P
   }
 
   const response = await fetch(`${baseUrl}/api/v1/auth/login`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'X-Client': platform
+      "Content-Type": "application/json",
+      "X-Client": platform,
     },
     body: JSON.stringify({ username, password }),
   });

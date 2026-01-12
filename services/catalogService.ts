@@ -1,12 +1,12 @@
-import { apiClient } from './apiClient';
-import { useQuery } from '@tanstack/react-query';
+import { apiClient } from "./apiClient";
+import { useQuery } from "@tanstack/react-query";
 
 const fetchTrendingMovies = (): Promise<any> => {
-  return apiClient('/movie/trending');
+  return apiClient("/movie/trending");
 };
 
 const fetchTrendingShows = (): Promise<any> => {
-  return apiClient('/tv/trending');
+  return apiClient("/tv/trending");
 };
 
 export const fetchContinueWatching = (): Promise<any> => {
@@ -15,7 +15,7 @@ export const fetchContinueWatching = (): Promise<any> => {
 
 export const useTrendingMovies = () => {
   return useQuery({
-    queryKey: ['trending-movies'],
+    queryKey: ["trending-movies"],
     queryFn: fetchTrendingMovies,
     staleTime: 1000 * 60 * 5, // cache for 5 mins
     select: (data: any) => data.data,
@@ -24,7 +24,7 @@ export const useTrendingMovies = () => {
 
 export const useTrendingShows = () => {
   return useQuery({
-    queryKey: ['trending-shows'],
+    queryKey: ["trending-shows"],
     queryFn: fetchTrendingShows,
     staleTime: 1000 * 60 * 5,
     select: (data: any) => data.data,
