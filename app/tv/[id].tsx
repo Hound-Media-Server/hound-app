@@ -33,7 +33,7 @@ export default function TVDetails() {
       queryClient.invalidateQueries({
         queryKey: ["show-watch-progress", id],
       });
-    }, [id, queryClient])
+    }, [id, queryClient]),
   );
 
   // fetch show details
@@ -81,7 +81,6 @@ export default function TVDetails() {
     let targetEpisode: number | undefined;
     let encodedData: string | null = null;
     let startTime: number = 0;
-
     if (watchAction) {
       if (
         watchAction.watch_action_type === "resume" &&
@@ -103,18 +102,17 @@ export default function TVDetails() {
       targetSeason = 1;
       targetEpisode = 1;
     }
-
-    if (targetSeason !== undefined && targetEpisode !== undefined) {
+    if (targetSeason && targetEpisode) {
       if (encodedData) {
         try {
           const providersRes = await fetchShowProviders(
             id as string,
             targetSeason,
-            targetEpisode
+            targetEpisode,
           );
           const streams = providersRes?.data?.providers?.[0]?.streams || [];
           const match = streams.find(
-            (s: any) => s.encoded_data === encodedData
+            (s: any) => s.encoded_data === encodedData,
           );
           if (match) {
             router.navigate(
@@ -125,7 +123,7 @@ export default function TVDetails() {
                 season: targetSeason,
                 episode: targetEpisode,
                 startTime: startTime,
-              })
+              }),
             );
             return;
           }
@@ -142,11 +140,11 @@ export default function TVDetails() {
           episode: targetEpisode,
           startTime: resumeStartTime,
           title: details?.media_title,
-        })
+        }),
       );
     } else {
       Alert.alert(
-        "Invalid Season or Episode. Please report this issue on Github"
+        "Invalid Season or Episode. Please report this issue on Github",
       );
     }
   };

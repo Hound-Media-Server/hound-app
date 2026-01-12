@@ -41,18 +41,18 @@ export default function SeasonSection({
   } = useSeasonDetails(tmdbID, selectedSeasonNum);
   const { data: watchedEpisodeData } = useShowWatchData(
     tmdbID,
-    selectedSeasonNum
+    selectedSeasonNum,
   );
   const { data: watchProgress } = useShowWatchProgress(
     tmdbID,
-    selectedSeasonNum
+    selectedSeasonNum,
   );
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     if (seasons && seasons.length > 0) {
       const index = seasons.findIndex(
-        (s: any) => s.season_number === defaultSeason
+        (s: any) => s.season_number === defaultSeason,
       );
       if (index !== -1) {
         flatListRef.current?.scrollToIndex({
@@ -183,19 +183,24 @@ function EpisodeCard({
                   type: "tv",
                   season: episode.season_number,
                   episode: episode.episode_number,
+                  startTime: watchProgress?.current_progress_seconds,
                   title: mediaTitle,
-                })
+                }),
               );
             }}
             activeOpacity={0.7}
           >
-            <Image
-              className="w-[145px] h-[100px] rounded-md sm:w-[160px] sm:h-[100px] opacity-90"
-              source={{
-                uri: episode.still_path,
-              }}
-              resizeMode="cover"
-            />
+            {episode.still_path ? (
+              <Image
+                className="w-[145px] h-[100px] rounded-md sm:w-[160px] sm:h-[100px] opacity-90"
+                source={{
+                  uri: `https://image.tmdb.org/t/p/w300${episode.still_path}`,
+                }}
+                resizeMode="cover"
+              />
+            ) : (
+              <View className="w-[145px] h-[100px] rounded-md sm:w-[160px] sm:h-[100px] bg-gray-800" />
+            )}
             {watchProgress && (
               <>
                 <View className="absolute bottom-0 left-0 right-0 h-1 bg-gray-600/50 rounded-b-md overflow-hidden">
@@ -206,7 +211,7 @@ function EpisodeCard({
                         (watchProgress.current_progress_seconds /
                           watchProgress.total_duration_seconds) *
                           100,
-                        100
+                        100,
                       )}%`,
                     }}
                   />
@@ -216,7 +221,7 @@ function EpisodeCard({
                     {Math.ceil(
                       (watchProgress.total_duration_seconds -
                         watchProgress.current_progress_seconds) /
-                        60
+                        60,
                     )}
                     m left
                   </ThemedText>
