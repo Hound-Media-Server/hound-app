@@ -49,7 +49,7 @@ export default function HorizontalList({
   }
   return (
     <>
-      {!!header && (
+      {!!header && data && (
         <ThemedText className="text-white text-2xl mb-3 ps-5">
           {header}
         </ThemedText>
