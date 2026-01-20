@@ -1,8 +1,11 @@
 import { Platform } from "react-native";
 
 export interface LoginResponse {
-  token: string;
-  username: string;
+  status: string;
+  data: {
+    token: string;
+    username: string;
+  }
 }
 
 export async function login(

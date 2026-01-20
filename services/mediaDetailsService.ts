@@ -22,6 +22,7 @@ export const useMovieDetails = (id: string) => {
     queryKey: ['movie-details', id],
     queryFn: () => fetchMovieDetails(id),
     staleTime: 1000 * 60 * 5,
+    select: (data: any) => data.data
   });
 };
 
@@ -30,6 +31,7 @@ export const useShowDetails = (id: string) => {
     queryKey: ['show-details', id],
     queryFn: () => fetchShowDetails(id),
     staleTime: 1000 * 60 * 5,
+    select: (data: any) => data.data
   });
 };
 
@@ -38,5 +40,6 @@ export const useSeasonDetails = (id: string, seasonNum: number) => {
     queryKey: ['season-details', id, seasonNum],
     queryFn: () => fetchSeasonDetails(id, seasonNum),
     staleTime: 1000 * 60 * 5,
+    select: (data: any) => data.data
   });
 };

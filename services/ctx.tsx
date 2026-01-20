@@ -82,8 +82,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
     const data = await login(host, username, password);
     const newSession: Session = {
       host: host.trim().replace(/\/$/, ""),
-      token: data.token,
-      username: data.username,
+      token: data.data.token,
+      username: data.data.username,
     };
 
     if (
