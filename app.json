@@ -26,6 +26,13 @@
           "supportsPictureInPicture": true
         }
       ],
+      [
+        "react-native-video",
+        {
+          "enableAndroidPictureInPicture": true,
+          "enableBackgroundAudio": true
+        }
+      ],
       "expo-router",
       "expo-font",
       "expo-build-properties",

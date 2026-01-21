@@ -77,7 +77,7 @@ export default function SelectStreamScreen() {
         ) : (
           <View>
             {providers?.providers?.some(
-              (p: any) => p.streams && p.streams.length > 0
+              (p: any) => p.streams && p.streams.length > 0,
             ) ? (
               providers.providers.map((provider: any) => (
                 <View key={provider.provider} className="mb-4">
@@ -86,7 +86,7 @@ export default function SelectStreamScreen() {
                   </ThemedText>
                   {provider.streams?.map((stream: any) => (
                     <TouchableHighlight
-                      key={stream.info_hash}
+                      key={provider.provider + "-" + stream.info_hash}
                       underlayColor="#1e293b"
                       className="rounded-lg mb-2"
                       onPress={() => {
@@ -98,7 +98,7 @@ export default function SelectStreamScreen() {
                             episode: episodeNumber,
                             startTime: startTimeNum,
                             title: title,
-                          })
+                          }),
                         );
                       }}
                     >

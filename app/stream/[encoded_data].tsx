@@ -1,10 +1,10 @@
 import { View } from "react-native";
 import React, { use } from "react";
-import VideoScreen from "@/components/video/VideoScreen";
 import { useEffect } from "react";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { useLocalSearchParams } from "expo-router";
 import { useSession } from "@/services/ctx";
+import RNVVideoScreen from "@/components/video/RNVVideoScreen";
 
 export default function Stream() {
   const { encoded_data, startTime, id, type, season, episode, title } =
@@ -20,7 +20,7 @@ export default function Stream() {
   }, []);
   return (
     <View className="flex-1 bg-black justify-center items-center">
-      <VideoScreen
+      <RNVVideoScreen
         src={url}
         startTime={startTime ? parseInt(startTime as string, 10) : 0}
         id={id as string}
