@@ -53,7 +53,7 @@ export default function SignIn() {
           />
         </View>
 
-        <View className="w-full">
+        <View className="w-full mt-2">
           <Text className="text-gray-400 mb-1 ml-1">Username</Text>
           <TextInput
             className="bg-zinc-800 text-white p-4 rounded-lg border border-zinc-700 focus:border-indigo-500"
@@ -65,7 +65,7 @@ export default function SignIn() {
           />
         </View>
 
-        <View className="w-full">
+        <View className="w-full mt-2">
           <Text className="text-gray-400 mb-1 ml-1">Password</Text>
           <TextInput
             className="bg-zinc-800 text-white p-4 rounded-lg border border-zinc-700 focus:border-indigo-500"
