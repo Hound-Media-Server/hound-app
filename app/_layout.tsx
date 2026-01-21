@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { SessionProvider, useSession } from "../services/ctx";
+import ToastManager from "toastify-react-native";
 import "./../global.css";
 import { StatusBar } from "expo-status-bar";
 
@@ -51,7 +52,7 @@ function RootLayoutNav() {
         name="(modals)/add-to-collection"
         options={{
           headerShown: false,
-          presentation: "modal",
+          presentation: "transparentModal",
           animation: "slide_from_bottom",
         }}
       />
@@ -74,6 +75,7 @@ export default function RootLayout() {
         <StatusBar style="light" translucent backgroundColor="transparent" />
         <RootLayoutNav />
       </QueryClientProvider>
+      <ToastManager theme="dark" showProgressBar={false} useModal={false} />
     </SessionProvider>
   );
 }

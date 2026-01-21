@@ -54,7 +54,10 @@ export async function apiClient<T>(
     const errorBody = await response
       .json()
       .catch(() => ({ message: response.statusText }));
-    throw new Error(errorBody.message || `API Error: ${response.status}`);
+    const error = new Error(errorBody.message || `API Error: ${response.status}`);
+    // @ts-ignore
+    error.status = response.status;
+    throw error;
   }
 
   return response.json() as ApiResponse<T>;

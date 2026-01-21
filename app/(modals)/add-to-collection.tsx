@@ -1,7 +1,11 @@
 import { ThemedText } from "@/components/ThemedText";
-import { useCollections } from "@/services/collectionService";
+import {
+  useCollections,
+  useAddToCollection,
+} from "@/services/collectionService";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
+import { Toast } from "toastify-react-native";
 import {
   View,
   ScrollView,
@@ -12,9 +16,42 @@ import {
 
 export default function AddToCollectionScreen() {
   const { data, isLoading, error } = useCollections();
-  const { id } = useLocalSearchParams<{
-    id: string;
+  const { mutate, isPending } = useAddToCollection();
+  const { media_type, media_source, source_id } = useLocalSearchParams<{
+    media_type: string;
+    media_source: string;
+    source_id: string;
   }>();
+  const handleAddToCollection = (collectionId: number | string) => {
+    if (!media_type || !media_source || !source_id) {
+      Toast.error("Invalid media params, contact developer");
+      return;
+    }
+    mutate(
+      {
+        collectionId,
+        payload: {
+          media_type,
+          media_source,
+          source_id,
+        },
+      },
+      {
+        onSuccess: () => {
+          Toast.success("Item added to collection");
+          router.back();
+        },
+        onError: (error: any) => {
+          if (error?.status === 409) {
+            Toast.error("Item already exists in collection");
+          } else {
+            Toast.error(error?.message || "Failed to add to collection");
+          }
+          router.back();
+        },
+      },
+    );
+  };
 
   return (
     <View className="flex-1 bg-primary">
@@ -38,12 +75,20 @@ export default function AddToCollectionScreen() {
               <View key={collection.collection_id} className="mb-4">
                 <TouchableHighlight
                   underlayColor="#1e293b"
-                  className="bg-slate-800 p-3 rounded-lg border border-slate-700"
-                  onPress={() => {}}
+                  disabled={isPending}
+                  className={`bg-slate-800 p-3 rounded-lg border border-slate-700 ${isPending ? "opacity-50" : ""}`}
+                  onPress={() =>
+                    handleAddToCollection(collection.collection_id)
+                  }
                 >
-                  <ThemedText className="text-white text-lg">
-                    {collection.collection_title}
-                  </ThemedText>
+                  <View className="flex-row justify-between items-center">
+                    <ThemedText className="text-white text-lg">
+                      {collection.collection_title}
+                    </ThemedText>
+                    {isPending && (
+                      <ActivityIndicator color="white" size="small" />
+                    )}
+                  </View>
                 </TouchableHighlight>
               </View>
             ))}

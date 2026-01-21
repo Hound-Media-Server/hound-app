@@ -18,7 +18,11 @@ import {
 import { fetchMovieProviders } from "@/services/providerService";
 import { router, useFocusEffect } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { getSelectStreamUrl, getStreamUrl } from "@/utils/navigation";
+import {
+  getSelectStreamUrl,
+  getStreamUrl,
+  getAddToCollectionUrl,
+} from "@/utils/navigation";
 
 export default function MovieDetails() {
   const queryClient = useQueryClient();
@@ -32,7 +36,7 @@ export default function MovieDetails() {
       queryClient.invalidateQueries({
         queryKey: ["movie-watch-data", id],
       });
-    }, [id, queryClient])
+    }, [id, queryClient]),
   );
 
   const { data: details, isLoading, error } = useMovieDetails(id as string);
@@ -74,7 +78,7 @@ export default function MovieDetails() {
               type: "movie",
               title: details?.media_title,
               startTime: startTime,
-            })
+            }),
           );
           return;
         }
@@ -89,7 +93,7 @@ export default function MovieDetails() {
         type: "movie",
         startTime: watchAction?.watch_progress?.current_progress_seconds || 0,
         title: details?.media_title,
-      })
+      }),
     );
   };
 
@@ -111,7 +115,7 @@ export default function MovieDetails() {
   const info = [];
   if (details?.runtime) {
     info.push(
-      Math.floor(details?.runtime / 60) + "h " + (details?.runtime % 60) + "m"
+      Math.floor(details?.runtime / 60) + "h " + (details?.runtime % 60) + "m",
     );
   }
   if (creators) {
@@ -168,6 +172,23 @@ export default function MovieDetails() {
                 {details?.overview}
               </ThemedText>
             </View>
+            <TouchableOpacity
+              onPress={() =>
+                router.push(
+                  getAddToCollectionUrl(
+                    "movie",
+                    details?.media_source,
+                    details?.source_id,
+                  ),
+                )
+              }
+              activeOpacity={0.75}
+              className="p-2 mt-3 bg-white rounded-2xl w-[120px] sm:w-[150px] items-center"
+            >
+              <ThemedText className="text-primary text-md sm:text-lg">
+                Add to Collection
+              </ThemedText>
+            </TouchableOpacity>
             {details?.credits?.cast?.length > 0 && (
               <View className="mt-2">
                 <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">

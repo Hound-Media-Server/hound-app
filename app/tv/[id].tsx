@@ -16,7 +16,11 @@ import SeasonSection from "@/components/media_page/SeasonSection";
 import { useShowContinueWatching } from "@/services/watchDataService";
 import { fetchShowProviders } from "@/services/providerService";
 import { useQueryClient } from "@tanstack/react-query";
-import { getSelectStreamUrl, getStreamUrl } from "@/utils/navigation";
+import {
+  getSelectStreamUrl,
+  getStreamUrl,
+  getAddToCollectionUrl,
+} from "@/utils/navigation";
 
 export default function TVDetails() {
   const queryClient = useQueryClient();
@@ -185,24 +189,17 @@ export default function TVDetails() {
           }
         >
           <View className="px-5 sm:px-8 md:px-24">
-            <TouchableOpacity
-              onPress={handlePlayPress}
-              activeOpacity={0.75}
-              className="p-2 mb-3 bg-secondary rounded-2xl w-[120px] sm:w-[150px] items-center"
-            >
-              <ThemedText className="text-primary text-md sm:text-lg">
-                {playLabel}
-              </ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push(`/add-to-collection?id=${id}`)}
-              activeOpacity={0.75}
-              className="p-2 mb-3 bg-secondary rounded-2xl w-[120px] sm:w-[150px] items-center"
-            >
-              <ThemedText className="text-primary text-md sm:text-lg">
-                Add to Collection
-              </ThemedText>
-            </TouchableOpacity>
+            <View className="flex-row">
+              <TouchableOpacity
+                onPress={handlePlayPress}
+                activeOpacity={0.75}
+                className="p-2 mb-3 bg-secondary rounded-2xl w-[120px] sm:w-[150px] items-center"
+              >
+                <ThemedText className="text-primary text-md sm:text-lg">
+                  {playLabel}
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
             <View className="me-5">
               <ThemedText className="text-white text-3xl leading-[36px]">
                 {details?.media_title}
@@ -222,6 +219,36 @@ export default function TVDetails() {
                 {details?.overview}
               </ThemedText>
             </View>
+            <TouchableOpacity
+              onPress={() =>
+                router.push(
+                  getAddToCollectionUrl(
+                    "tvshow",
+                    details?.media_source,
+                    details?.source_id,
+                  ),
+                )
+              }
+              activeOpacity={0.75}
+              className="p-2 mt-3 bg-white rounded-2xl w-[120px] sm:w-[150px] items-center"
+            >
+              <ThemedText className="text-primary text-md sm:text-lg">
+                Add to Collection
+              </ThemedText>
+            </TouchableOpacity>
+            {!!details?.seasons?.length && (
+              <View className="mt-2">
+                <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
+                  Seasons
+                </ThemedText>
+                <SeasonSection
+                  tmdbID={id as string}
+                  seasons={seasonsData}
+                  defaultSeason={seasonsData[0]?.season_number}
+                  mediaTitle={details?.media_title}
+                />
+              </View>
+            )}
             {!!details?.credits?.cast?.length && (
               <View className="mt-2">
                 <ThemedText className=" text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
@@ -234,19 +261,6 @@ export default function TVDetails() {
                     showDescription={true}
                   />
                 </View>
-              </View>
-            )}
-            {!!details?.seasons?.length && (
-              <View className="mt-2">
-                <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
-                  Seasons
-                </ThemedText>
-                <SeasonSection
-                  tmdbID={id as string}
-                  seasons={seasonsData}
-                  defaultSeason={seasonsData[0]?.season_number}
-                  mediaTitle={details?.media_title}
-                />
               </View>
             )}
           </View>

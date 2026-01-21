@@ -30,3 +30,12 @@ export function getSelectStreamUrl(params: StreamUrlParams) {
 
   return `/select-stream?${queryParts.join("&")}` as any;
 }
+
+export function getAddToCollectionUrl(media_type: string, media_source: string, source_id: string) {
+  const queryParts = [];
+  queryParts.push(`media_type=${media_type}`);
+  queryParts.push(`media_source=${media_source}`);
+  queryParts.push(`source_id=${source_id}`);
+
+  return `/add-to-collection?${queryParts.join("&")}` as any;
+}
