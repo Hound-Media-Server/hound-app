@@ -194,6 +194,15 @@ export default function TVDetails() {
                 {playLabel}
               </ThemedText>
             </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push(`/add-to-collection?id=${id}`)}
+              activeOpacity={0.75}
+              className="p-2 mb-3 bg-secondary rounded-2xl w-[120px] sm:w-[150px] items-center"
+            >
+              <ThemedText className="text-primary text-md sm:text-lg">
+                Add to Collection
+              </ThemedText>
+            </TouchableOpacity>
             <View className="me-5">
               <ThemedText className="text-white text-3xl leading-[36px]">
                 {details?.media_title}

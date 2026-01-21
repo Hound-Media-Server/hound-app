@@ -40,7 +40,15 @@ function RootLayoutNav() {
       />
       <Stack.Screen name="sign-in" options={{ headerShown: false }} />
       <Stack.Screen
-        name="select-stream"
+        name="(modals)/select-stream"
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+      <Stack.Screen
+        name="(modals)/add-to-collection"
         options={{
           headerShown: false,
           presentation: "modal",
