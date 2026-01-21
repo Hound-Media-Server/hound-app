@@ -33,9 +33,16 @@
           "enableBackgroundAudio": true
         }
       ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ],
       "expo-router",
       "expo-font",
-      "expo-build-properties",
       "expo-web-browser",
       "expo-secure-store"
     ],
