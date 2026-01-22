@@ -1,4 +1,4 @@
-import { View, Text, TouchableHighlight } from "react-native";
+import { View, Text, TouchableHighlight, Platform } from "react-native";
 import React from "react";
 import { Image } from "react-native";
 import { Route, useRouter } from "expo-router";
@@ -53,6 +53,9 @@ export default function ContinueWatchingCard({ item }: { item: any }) {
   }
   return (
     <TouchableHighlight
+      className="group rounded-lg"
+      focusable
+      activeOpacity={Platform.isTV ? 1 : 0.9}
       disabled={!item.media_type}
       onPress={() => {
         // cast/credits case
@@ -63,11 +66,11 @@ export default function ContinueWatchingCard({ item }: { item: any }) {
       <View className="flex-1 w-[200px]">
         {imgSource ? (
           <Image
-            className="w-[200px] h-[112px] rounded-lg bg-gray-300"
+            className="group-focus:border-white border-2 w-[200px] h-[112px] rounded-lg bg-gray-300"
             source={{ uri: imgSource }}
           />
         ) : (
-          <View className="w-[200px] h-[112px] rounded-lg bg-zinc-800 border border-zinc-700 items-center justify-center">
+          <View className="group-focus:border-white w-[200px] h-[112px] rounded-lg bg-zinc-800 border-2 border-zinc-700 items-center justify-center">
             <ThemedText className="text-gray-500">No Image</ThemedText>
           </View>
         )}

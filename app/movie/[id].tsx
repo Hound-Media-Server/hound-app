@@ -40,8 +40,10 @@ export default function MovieDetails() {
   );
 
   const { data: details, isLoading, error } = useMovieDetails(id as string);
-  const { data: continueWatching } = useMovieContinueWatching(id as string);
-  const { data: movieWatchData } = useMovieWatchData(id as string);
+  const { data: continueWatching, isLoading: isContinueLoading } =
+    useMovieContinueWatching(id as string);
+  const { data: movieWatchData, isLoading: isWatchDataLoading } =
+    useMovieWatchData(id as string);
 
   const watchAction = continueWatching;
 
@@ -97,7 +99,7 @@ export default function MovieDetails() {
     );
   };
 
-  if (isLoading) {
+  if (isLoading || isContinueLoading || isWatchDataLoading) {
     return (
       <View className="w-full h-full bg-primary justify-center items-center">
         <ActivityIndicator color="white" size="large" />
@@ -140,6 +142,8 @@ export default function MovieDetails() {
         >
           <View className="px-5 sm:px-8 md:px-24">
             <TouchableOpacity
+              focusable
+              hasTVPreferredFocus
               onPress={handlePlayPress}
               activeOpacity={0.75}
               className="p-2 mb-3 bg-secondary rounded-2xl w-[120px] sm:w-[150px] items-center"

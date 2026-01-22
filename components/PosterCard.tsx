@@ -1,6 +1,6 @@
 import { View, Text, TouchableHighlight } from "react-native";
 import React from "react";
-import { Image } from "react-native";
+import { Platform, Image } from "react-native";
 import { Route, useRouter } from "expo-router";
 import { ThemedText } from "./ThemedText";
 
@@ -9,11 +9,13 @@ export default function PosterCard({
   title,
   subtitle,
   imgAlt,
+  onFocus,
 }: {
   item: any;
   title?: string;
   subtitle?: string;
   imgAlt?: string;
+  onFocus?: () => void;
 }) {
   const router = useRouter();
   if (!item) return;
@@ -24,23 +26,28 @@ export default function PosterCard({
 
   return (
     <TouchableHighlight
+      className="group rounded-lg"
+      focusable
+      onFocus={() => onFocus?.()}
+      underlayColor={Platform.isTV ? "transparent" : "#000"}
+      activeOpacity={Platform.isTV ? 1 : 0.9}
       disabled={!item.media_type} // disable for cast view for now
       onPress={() => {
         // cast/credits case
         if (!item.media_type) return;
         router.navigate(
-          `/${item.media_type === "movie" ? "movie" : "tv"}/${item.media_source + "-" + item.source_id}` as Route
+          `/${item.media_type === "movie" ? "movie" : "tv"}/${item.media_source + "-" + item.source_id}` as Route,
         );
       }}
     >
-      <View className="flex-1 w-[120px]">
+      <View className="flex-1">
         {imgSource ? (
           <Image
-            className="w-[120px] h-[180px] rounded-lg bg-gray-300"
+            className="w-[120px] h-[180px] rounded-lg group-focus:border-white border-2 border-transparent"
             source={{ uri: imgSource }}
           />
         ) : (
-          <View className="w-[120px] h-[180px] p-2 rounded-lg bg-gray-300 flex items-center justify-center">
+          <View className="w-[120px] h-[180px] rounded-lg p-2 bg-gray-300 flex items-center justify-center group-focus:border-white border-2 border-transparent">
             <ThemedText className="text-black mt-2 text-base text-start">
               {imgAlt}
             </ThemedText>
