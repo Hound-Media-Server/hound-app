@@ -1,8 +1,10 @@
 node_modules/
 .expo/
 dist/
-ios/
-android/
+/ios
+/android
+/modules/mpv-player/android/build
+/modules/mpv-player/ios/build
 npm-debug.*
 *.jks
 *.p8
