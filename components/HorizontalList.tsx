@@ -1,4 +1,9 @@
-import { View, ActivityIndicator, TVFocusGuideView } from "react-native";
+import {
+  View,
+  ActivityIndicator,
+  TVFocusGuideView,
+  FlatList,
+} from "react-native";
 import React, { useRef } from "react";
 import PosterCard from "./PosterCard";
 import { ThemedText } from "./ThemedText";
@@ -26,35 +31,13 @@ export default function HorizontalList({
   itemData,
   showDescription,
 }: HorizontalListProps) {
-  const flashListRef = useRef<FlashListRef<any>>(null);
-  // const handleFocus = (index: number) => {
-  //   flashListRef?.current?.scrollToIndex({
-  //     index: index,
-  //     animated: true,
-  //     viewOffset: 0,
-  //     viewPosition: 0.25,
-  //   });
-  // };
-
-  const lastClickTime = useRef<number>(0);
-
+  const flatListRef = useRef<FlatList<any> | null>(null);
   const handleFocus = (index: number) => {
-    const now = Date.now();
-    const timeSinceLastClick = now - lastClickTime.current;
-    lastClickTime.current = now;
-    if (timeSinceLastClick < 200) {
-      flashListRef.current?.scrollToIndex({
-        index,
-        animated: false,
-        viewPosition: 0.25,
-      });
-    } else {
-      flashListRef.current?.scrollToIndex({
-        index,
-        animated: true,
-        viewPosition: 0.25,
-      });
-    }
+    flatListRef.current?.scrollToIndex({
+      index,
+      animated: true,
+      viewPosition: 0.25,
+    });
   };
 
   let data = itemData;
@@ -83,20 +66,20 @@ export default function HorizontalList({
     );
   }
   return (
-    <TVFocusGuideView autoFocus>
+    <>
       {!!header && data && (
         <ThemedText className="text-white text-2xl mb-3 ps-5">
           {header}
         </ThemedText>
       )}
-      <FlashList
+      <FlatList
         keyExtractor={(item: any) => {
           if (item.media_source && item.source_id) {
             return item.media_source + item.source_id;
           }
           return item.credit_id;
         }}
-        ref={flashListRef}
+        ref={flatListRef}
         data={data}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -135,7 +118,7 @@ export default function HorizontalList({
           );
         }}
       />
-    </TVFocusGuideView>
+    </>
   );
 }
 
