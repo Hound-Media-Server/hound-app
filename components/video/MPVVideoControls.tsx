@@ -127,16 +127,6 @@ export default function MPVVideoControls({
               <View style={styles.topBarRight}>
                 <TouchableOpacity
                   style={styles.iconButton}
-                  onPress={onChangeResizeMode}
-                >
-                  <Ionicons name="expand" size={24} color="white" />
-                  <Text style={styles.smallText}>
-                    {isZoomedToFill ? "Fill" : "Fit"}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.iconButton}
                   onPress={() => setShowSettingsModal(true)}
                 >
                   <Ionicons name="settings-outline" size={24} color="white" />

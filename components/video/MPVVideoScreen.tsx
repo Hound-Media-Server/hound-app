@@ -81,7 +81,6 @@ export default function MPVVideoScreen(props: {
   };
 
   const handleTracksReady = async () => {
-    console.log("Tracks ready");
     try {
       const subtitles = await videoRef.current?.getSubtitleTracks();
       const audio = await videoRef.current?.getAudioTracks();
