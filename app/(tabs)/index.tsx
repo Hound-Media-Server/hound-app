@@ -1,5 +1,5 @@
-import { View, Text, ScrollView, RefreshControl } from "react-native";
-import React, { useState, useCallback } from "react";
+import { RefreshControl, FlatList, Platform, View, Text } from "react-native";
+import React, { useState, useCallback, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -18,30 +18,61 @@ export default function Index() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["trending-movies"] }),
       queryClient.invalidateQueries({ queryKey: ["trending-shows"] }),
+      queryClient.invalidateQueries({ queryKey: ["continue-watching"] }),
     ]);
     setRefreshing(false);
   }, []);
 
+  const rows = [
+    { key: "trendingShows", header: "Trending Shows", query: useTrendingShows },
+    {
+      key: "trendingMovies",
+      header: "Trending Movies",
+      query: useTrendingMovies,
+    },
+    {
+      key: "continueWatching",
+      header: "Continue Watching",
+      query: useContinueWatching,
+      itemType: "episode",
+    },
+  ];
+
+  const verticalListRef = useRef<FlatList>(null);
+
   return (
     <SafeAreaView className="flex-1 bg-black">
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
+      <Text className="text-secondary text-3xl text-center mt-5">Hound</Text>
+      <FlatList
+        className="mt-5"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-      >
-        <Text className="text-secondary text-3xl text-center mb-5">Hound</Text>
-        <HorizontalList useQuery={useTrendingShows} header="Trending Shows" />
-        <View className="mb-5" />
-        <HorizontalList useQuery={useTrendingMovies} header="Trending Movies" />
-        <View className="mb-5" />
-        <HorizontalList
-          useQuery={useContinueWatching}
-          header="Continue Watching"
-          itemType="episode"
-        />
-      </ScrollView>
+        ref={verticalListRef}
+        data={rows}
+        keyExtractor={(item) => item.key}
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews={true}
+        focusable={false}
+        renderItem={({ item, index }) => (
+          <HorizontalList
+            key={item.key}
+            header={item.header}
+            useQuery={item.query}
+            itemType={item.itemType}
+            rowIndex={index}
+            onRowFocus={(rowIndex: number) => {
+              if (!Platform.isTV) return;
+              verticalListRef.current?.scrollToIndex({
+                index: rowIndex,
+                viewPosition: 0.5,
+                animated: true,
+              });
+            }}
+          />
+        )}
+        ItemSeparatorComponent={() => <View className="h-5" />}
+      />
     </SafeAreaView>
   );
 }

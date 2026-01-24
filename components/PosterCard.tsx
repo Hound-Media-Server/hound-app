@@ -1,6 +1,7 @@
-import { View, Text, TouchableHighlight } from "react-native";
-import React from "react";
-import { Platform, Image } from "react-native";
+import { View, TouchableHighlight } from "react-native";
+import React, { useState } from "react";
+import { Platform } from "react-native";
+import { Image } from "expo-image";
 import { Route, useRouter } from "expo-router";
 import { ThemedText } from "./ThemedText";
 
@@ -43,8 +44,9 @@ export default function PosterCard({
       <View className="flex-1">
         {imgSource ? (
           <Image
+            source={imgSource}
             className="w-[120px] h-[180px] rounded-lg group-focus:border-white border-2 border-transparent"
-            source={{ uri: imgSource }}
+            contentFit="cover"
           />
         ) : (
           <View className="w-[120px] h-[180px] rounded-lg p-2 bg-gray-300 flex items-center justify-center group-focus:border-white border-2 border-transparent">

@@ -1,6 +1,6 @@
 import { View, Text, TouchableHighlight, Platform } from "react-native";
 import React from "react";
-import { Image } from "react-native";
+import { Image } from "expo-image";
 import { Route, useRouter } from "expo-router";
 import { ThemedText } from "./ThemedText";
 import { getSelectStreamUrl, getStreamUrl } from "@/utils/navigation";
@@ -67,7 +67,9 @@ export default function ContinueWatchingCard({ item }: { item: any }) {
         {imgSource ? (
           <Image
             className="group-focus:border-white border-2 w-[200px] h-[112px] rounded-lg bg-gray-300"
-            source={{ uri: imgSource }}
+            source={imgSource}
+            contentFit="cover"
+            transition={1000}
           />
         ) : (
           <View className="group-focus:border-white w-[200px] h-[112px] rounded-lg bg-zinc-800 border-2 border-zinc-700 items-center justify-center">

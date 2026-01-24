@@ -68,7 +68,6 @@ export default function MPVVideoScreen(props: {
   ]);
 
   const handleLoad = async () => {
-    console.log("MPV Player loaded");
     setIsReady(true);
 
     // Get initial duration

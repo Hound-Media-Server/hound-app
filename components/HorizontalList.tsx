@@ -1,18 +1,9 @@
-import {
-  View,
-  ActivityIndicator,
-  TVFocusGuideView,
-  FlatList,
-} from "react-native";
+import { View, ActivityIndicator, FlatList, Platform } from "react-native";
 import React, { useRef } from "react";
 import PosterCard from "./PosterCard";
 import { ThemedText } from "./ThemedText";
-import {
-  FlashList,
-  FlashListRef,
-  useFlashListContext,
-} from "@shopify/flash-list";
 import ContinueWatchingCard from "./ContinueWatchingCard";
+import { TVFocusGuideView } from "react-native";
 
 interface HorizontalListProps {
   useQuery?: () => any;
@@ -21,6 +12,8 @@ interface HorizontalListProps {
   header?: string;
   itemData?: any;
   showDescription?: boolean;
+  rowIndex: number;
+  onRowFocus?: (rowIndex: number) => void;
 }
 
 export default function HorizontalList({
@@ -30,9 +23,15 @@ export default function HorizontalList({
   header,
   itemData,
   showDescription,
+  rowIndex,
+  onRowFocus,
 }: HorizontalListProps) {
   const flatListRef = useRef<FlatList<any> | null>(null);
   const handleFocus = (index: number) => {
+    if (!Platform.isTV) return;
+    // vertical scroll in parent
+    onRowFocus?.(rowIndex);
+    // scroll within row
     flatListRef.current?.scrollToIndex({
       index,
       animated: true,
@@ -65,7 +64,8 @@ export default function HorizontalList({
       </View>
     );
   }
-  return (
+  // only wrap tv focus guide view if platform is tv
+  return wrapTVFocusGuideView(
     <>
       {!!header && data && (
         <ThemedText className="text-white text-2xl mb-3 ps-5">
@@ -118,8 +118,13 @@ export default function HorizontalList({
           );
         }}
       />
-    </>
+    </>,
   );
+}
+
+function wrapTVFocusGuideView(children: React.ReactNode) {
+  if (!Platform.isTV) return children;
+  return <TVFocusGuideView>{children}</TVFocusGuideView>;
 }
 
 function getMediaTitle(item: any) {
