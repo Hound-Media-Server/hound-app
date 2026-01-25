@@ -2,11 +2,11 @@ import { apiClient } from "./apiClient";
 import { useQuery } from "@tanstack/react-query";
 
 const fetchTrendingMovies = (): Promise<any> => {
-  return apiClient("/movie/trending");
+  return apiClient("/catalog/trending-movies");
 };
 
 const fetchTrendingShows = (): Promise<any> => {
-  return apiClient("/tv/trending");
+  return apiClient("/catalog/trending-shows");
 };
 
 export const fetchContinueWatching = (): Promise<any> => {

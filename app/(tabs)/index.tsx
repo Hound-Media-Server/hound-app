@@ -8,7 +8,6 @@ import {
   useTrendingShows,
 } from "./../../services/catalogService";
 import HorizontalList from "@/components/HorizontalList";
-import { Link, Route } from "expo-router";
 
 export default function Index() {
   const queryClient = useQueryClient();
