@@ -1,9 +1,9 @@
-import { View, Text, ActivityIndicator } from "react-native";
-import React from "react";
+import { View, ActivityIndicator, FlatList, Platform } from "react-native";
+import React, { useRef } from "react";
 import PosterCard from "./PosterCard";
 import { ThemedText } from "./ThemedText";
-import { FlashList } from "@shopify/flash-list";
 import ContinueWatchingCard from "./ContinueWatchingCard";
+import { TVFocusGuideView } from "react-native";
 
 interface HorizontalListProps {
   useQuery?: () => any;
@@ -12,6 +12,8 @@ interface HorizontalListProps {
   header?: string;
   itemData?: any;
   showDescription?: boolean;
+  rowIndex: number;
+  onRowFocus?: (rowIndex: number) => void;
 }
 
 export default function HorizontalList({
@@ -21,7 +23,22 @@ export default function HorizontalList({
   header,
   itemData,
   showDescription,
+  rowIndex,
+  onRowFocus,
 }: HorizontalListProps) {
+  const flatListRef = useRef<FlatList<any> | null>(null);
+  const handleFocus = (index: number) => {
+    if (!Platform.isTV) return;
+    // vertical scroll in parent
+    onRowFocus?.(rowIndex);
+    // scroll within row
+    flatListRef.current?.scrollToIndex({
+      index,
+      animated: true,
+      viewPosition: 0.25,
+    });
+  };
+
   let data = itemData;
   if (!data && useQuery) {
     const { data: queryData, isLoading: queryLoading, error } = useQuery();
@@ -47,25 +64,27 @@ export default function HorizontalList({
       </View>
     );
   }
-  return (
+  // only wrap tv focus guide view if platform is tv
+  return wrapTVFocusGuideView(
     <>
       {!!header && data && (
         <ThemedText className="text-white text-2xl mb-3 ps-5">
           {header}
         </ThemedText>
       )}
-      <FlashList
+      <FlatList
         keyExtractor={(item: any) => {
           if (item.media_source && item.source_id) {
             return item.media_source + item.source_id;
           }
           return item.credit_id;
         }}
+        ref={flatListRef}
         data={data}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20 }}
-        ItemSeparatorComponent={() => <View style={{ width: 20 }} />}
+        ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
         renderItem={(item) => {
           if (itemType === "cast") {
             return (
@@ -94,12 +113,18 @@ export default function HorizontalList({
               title={showDescription ? getMediaTitle(item.item) : ""}
               subtitle={""}
               imgAlt={getMediaTitle(item.item)}
+              onFocus={() => handleFocus(item.index)}
             />
           );
         }}
       />
-    </>
+    </>,
   );
+}
+
+function wrapTVFocusGuideView(children: React.ReactNode) {
+  if (!Platform.isTV) return children;
+  return <TVFocusGuideView>{children}</TVFocusGuideView>;
 }
 
 function getMediaTitle(item: any) {

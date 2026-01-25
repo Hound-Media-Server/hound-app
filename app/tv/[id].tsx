@@ -153,7 +153,7 @@ export default function TVDetails() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isContinueLoading) {
     return (
       <View className="w-full h-full bg-primary justify-center items-center">
         <ActivityIndicator color="white" size="large" />
@@ -191,6 +191,8 @@ export default function TVDetails() {
           <View className="px-5 sm:px-8 md:px-24">
             <View className="flex-row">
               <TouchableOpacity
+                focusable
+                hasTVPreferredFocus
                 onPress={handlePlayPress}
                 activeOpacity={0.75}
                 className="p-2 mb-3 bg-secondary rounded-2xl w-[120px] sm:w-[150px] items-center"

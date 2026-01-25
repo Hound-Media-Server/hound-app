@@ -27,13 +27,6 @@
         }
       ],
       [
-        "react-native-video",
-        {
-          "enableAndroidPictureInPicture": true,
-          "enableBackgroundAudio": true
-        }
-      ],
-      [
         "expo-build-properties",
         {
           "android": {

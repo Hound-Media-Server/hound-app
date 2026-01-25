@@ -1,10 +1,11 @@
 import {
   View,
-  Image,
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
+  Platform,
 } from "react-native";
+import { Image } from "expo-image";
 import React, { useRef, useEffect } from "react";
 import { ThemedText } from "../ThemedText";
 import { useSeasonDetails } from "@/services/mediaDetailsService";
@@ -172,10 +173,13 @@ function EpisodeCard({
     info.push(episode.air_date);
   }
   return (
-    <>
+    <View className="group">
       <View className="flex-row mb-3">
         <View className="relative rounded-md bg-black me-3">
           <TouchableOpacity
+            className="border-2 border-transparent rounded-lg group-focus:border-white"
+            focusable
+            activeOpacity={Platform.isTV ? 1 : 0.7}
             onPress={() => {
               router.navigate(
                 getSelectStreamUrl({
@@ -188,15 +192,13 @@ function EpisodeCard({
                 }),
               );
             }}
-            activeOpacity={0.7}
           >
             {episode.still_path ? (
               <Image
                 className="w-[145px] h-[100px] rounded-md sm:w-[160px] sm:h-[100px] opacity-90"
-                source={{
-                  uri: `https://image.tmdb.org/t/p/w300${episode.still_path}`,
-                }}
-                resizeMode="cover"
+                source={`${episode.still_path.replace("w500", "w300")}`}
+                contentFit="cover"
+                transition={1000}
               />
             ) : (
               <View className="w-[145px] h-[100px] rounded-md sm:w-[160px] sm:h-[100px] bg-gray-800" />
@@ -271,6 +273,6 @@ function EpisodeCard({
       <ThemedText className="text-gray-400 mb-4 text-sm">
         {episode.overview}
       </ThemedText>
-    </>
+    </View>
   );
 }
