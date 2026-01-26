@@ -1,4 +1,4 @@
-import { RefreshControl, FlatList, Platform, View, Text } from "react-native";
+import { RefreshControl, FlatList, Platform, View } from "react-native";
 import React, { useState, useCallback, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
@@ -8,7 +8,6 @@ import {
   useTrendingShows,
 } from "./../../services/catalogService";
 import HorizontalList from "@/components/HorizontalList";
-import { ThemedText } from "@/components/ThemedText";
 import HomeDetails from "@/components/home/HomeDetails";
 
 export default function Index() {
@@ -42,37 +41,38 @@ export default function Index() {
 
   const verticalListRef = useRef<FlatList>(null);
   return (
-    <SafeAreaView className="flex bg-black">
-      <HomeDetails item={null} />
-      <FlatList
-        className="mt-5"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        ref={verticalListRef}
-        data={rows}
-        keyExtractor={(item) => item.key}
-        showsVerticalScrollIndicator={false}
-        removeClippedSubviews={false}
-        renderItem={({ item, index }) => (
-          <HorizontalList
-            key={item.key}
-            header={item.header}
-            useQuery={item.query}
-            itemType={item.itemType}
-            rowIndex={index}
-            onRowFocus={(rowIndex: number) => {
-              if (!Platform.isTV) return;
-              verticalListRef.current?.scrollToIndex({
-                index: rowIndex,
-                viewPosition: 0.5,
-                animated: true,
-              });
-            }}
-          />
-        )}
-        ItemSeparatorComponent={() => <View className="h-5" />}
-      />
+    <SafeAreaView className="flex-1 bg-black h-full">
+      <HomeDetails />
+      <View className="flex-1">
+        <FlatList
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          ref={verticalListRef}
+          data={rows}
+          keyExtractor={(item) => item.key}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={false}
+          renderItem={({ item, index }) => (
+            <HorizontalList
+              key={item.key}
+              header={item.header}
+              useQuery={item.query}
+              itemType={item.itemType}
+              rowIndex={index}
+              onRowFocus={(rowIndex: number) => {
+                if (!Platform.isTV) return;
+                verticalListRef.current?.scrollToIndex({
+                  index: rowIndex,
+                  viewPosition: 0.5,
+                  animated: true,
+                });
+              }}
+            />
+          )}
+          ItemSeparatorComponent={() => <View className="h-5" />}
+        />
+      </View>
     </SafeAreaView>
   );
 }

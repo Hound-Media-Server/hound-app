@@ -94,40 +94,42 @@ export default function HorizontalList({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20 }}
         ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
-        renderItem={(item) => {
+        renderItem={({ item, index }) => {
           if (itemType === "cast") {
             return (
               <PosterCard
-                item={item.item}
-                title={showDescription ? item.item.name : ""}
-                subtitle={showDescription ? item.item.character : ""}
+                item={item}
+                title={showDescription ? item.name : ""}
+                subtitle={showDescription ? item.character : ""}
               />
             );
           }
           if (itemType === "search") {
             return (
               <PosterCard
-                item={item.item}
-                title={getMediaTitle(item.item)}
-                imgAlt={getMediaTitle(item.item)}
+                item={item}
+                title={getMediaTitle(item)}
+                imgAlt={getMediaTitle(item)}
               />
             );
           }
           if (itemType === "episode") {
             return (
               <ContinueWatchingCard
-                item={item.item}
-                onFocus={() => handleFocus(item.index)}
+                item={item}
+                onFocus={() => handleFocus(index)}
+                hasTVPreferredFocus={rowIndex === 0 && index === 0}
               />
             );
           }
           return (
             <PosterCard
-              item={item.item}
-              title={showDescription ? getMediaTitle(item.item) : ""}
+              item={item}
+              title={showDescription ? getMediaTitle(item) : ""}
               subtitle={""}
-              imgAlt={getMediaTitle(item.item)}
-              onFocus={() => handleFocus(item.index)}
+              imgAlt={getMediaTitle(item)}
+              onFocus={() => handleFocus(index)}
+              hasTVPreferredFocus={rowIndex === 0 && index === 0}
             />
           );
         }}

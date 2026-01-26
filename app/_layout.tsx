@@ -15,10 +15,11 @@ import { Cabin_500Medium_Italic } from "@expo-google-fonts/cabin/500Medium_Itali
 import { Cabin_600SemiBold_Italic } from "@expo-google-fonts/cabin/600SemiBold_Italic";
 import { Cabin_700Bold_Italic } from "@expo-google-fonts/cabin/700Bold_Italic";
 import { cssInterop } from "nativewind";
-import { Image } from "expo-image";
+import { Image, ImageBackground } from "expo-image";
 
 // enable styling expo image with nativewind classes
 cssInterop(Image, { className: "style" });
+cssInterop(ImageBackground, { className: "style" });
 
 const queryClient = new QueryClient({
   defaultOptions: {

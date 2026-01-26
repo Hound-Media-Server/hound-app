@@ -4,16 +4,20 @@ import { Image } from "expo-image";
 import { Route, useRouter } from "expo-router";
 import { ThemedText } from "./ThemedText";
 import { getSelectStreamUrl, getStreamUrl } from "@/utils/navigation";
+import { FocusItem, useFocusStore } from "@/stores/focusStore";
 
 export default function ContinueWatchingCard({
   item,
   onFocus,
+  hasTVPreferredFocus,
 }: {
   item: any;
   onFocus: () => void;
+  hasTVPreferredFocus?: boolean;
 }) {
-  const router = useRouter();
   if (!item) return;
+  const router = useRouter();
+  const setFocusedItem = useFocusStore((s) => s.setFocusedItem);
   let route = "";
   let title = "";
   let subtitle = "";
@@ -61,7 +65,34 @@ export default function ContinueWatchingCard({
     <TouchableHighlight
       className="flex-1 group rounded-lg"
       focusable
-      onFocus={() => onFocus?.()}
+      hasTVPreferredFocus={hasTVPreferredFocus || false}
+      onFocus={() => {
+        const focusItem: FocusItem = {
+          media_type: item.media_type,
+          source_id: item.source_id,
+          media_title:
+            item.watch_progress?.media_title || item.next_episode?.media_title,
+          media_subtitle:
+            item.watch_progress?.episode_title ||
+            item.next_episode?.episode_title,
+          overview:
+            item.watch_progress?.overview || item.next_episode?.overview,
+          backdrop_uri:
+            item.watch_progress?.thumbnail_uri ||
+            item.next_episode?.thumbnail_uri,
+          release_date:
+            item.watch_progress?.release_date ||
+            item.next_episode?.release_date,
+          season_number:
+            item.watch_progress?.season_number ||
+            item.next_episode?.season_number,
+          episode_number:
+            item.watch_progress?.episode_number ||
+            item.next_episode?.episode_number,
+        };
+        setFocusedItem(focusItem);
+        onFocus?.();
+      }}
       activeOpacity={Platform.isTV ? 1 : 0.9}
       disabled={!item.media_type}
       onPress={() => {
