@@ -1,14 +1,8 @@
-import { FontAwesome, Ionicons } from "@expo/vector-icons";
-import { Platform } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
-import WebTabLayout from "./TabLayout.web";
-import TVTabLayout from "./TabLayout.tv";
 import { Tabs } from "expo-router";
 
 export default function TabLayout() {
-  if (Platform.OS === "android" && Platform.isTV) {
-    return <WebTabLayout />;
-  }
   return (
     <Tabs
       screenOptions={{
@@ -98,20 +92,4 @@ export default function TabLayout() {
       />
     </Tabs>
   );
-  // return (
-  //     <NativeTabs>
-  //         <NativeTabs.Trigger name="index">
-  //             <Label>Home</Label>
-  //             <Ionicons name="home-outline" size={22} />
-  //         </NativeTabs.Trigger>
-  //         <NativeTabs.Trigger name="explore">
-  //             <Label>Explore</Label>
-  //             <Icon sf="atom" />
-  //         </NativeTabs.Trigger>
-  //         <NativeTabs.Trigger name="library">
-  //             <Label>Library</Label>
-  //             <Icon sf="atom" />
-  //         </NativeTabs.Trigger>
-  //     </NativeTabs>
-  // );
 }

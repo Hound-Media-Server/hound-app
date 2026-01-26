@@ -20,11 +20,7 @@ export default function PosterCard({
 }) {
   const router = useRouter();
   if (!item) return;
-  let imgSource = item.thumbnail_url || item.poster_url;
-  if (item.profile_path) {
-    imgSource = item.profile_path;
-  }
-
+  let imgSource = item.thumbnail_uri;
   return (
     <TouchableHighlight
       className="group rounded-lg"
@@ -56,12 +52,12 @@ export default function PosterCard({
           </View>
         )}
         {!!title && (
-          <ThemedText className="text-gray-200 mt-2 text-start px-1">
+          <ThemedText className="text-gray-200 mt-2 text-start px-1 w-[120px]">
             {title}
           </ThemedText>
         )}
         {!!subtitle && (
-          <ThemedText className="text-gray-400 text-sm text-start px-1">
+          <ThemedText className="text-gray-400 text-sm text-start px-1 w-[120px]">
             {subtitle}
           </ThemedText>
         )}

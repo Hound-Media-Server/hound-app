@@ -28,8 +28,8 @@ export interface WatchAction {
   watch_action_type: "resume" | "next_episode";
   title: string;
   overview: string;
-  air_date: string;
-  thumbnail_url: string;
+  release_date: string;
+  thumbnail_uri: string;
   watch_progress: WatchProgress | null;
   next_episode: NextEpisode | null;
 }

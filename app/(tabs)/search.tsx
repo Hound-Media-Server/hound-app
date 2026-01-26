@@ -18,7 +18,7 @@ export default function Search() {
   const { query } = useLocalSearchParams();
   const [searchQuery, setSearchQuery] = useState((query as string) || "");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(
-    (query as string) || ""
+    (query as string) || "",
   );
 
   const [refreshing, setRefreshing] = useState(false);
@@ -87,6 +87,7 @@ export default function Search() {
               itemData={data?.tv_results}
               itemType="search"
               header="TV Shows"
+              rowIndex={1}
             />
             <View className="mb-5" />
             <HorizontalList
@@ -94,6 +95,7 @@ export default function Search() {
               itemData={data?.movie_results}
               itemType="search"
               header="Movies"
+              rowIndex={2}
             />
             <View className="mb-[100px]" />
           </ScrollView>

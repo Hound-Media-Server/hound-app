@@ -109,15 +109,15 @@ export default function MovieDetails() {
   if (error) {
     return <Text>Error: {error.message}</Text>;
   }
-  const creators = details?.credits?.crew
-    ?.filter((item: any) => item.job === "Director")
-    .map((item: any) => item.name)
-    .join(", ");
+  const creators = details?.creators?.map((item: any) => item.name).join(", ");
   // create array to render info in a row
   const info = [];
-  if (details?.runtime) {
+  if (details?.duration) {
     info.push(
-      Math.floor(details?.runtime / 60) + "h " + (details?.runtime % 60) + "m",
+      Math.floor(details?.duration / 60) +
+        "h " +
+        (details?.duration % 60) +
+        "m",
     );
   }
   if (creators) {
@@ -129,9 +129,9 @@ export default function MovieDetails() {
         <ParallaxScrollView
           headerHeight={300}
           headerImage={
-            details?.backdrop_url ? (
+            details?.backdrop_uri ? (
               <ImageBackground
-                source={{ uri: details?.backdrop_url }}
+                source={{ uri: details?.backdrop_uri }}
                 className="absolute w-full h-96"
                 resizeMode="cover"
               />
@@ -193,14 +193,14 @@ export default function MovieDetails() {
                 Add to Collection
               </ThemedText>
             </TouchableOpacity>
-            {details?.credits?.cast?.length > 0 && (
+            {details?.cast?.length > 0 && (
               <View className="mt-2">
                 <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
                   Cast
                 </ThemedText>
                 <View className="-mx-5">
                   <HorizontalList
-                    itemData={details?.credits?.cast}
+                    itemData={details?.cast}
                     showDescription={true}
                     itemType="cast"
                   />

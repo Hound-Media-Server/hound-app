@@ -5,7 +5,13 @@ import { Route, useRouter } from "expo-router";
 import { ThemedText } from "./ThemedText";
 import { getSelectStreamUrl, getStreamUrl } from "@/utils/navigation";
 
-export default function ContinueWatchingCard({ item }: { item: any }) {
+export default function ContinueWatchingCard({
+  item,
+  onFocus,
+}: {
+  item: any;
+  onFocus: () => void;
+}) {
   const router = useRouter();
   if (!item) return;
   let route = "";
@@ -31,7 +37,7 @@ export default function ContinueWatchingCard({ item }: { item: any }) {
       title += ` - S${wp.season_number}E${wp.episode_number}`;
     }
     subtitle = mediaType === "tv" ? wp.episode_title : "";
-    imgSource = wp?.thumbnail_url;
+    imgSource = wp?.thumbnail_uri;
   } else if (item.watch_action_type == "next_episode") {
     const nextEp = item.next_episode;
     // for next episode, show select-stream modal
@@ -47,14 +53,15 @@ export default function ContinueWatchingCard({ item }: { item: any }) {
       title += ` - S${nextEp.season_number}E${nextEp.episode_number}`;
     }
     subtitle = mediaType === "tv" ? nextEp.episode_title : "";
-    imgSource = nextEp?.thumbnail_url;
+    imgSource = nextEp?.thumbnail_uri;
   } else {
     return <></>;
   }
   return (
     <TouchableHighlight
-      className="group rounded-lg"
+      className="flex-1 group rounded-lg"
       focusable
+      onFocus={() => onFocus?.()}
       activeOpacity={Platform.isTV ? 1 : 0.9}
       disabled={!item.media_type}
       onPress={() => {
@@ -63,29 +70,50 @@ export default function ContinueWatchingCard({ item }: { item: any }) {
         router.navigate(route as Route);
       }}
     >
-      <View className="flex-1 w-[200px]">
-        {imgSource ? (
-          <Image
-            className="group-focus:border-white border-2 w-[200px] h-[112px] rounded-lg bg-gray-300"
-            source={imgSource}
-            contentFit="cover"
-            transition={1000}
-          />
-        ) : (
-          <View className="group-focus:border-white w-[200px] h-[112px] rounded-lg bg-zinc-800 border-2 border-zinc-700 items-center justify-center">
-            <ThemedText className="text-gray-500">No Image</ThemedText>
+      <View className="flex-1">
+        <View className="w-[200px] h-[112px] rounded-lg">
+          {imgSource ? (
+            <Image
+              className="group-focus:border-white border-2 w-[200px] h-[112px] rounded-lg bg-gray-300"
+              source={imgSource}
+              contentFit="cover"
+              transition={1000}
+            />
+          ) : (
+            <View className="group-focus:border-white w-[200px] h-[112px] rounded-lg bg-zinc-800 border-2 border-zinc-700 items-center justify-center">
+              <ThemedText className="text-gray-500">No Image</ThemedText>
+            </View>
+          )}
+          <View className="absolute bottom-2 right-1 bg-black/50 px-1.5 py-0.5 rounded-md">
+            {item.watch_progress && (
+              <ThemedText className="text-white text-xs">
+                {Math.ceil(
+                  (item.watch_progress.total_duration_seconds -
+                    item.watch_progress.current_progress_seconds) /
+                    60,
+                )}
+                m left
+              </ThemedText>
+            )}
+            {item.next_episode && (
+              <ThemedText className="text-white text-xs">
+                Next Episode
+              </ThemedText>
+            )}
           </View>
-        )}
-        {!!title && (
-          <ThemedText className="text-gray-200 mt-2 text-start">
-            {title}
-          </ThemedText>
-        )}
-        {!!subtitle && (
-          <ThemedText className="text-gray-400 text-sm text-start">
-            {subtitle}
-          </ThemedText>
-        )}
+        </View>
+        <View>
+          {!!title && (
+            <ThemedText className="text-gray-200 mt-2 text-start">
+              {title}
+            </ThemedText>
+          )}
+          {!!subtitle && (
+            <ThemedText className="text-gray-400 text-sm text-start">
+              {subtitle}
+            </ThemedText>
+          )}
+        </View>
       </View>
     </TouchableHighlight>
   );

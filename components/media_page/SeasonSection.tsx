@@ -20,12 +20,12 @@ import { getSelectStreamUrl } from "@/utils/navigation";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 export default function SeasonSection({
-  tmdbID,
+  sourceID,
   seasons,
   defaultSeason,
   mediaTitle,
 }: {
-  tmdbID: string;
+  sourceID: string;
   seasons: any;
   defaultSeason: number;
   mediaTitle?: string;
@@ -39,13 +39,13 @@ export default function SeasonSection({
     data: seasonDetails,
     isLoading,
     error,
-  } = useSeasonDetails(tmdbID, selectedSeasonNum);
+  } = useSeasonDetails(sourceID, selectedSeasonNum);
   const { data: watchedEpisodeData } = useShowWatchData(
-    tmdbID,
+    sourceID,
     selectedSeasonNum,
   );
   const { data: watchProgress } = useShowWatchProgress(
-    tmdbID,
+    sourceID,
     selectedSeasonNum,
   );
   const flatListRef = useRef<FlatList>(null);
@@ -102,7 +102,7 @@ export default function SeasonSection({
                 }
               </TouchableOpacity>
             )}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.source_id}
             ref={flatListRef}
             onScrollToIndexFailed={(info) => {
               setTimeout(() => {
@@ -124,18 +124,18 @@ export default function SeasonSection({
           }}
         >
           <FlashList
-            data={seasonDetails?.season?.episodes}
+            data={seasonDetails?.episodes}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }: { item: any }) => (
               <EpisodeCard
                 episode={item}
-                watchedAt={watchedEpisodeData?.get(item.id) || null}
-                watchProgress={watchProgress?.get(item.id.toString()) || null}
-                tmdbID={tmdbID}
+                watchedAt={watchedEpisodeData?.get(item.source_id) || null}
+                watchProgress={watchProgress?.get(item.source_id) || null}
+                sourceID={sourceID}
                 mediaTitle={mediaTitle}
               />
             )}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.source_id}
             ListHeaderComponent={
               isLoading ? (
                 <View className="h-[200px] justify-center items-center">
@@ -156,21 +156,21 @@ function EpisodeCard({
   episode,
   watchedAt,
   watchProgress,
-  tmdbID,
+  sourceID,
   mediaTitle,
 }: {
   episode: any;
   watchedAt: string | null;
   watchProgress: WatchProgress | null;
-  tmdbID: string;
+  sourceID: string;
   mediaTitle?: string;
 }) {
   var info: string[] = [];
-  if (episode.runtime) {
-    info.push(episode.runtime + " m");
+  if (episode.duration) {
+    info.push(episode.duration + " m");
   }
-  if (episode.air_date) {
-    info.push(episode.air_date);
+  if (episode.release_date) {
+    info.push(episode.release_date);
   }
   return (
     <View className="group">
@@ -183,7 +183,7 @@ function EpisodeCard({
             onPress={() => {
               router.navigate(
                 getSelectStreamUrl({
-                  id: tmdbID,
+                  id: sourceID,
                   type: "tv",
                   season: episode.season_number,
                   episode: episode.episode_number,
@@ -193,10 +193,10 @@ function EpisodeCard({
               );
             }}
           >
-            {episode.still_path ? (
+            {episode.thumbnail_uri ? (
               <Image
                 className="w-[145px] h-[100px] rounded-md sm:w-[160px] sm:h-[100px] opacity-90"
-                source={`${episode.still_path.replace("w500", "w300")}`}
+                source={`${episode.thumbnail_uri.replace("w500", "w300")}`}
                 contentFit="cover"
                 transition={1000}
               />
@@ -257,7 +257,7 @@ function EpisodeCard({
               {episode.episode_number + " • "}
             </ThemedText>
             <ThemedText className="text-white text-base">
-              {episode.name}
+              {episode.media_title}
             </ThemedText>
           </ThemedText>
           <ThemedText className="text-gray-400 sm:text-sm">

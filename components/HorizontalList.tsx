@@ -1,4 +1,10 @@
-import { View, ActivityIndicator, FlatList, Platform } from "react-native";
+import {
+  View,
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  Text,
+} from "react-native";
 import React, { useRef } from "react";
 import PosterCard from "./PosterCard";
 import { ThemedText } from "./ThemedText";
@@ -12,7 +18,7 @@ interface HorizontalListProps {
   header?: string;
   itemData?: any;
   showDescription?: boolean;
-  rowIndex: number;
+  rowIndex?: number;
   onRowFocus?: (rowIndex: number) => void;
 }
 
@@ -30,12 +36,12 @@ export default function HorizontalList({
   const handleFocus = (index: number) => {
     if (!Platform.isTV) return;
     // vertical scroll in parent
-    onRowFocus?.(rowIndex);
+    onRowFocus?.(rowIndex ?? 0);
     // scroll within row
     flatListRef.current?.scrollToIndex({
       index,
       animated: true,
-      viewPosition: 0.25,
+      viewPosition: 0.15,
     });
   };
 
@@ -54,9 +60,11 @@ export default function HorizontalList({
   }
   if (isLoading) {
     return (
-      <View className="me-5">
+      <View className="me-5 flex-1">
         {!!header && (
-          <ThemedText className="text-white text-2xl mb-3">{header}</ThemedText>
+          <ThemedText className="text-white text-2xl mb-3 ps-5">
+            {header}
+          </ThemedText>
         )}
         <View className="w-full h-[100px] justify-center items-center">
           <ActivityIndicator color="white" size="large" />
@@ -65,8 +73,9 @@ export default function HorizontalList({
     );
   }
   // only wrap tv focus guide view if platform is tv
+  // prevents errors on other platforms (web)
   return wrapTVFocusGuideView(
-    <>
+    <View>
       {!!header && data && (
         <ThemedText className="text-white text-2xl mb-3 ps-5">
           {header}
@@ -105,7 +114,12 @@ export default function HorizontalList({
             );
           }
           if (itemType === "episode") {
-            return <ContinueWatchingCard item={item.item} />;
+            return (
+              <ContinueWatchingCard
+                item={item.item}
+                onFocus={() => handleFocus(item.index)}
+              />
+            );
           }
           return (
             <PosterCard
@@ -118,21 +132,19 @@ export default function HorizontalList({
           );
         }}
       />
-    </>,
+    </View>,
   );
 }
 
 function wrapTVFocusGuideView(children: React.ReactNode) {
   if (!Platform.isTV) return children;
-  return <TVFocusGuideView>{children}</TVFocusGuideView>;
+  return <TVFocusGuideView trapFocusRight>{children}</TVFocusGuideView>;
 }
 
 function getMediaTitle(item: any) {
   let title = item?.media_title;
   if (item?.release_date && item.release_date.length >= 4) {
     title += " (" + item.release_date.slice(0, 4) + ")";
-  } else if (item?.first_air_date && item.first_air_date.length >= 4) {
-    title += " (" + item.first_air_date.slice(0, 4) + ")";
   }
   return title;
 }

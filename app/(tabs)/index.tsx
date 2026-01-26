@@ -8,6 +8,8 @@ import {
   useTrendingShows,
 } from "./../../services/catalogService";
 import HorizontalList from "@/components/HorizontalList";
+import { ThemedText } from "@/components/ThemedText";
+import HomeDetails from "@/components/home/HomeDetails";
 
 export default function Index() {
   const queryClient = useQueryClient();
@@ -39,10 +41,9 @@ export default function Index() {
   ];
 
   const verticalListRef = useRef<FlatList>(null);
-
   return (
-    <SafeAreaView className="flex-1 bg-black">
-      <Text className="text-secondary text-3xl text-center mt-5">Hound</Text>
+    <SafeAreaView className="flex bg-black">
+      <HomeDetails item={null} />
       <FlatList
         className="mt-5"
         refreshControl={
@@ -52,8 +53,7 @@ export default function Index() {
         data={rows}
         keyExtractor={(item) => item.key}
         showsVerticalScrollIndicator={false}
-        removeClippedSubviews={true}
-        focusable={false}
+        removeClippedSubviews={false}
         renderItem={({ item, index }) => (
           <HorizontalList
             key={item.key}

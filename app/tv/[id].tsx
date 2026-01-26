@@ -163,9 +163,8 @@ export default function TVDetails() {
   if (error) {
     return <Text>Error: {error.message}</Text>;
   }
-  const creators = details?.created_by
-    ?.map((item: any) => item.name)
-    .join(", ");
+
+  const creators = details?.creators?.map((item: any) => item.name).join(", ");
   // if first season is specials, move it to the end
   const seasonsData =
     details?.seasons?.[0]?.season_number === 0
@@ -177,9 +176,9 @@ export default function TVDetails() {
         <ParallaxScrollView
           headerHeight={300}
           headerImage={
-            details?.backdrop_url ? (
+            details?.backdrop_uri ? (
               <ImageBackground
-                source={{ uri: details?.backdrop_url }}
+                source={{ uri: details?.backdrop_uri }}
                 className="absolute w-full h-96"
                 resizeMode="cover"
               />
@@ -206,7 +205,7 @@ export default function TVDetails() {
               <ThemedText className="text-white text-3xl leading-[36px]">
                 {details?.media_title}
                 <ThemedText className="text-gray-400 text-2xl leading-[32px]">
-                  {" (" + details?.first_air_date?.split("-")[0] + ")"}
+                  {" (" + details?.release_date?.split("-")[0] + ")"}
                 </ThemedText>
               </ThemedText>
               <ThemedText className="text-secondary mt-1 opacity-80 sm:text-lg">
@@ -244,21 +243,21 @@ export default function TVDetails() {
                   Seasons
                 </ThemedText>
                 <SeasonSection
-                  tmdbID={id as string}
+                  sourceID={id as string}
                   seasons={seasonsData}
                   defaultSeason={seasonsData[0]?.season_number}
                   mediaTitle={details?.media_title}
                 />
               </View>
             )}
-            {!!details?.credits?.cast?.length && (
+            {!!details?.cast?.length && (
               <View className="mt-2">
                 <ThemedText className=" text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
                   Cast
                 </ThemedText>
                 <View className="-mx-5">
                   <HorizontalList
-                    itemData={details?.credits?.cast}
+                    itemData={details?.cast}
                     itemType="cast"
                     showDescription={true}
                   />

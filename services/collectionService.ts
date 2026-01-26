@@ -8,7 +8,7 @@ interface CollectionMeta {
   owner_username: string;
   is_primary: boolean;
   is_public: boolean;
-  thumbnail_url: string;
+  thumbnail_uri: string;
   created_at: string;
   updated_at: string;
 }
