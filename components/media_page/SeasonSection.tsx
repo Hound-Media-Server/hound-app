@@ -6,10 +6,10 @@ import {
   Platform,
 } from "react-native";
 import { Image } from "expo-image";
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { ThemedText } from "../ThemedText";
 import { useSeasonDetails } from "@/services/mediaDetailsService";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, FlashListRef } from "@shopify/flash-list";
 import {
   useShowWatchData,
   useShowWatchProgress,
@@ -18,6 +18,8 @@ import {
 import { router } from "expo-router";
 import { getSelectStreamUrl } from "@/utils/navigation";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+
+const isTV = Platform.isTV;
 
 export default function SeasonSection({
   sourceID,
@@ -32,9 +34,6 @@ export default function SeasonSection({
 }) {
   const [selectedSeasonNum, setSelectedSeasonNum] =
     React.useState(defaultSeason);
-  const [episodeListHeight, setEpisodeListHeight] = React.useState<
-    number | null
-  >(null);
   const {
     data: seasonDetails,
     isLoading,
@@ -48,6 +47,8 @@ export default function SeasonSection({
     sourceID,
     selectedSeasonNum,
   );
+  const [focusedEpisode, setFocusedEpisode] = useState<any | null>(null);
+  const [focusedWatchedAt, setFocusedWatchedAt] = useState<string | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -84,14 +85,15 @@ export default function SeasonSection({
             ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
             renderItem={({ item }: { item: any }) => (
               <TouchableOpacity
+                focusable
                 onPress={() => setSelectedSeasonNum(item.season_number)}
                 className={
-                  "rounded-xl p-2 opacity-85 " +
+                  "rounded-xl p-2 opacity-70 border-2 border-transparent focus:border-white " +
                   (item?.season_number === selectedSeasonNum
                     ? "bg-secondary"
                     : "bg-gray-200")
                 }
-                activeOpacity={0.75}
+                activeOpacity={isTV ? 1 : 0.75}
               >
                 {
                   <ThemedText className="text-primary">
@@ -115,71 +117,131 @@ export default function SeasonSection({
             }}
           />
         </View>
-        <View
-          style={{ minHeight: episodeListHeight ?? undefined }}
-          onLayout={(e) => {
-            if (!episodeListHeight) {
-              setEpisodeListHeight(e.nativeEvent.layout.height);
-            }
-          }}
-        >
-          <FlashList
-            data={seasonDetails?.episodes}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }: { item: any }) => (
-              <EpisodeCard
-                episode={item}
-                watchedAt={watchedEpisodeData?.get(item.source_id) || null}
-                watchProgress={watchProgress?.get(item.source_id) || null}
-                sourceID={sourceID}
-                mediaTitle={mediaTitle}
-              />
-            )}
-            keyExtractor={(item) => item.source_id}
-            ListHeaderComponent={
-              isLoading ? (
-                <View className="h-[200px] justify-center items-center">
-                  <ActivityIndicator color="white" size="large" />
-                </View>
-              ) : (
-                <></>
-              )
-            }
-          />
+        <View>
+          {isLoading ? (
+            <View className="h-[200px] justify-center items-center">
+              <ActivityIndicator color="white" size="large" />
+            </View>
+          ) : (
+            <EpisodeSection
+              seasonDetails={seasonDetails}
+              watchedEpisodeData={watchedEpisodeData}
+              watchProgress={watchProgress}
+              sourceID={sourceID}
+              mediaTitle={mediaTitle}
+              focusedEpisode={focusedEpisode}
+              focusedWatchedAt={focusedWatchedAt}
+              setFocusedEpisode={setFocusedEpisode}
+              setFocusedWatchedAt={setFocusedWatchedAt}
+            />
+          )}
         </View>
       </View>
     </>
   );
 }
 
+function EpisodeSection({
+  seasonDetails,
+  watchedEpisodeData,
+  watchProgress,
+  sourceID,
+  mediaTitle,
+  focusedEpisode,
+  focusedWatchedAt,
+  setFocusedEpisode,
+  setFocusedWatchedAt,
+}: {
+  seasonDetails: any;
+  watchedEpisodeData: any;
+  watchProgress: any;
+  sourceID: string;
+  mediaTitle?: string;
+  focusedEpisode: any;
+  focusedWatchedAt: string | null;
+  setFocusedEpisode: (episode: any) => void;
+  setFocusedWatchedAt: (watchedAt: string | null) => void;
+}) {
+  const flashlistRef = useRef<FlashListRef<any>>(null);
+
+  return (
+    <View>
+      <FlashList
+        ref={flashlistRef}
+        data={seasonDetails?.episodes}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        removeClippedSubviews={false}
+        horizontal={isTV}
+        renderItem={({ item, index }: { item: any; index: number }) => (
+          <EpisodeCard
+            index={index}
+            episode={item}
+            watchedAt={watchedEpisodeData?.get(item.source_id) || null}
+            watchProgress={watchProgress?.get(item.source_id) || null}
+            sourceID={sourceID}
+            mediaTitle={mediaTitle}
+            setFocusedEpisode={setFocusedEpisode}
+            setFocusedWatchedAt={setFocusedWatchedAt}
+            flashlistRef={flashlistRef}
+          />
+        )}
+        keyExtractor={(item) => item.source_id}
+      />
+      {isTV && (
+        <View className="h-[80px] mt-3">
+          <EpisodeInfo episode={focusedEpisode} watchedAt={focusedWatchedAt} />
+        </View>
+      )}
+    </View>
+  );
+}
+
 function EpisodeCard({
+  index,
   episode,
   watchedAt,
   watchProgress,
   sourceID,
   mediaTitle,
+  setFocusedEpisode,
+  setFocusedWatchedAt,
+  flashlistRef,
 }: {
+  index: number;
   episode: any;
   watchedAt: string | null;
   watchProgress: WatchProgress | null;
   sourceID: string;
   mediaTitle?: string;
+  setFocusedEpisode: (episode: any) => void;
+  setFocusedWatchedAt: (watchedAt: string | null) => void;
+  flashlistRef: React.RefObject<FlashListRef<any> | null>;
 }) {
   var info: string[] = [];
-  if (episode.duration) {
+  if (episode?.duration) {
     info.push(episode.duration + " m");
   }
-  if (episode.release_date) {
+  if (episode?.release_date) {
     info.push(episode.release_date);
   }
   return (
-    <View className="group">
-      <View className="flex-row mb-3">
+    <View>
+      <View className={"flex-row " + (isTV ? "" : "mb-3")}>
         <View className="relative rounded-md bg-black me-3">
           <TouchableOpacity
-            className="border-2 border-transparent rounded-lg group-focus:border-white"
+            className="border-2 border-transparent rounded-lg focus:border-white"
+            activeOpacity={isTV ? 1 : 0.7}
             focusable
-            activeOpacity={Platform.isTV ? 1 : 0.7}
+            onFocus={() => {
+              setFocusedEpisode(episode);
+              setFocusedWatchedAt(watchedAt);
+              flashlistRef?.current?.scrollToIndex({
+                index: index,
+                animated: true,
+                viewPosition: 0.25,
+              });
+            }}
             onPress={() => {
               router.navigate(
                 getSelectStreamUrl({
@@ -251,28 +313,61 @@ function EpisodeCard({
             </View>
           </TouchableOpacity>
         </View>
-        <View className="flex-1 justify-center">
-          <ThemedText>
-            <ThemedText className="text-secondary">
-              {episode.episode_number + " • "}
-            </ThemedText>
-            <ThemedText className="text-white text-base">
-              {episode.media_title}
-            </ThemedText>
-          </ThemedText>
-          <ThemedText className="text-gray-400 sm:text-sm">
-            {info.join(" ⸱ ")}
-          </ThemedText>
-          {watchedAt ? (
-            <ThemedText className="text-gray-200 text-sm opacity-85">
-              {"Last watched " + watchedAt}
-            </ThemedText>
-          ) : null}
-        </View>
+        {!isTV && (
+          <View className="flex-1 justify-center">
+            <EpisodeInfo episode={episode} watchedAt={watchedAt} />
+          </View>
+        )}
       </View>
-      <ThemedText className="text-gray-400 mb-4 text-sm">
-        {episode.overview}
+      {!isTV && (
+        <ThemedText className="text-gray-400 mb-4 text-sm">
+          {episode?.overview}
+        </ThemedText>
+      )}
+    </View>
+  );
+}
+
+function EpisodeInfo({
+  episode,
+  watchedAt,
+}: {
+  episode: any;
+  watchedAt: string | null;
+}) {
+  if (!episode) {
+    return <></>;
+  }
+  var info: string[] = [];
+  if (episode?.duration) {
+    info.push(episode.duration + " m");
+  }
+  if (episode?.release_date) {
+    info.push(episode.release_date);
+  }
+  return (
+    <View>
+      <ThemedText>
+        <ThemedText className="text-secondary">
+          {episode?.episode_number + " • "}
+        </ThemedText>
+        <ThemedText className="text-white text-base">
+          {episode?.media_title}
+        </ThemedText>
       </ThemedText>
+      <ThemedText className="text-gray-400 sm:text-sm">
+        {info.join(" ⸱ ")}
+      </ThemedText>
+      {watchedAt ? (
+        <ThemedText className="text-gray-200 text-sm opacity-85">
+          {"Last watched " + watchedAt}
+        </ThemedText>
+      ) : null}
+      {isTV && (
+        <ThemedText className="text-gray-400 mb-4 text-sm">
+          {episode?.overview}
+        </ThemedText>
+      )}
     </View>
   );
 }

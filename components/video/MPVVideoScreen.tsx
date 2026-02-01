@@ -1,10 +1,17 @@
-import { useWindowDimensions, View } from "react-native";
+import {
+  ActivityIndicator,
+  Platform,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
 import { StatusBar } from "expo-status-bar";
 import { useLayoutEffect, useRef, useState, useEffect } from "react";
 import { updatePlaybackProgress } from "@/services/watchDataService";
 import { MpvPlayerView, MpvPlayerViewRef } from "@/modules/mpv-player";
 import MPVVideoControls from "./MPVVideoControls";
+import MPVVideoControlsTV from "./MPVVideoControls.tv";
+import { ThemedText } from "../ThemedText";
 
 export default function MPVVideoScreen(props: {
   src: string;
@@ -27,7 +34,6 @@ export default function MPVVideoScreen(props: {
   const [isZoomedToFill, setIsZoomedToFill] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
-  // Progress tracking interval
   useEffect(() => {
     if (!isReady || paused) return;
 
@@ -39,7 +45,7 @@ export default function MPVVideoScreen(props: {
         if (position !== undefined) setCurrentTime(position);
         if (dur !== undefined) setDuration(dur);
 
-        // 5 minute grace period before tracking
+        // don't set playback progress if below 5 minutes
         if (position && position > 300) {
           updatePlaybackProgress(props.id, props.mediaType, {
             season_number: props.seasonNumber,
@@ -69,8 +75,6 @@ export default function MPVVideoScreen(props: {
 
   const handleLoad = async () => {
     setIsReady(true);
-
-    // Get initial duration
     try {
       const dur = await videoRef.current?.getDuration();
       if (dur) setDuration(dur);
@@ -87,7 +91,6 @@ export default function MPVVideoScreen(props: {
       if (subtitles) setTextTracks(subtitles);
       if (audio) setAudioTracks(audio);
 
-      // Get current selections
       const currentSub = await videoRef.current?.getCurrentSubtitleTrack();
       const currentAudio = await videoRef.current?.getCurrentAudioTrack();
 
@@ -105,7 +108,7 @@ export default function MPVVideoScreen(props: {
       setPaused(isPaused);
     }
 
-    // Seek to start time when ready
+    // seek to start time
     if (isReadyToSeek && props.startTime) {
       try {
         await videoRef.current?.seekTo(props.startTime);
@@ -210,6 +213,7 @@ export default function MPVVideoScreen(props: {
           ref={videoRef}
           source={{
             url: props.src,
+            // url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
             startPosition: props.startTime,
             autoplay: true,
           }}
@@ -220,25 +224,57 @@ export default function MPVVideoScreen(props: {
           onError={handleError}
           onTracksReady={handleTracksReady}
         />
-        <MPVVideoControls
-          videoRef={videoRef}
-          paused={paused}
-          onPlayPause={handlePlayPause}
-          currentTime={currentTime}
-          duration={duration}
-          onSeek={handleSeek}
-          onSeekForward={handleSeekForward}
-          onSeekBackward={handleSeekBackward}
-          textTracks={textTracks}
-          audioTracks={audioTracks}
-          selectedTextTrack={selectedTextTrack}
-          selectedAudioTrack={selectedAudioTrack}
-          onSelectTextTrack={handleSelectTextTrack}
-          onSelectAudioTrack={handleSelectAudioTrack}
-          isZoomedToFill={isZoomedToFill}
-          onChangeResizeMode={handleChangeResizeMode}
-        />
+        {Platform.isTV ? (
+          <MPVVideoControlsTV
+            videoRef={videoRef}
+            paused={paused}
+            onPlayPause={handlePlayPause}
+            currentTime={currentTime}
+            duration={duration}
+            onSeek={handleSeek}
+            onSeekForward={handleSeekForward}
+            onSeekBackward={handleSeekBackward}
+            textTracks={textTracks}
+            audioTracks={audioTracks}
+            selectedTextTrack={selectedTextTrack}
+            selectedAudioTrack={selectedAudioTrack}
+            onSelectTextTrack={handleSelectTextTrack}
+            onSelectAudioTrack={handleSelectAudioTrack}
+            isZoomedToFill={isZoomedToFill}
+            onChangeResizeMode={handleChangeResizeMode}
+          />
+        ) : (
+          <MPVVideoControls
+            videoRef={videoRef}
+            paused={paused}
+            onPlayPause={handlePlayPause}
+            currentTime={currentTime}
+            duration={duration}
+            onSeek={handleSeek}
+            onSeekForward={handleSeekForward}
+            onSeekBackward={handleSeekBackward}
+            textTracks={textTracks}
+            audioTracks={audioTracks}
+            selectedTextTrack={selectedTextTrack}
+            selectedAudioTrack={selectedAudioTrack}
+            onSelectTextTrack={handleSelectTextTrack}
+            onSelectAudioTrack={handleSelectAudioTrack}
+            isZoomedToFill={isZoomedToFill}
+            onChangeResizeMode={handleChangeResizeMode}
+          />
+        )}
+
+        {!isReady && <LoadingOverlay />}
       </View>
     </>
   );
 }
+
+const LoadingOverlay = () => {
+  return (
+    <View className="absolute top-0 left-0 right-0 bottom-0 w-100 h-100 bg-black flex items-center justify-center">
+      <ThemedText className="text-white mb-2">Loading...</ThemedText>
+      <ActivityIndicator size="large" color="white" />
+    </View>
+  );
+};

@@ -102,7 +102,7 @@ export default function ContinueWatchingCard({
       }}
     >
       <View className="flex-1">
-        <View className="w-[200px] h-[112px] rounded-lg">
+        <View className="rounded-lg">
           {imgSource ? (
             <Image
               className="group-focus:border-white border-2 w-[200px] h-[112px] rounded-lg bg-gray-300"
@@ -133,7 +133,7 @@ export default function ContinueWatchingCard({
             )}
           </View>
         </View>
-        <View>
+        <View className="w-[200px]">
           {!!title && (
             <ThemedText className="text-gray-200 mt-2 text-start">
               {title}

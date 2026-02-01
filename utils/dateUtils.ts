@@ -38,10 +38,11 @@ export const formatRelativeTime = (
       return formatDateForDisplay(isoString);
     }
 
-    if (diffInSeconds < 60) return "just now";
+    if (diffInSeconds < 300) return "just now";
+    if (diffInSeconds < 1800) return "a few minutes ago";
     if (diffInSeconds < 3600) {
       const minutes = Math.floor(diffInSeconds / 60);
-      return `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`;
+      return `${minutes} minutes ago`;
     }
     if (diffInSeconds < 86400) {
       const hours = Math.floor(diffInSeconds / 3600);

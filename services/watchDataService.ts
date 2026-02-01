@@ -96,11 +96,11 @@ export const useShowWatchData = (id: string, seasonNum: number) => {
     staleTime: 1000 * 60 * 5,
     select: (data: any) => {
       if (!data.data || data.data.length === 0)
-        return new Map<number, string>();
+        return new Map<string, string>();
       const latest = data.data.reduce((a: any, b: any) =>
         new Date(a.rewatch_started_at) > new Date(b.rewatch_started_at) ? a : b,
       );
-      const watchMap = new Map<number, string>();
+      const watchMap = new Map<string, string>();
       // convert to relative time, eg. 1 day ago, etc.
       // cutoff is one month, after a month format as date
       // for duplicate events for the same episode, overwrite
@@ -112,13 +112,10 @@ export const useShowWatchData = (id: string, seasonNum: number) => {
             new Date(a.watched_at).getTime() - new Date(b.watched_at).getTime(),
         )
         .forEach((event: any) => {
-          const episodeID = parseInt(event.source_id, 10);
-          if (!isNaN(episodeID)) {
-            watchMap.set(
-              episodeID,
-              formatRelativeTime(event.watched_at, ONE_MONTH_SECONDS),
-            );
-          }
+          watchMap.set(
+            event.source_id,
+            formatRelativeTime(event.watched_at, ONE_MONTH_SECONDS),
+          );
         });
       return watchMap;
     },

@@ -1,7 +1,6 @@
 import {
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
@@ -21,6 +20,7 @@ import {
   getStreamUrl,
   getAddToCollectionUrl,
 } from "@/utils/navigation";
+import { ImageBackground } from "expo-image";
 
 export default function TVDetails() {
   const queryClient = useQueryClient();
@@ -163,7 +163,6 @@ export default function TVDetails() {
   if (error) {
     return <Text>Error: {error.message}</Text>;
   }
-
   const creators = details?.creators?.map((item: any) => item.name).join(", ");
   // if first season is specials, move it to the end
   const seasonsData =
@@ -180,7 +179,7 @@ export default function TVDetails() {
               <ImageBackground
                 source={{ uri: details?.backdrop_uri }}
                 className="absolute w-full h-96"
-                resizeMode="cover"
+                contentFit="cover"
               />
             ) : (
               <View className="absolute w-full h-96 bg-zinc-900 border-b border-zinc-800" />
