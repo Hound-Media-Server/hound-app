@@ -23,7 +23,10 @@ export default function Stream() {
   useKeepAwake();
   return (
     <View className="flex-1 bg-black justify-center items-center">
-      {Platform.OS === "web" ? (
+      {/*TODO REMOVE*/}
+      {Platform.OS === "web" ||
+      parseInt(season as string, 10) % 2 === 0 ||
+      type === "movie" ? (
         <VideoScreen
           src={url}
           startTime={startTime ? parseInt(startTime as string, 10) : 0}

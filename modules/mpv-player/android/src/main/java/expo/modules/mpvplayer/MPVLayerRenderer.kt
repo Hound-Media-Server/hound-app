@@ -1,7 +1,9 @@
 package expo.modules.mpvplayer
 
+import android.app.UiModeManager
 import android.content.Context
 import android.content.res.AssetManager
+import android.content.res.Configuration
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -26,6 +28,16 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         const val MPV_FORMAT_INT64 = 4
         const val MPV_FORMAT_DOUBLE = 5
         const val MPV_FORMAT_NODE = 6
+        
+        /**
+         * Detect if the device is an Android TV.
+         * Android TVs need different mpv settings (e.g., hwdec=mediacodec instead of mediacodec-copy)
+         * to avoid stuttering caused by the extra frame copy overhead.
+         */
+        fun isAndroidTV(context: Context): Boolean {
+            val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as? UiModeManager
+            return uiModeManager?.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
+        }
     }
     
     interface Delegate {
@@ -157,7 +169,19 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
             MPVLib.setOptionString("opengl-es", "yes")
             
             // Hardware video decoding
-            MPVLib.setOptionString("hwdec", "mediacodec-copy")
+            // Android TV: Use "mediacodec" (direct rendering) to avoid copy overhead that causes stuttering
+            // Mobile: Use "mediacodec-copy" which is more compatible but involves frame copying
+            val isTV = isAndroidTV(context)
+            if (isTV) {
+                MPVLib.setOptionString("hwdec", "mediacodec")
+                // TV-specific: Allow frame drops to maintain A/V sync (important for fixed 60Hz displays)
+                MPVLib.setOptionString("framedrop", "decoder+vo")
+                // TV-specific: Use larger video buffer for smoother playback
+                MPVLib.setOptionString("video-latency-hacks", "no")
+                Log.i(TAG, "Android TV detected - using mediacodec direct rendering")
+            } else {
+                MPVLib.setOptionString("hwdec", "mediacodec-copy")
+            }
             MPVLib.setOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
             
             // Cache settings for better network streaming
