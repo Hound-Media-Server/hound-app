@@ -1,13 +1,14 @@
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { Platform } from "react-native";
 
-import WebTabLayout from "./TabLayout.web";
-import TVTabLayout from "./TabLayout.tv";
+import TabLayoutTV from "./TabLayout.tv";
 import { Tabs } from "expo-router";
 
 export default function TabLayout() {
-  if (Platform.OS === "android" && Platform.isTV) {
-    return <WebTabLayout />;
+  if (Platform.isTV || Platform.isTVOS) {
+    return <TabLayoutTV />;
+  } else if (Platform.OS === "web") {
+    return <TabLayoutTV />;
   }
   return (
     <Tabs

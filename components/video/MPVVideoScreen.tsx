@@ -1,5 +1,6 @@
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   useWindowDimensions,
   View,
@@ -9,9 +10,10 @@ import { StatusBar } from "expo-status-bar";
 import { useLayoutEffect, useRef, useState, useEffect } from "react";
 import { updatePlaybackProgress } from "@/services/watchDataService";
 import { MpvPlayerView, MpvPlayerViewRef } from "@/modules/mpv-player";
-import MPVVideoControls from "./MPVVideoControls";
-import MPVVideoControlsTV from "./MPVVideoControls.tv";
+import VideoControls from "./VideoControls";
+import VideoControlsTV from "./VideoControls.tv";
 import { ThemedText } from "../ThemedText";
+import { router } from "expo-router";
 
 export default function MPVVideoScreen(props: {
   src: string;
@@ -124,8 +126,27 @@ export default function MPVVideoScreen(props: {
     if (dur) setDuration(dur);
   };
 
-  const handleError = (event: any) => {
-    console.error("MPV Player error:", event.nativeEvent.error);
+  const handleError = (error: any) => {
+    console.error("MPV Video Player error:", error);
+
+    let errorMessage = "An unknown MPV error occurred.";
+    if (typeof error === "string") {
+      errorMessage = error;
+    } else if (error?.nativeEvent?.error) {
+      errorMessage = error.nativeEvent.error;
+    } else if (error?.message) {
+      errorMessage = error.message;
+    } else {
+      errorMessage = JSON.stringify(error);
+    }
+
+    Alert.alert("MPV Player Error", `${errorMessage}`, [
+      {
+        text: "OK",
+        onPress: () => router.back(),
+        style: "cancel",
+      },
+    ]);
   };
 
   const handlePlayPause = async () => {
@@ -225,7 +246,7 @@ export default function MPVVideoScreen(props: {
           onTracksReady={handleTracksReady}
         />
         {Platform.isTV ? (
-          <MPVVideoControlsTV
+          <VideoControlsTV
             videoRef={videoRef}
             paused={paused}
             onPlayPause={handlePlayPause}
@@ -244,7 +265,7 @@ export default function MPVVideoScreen(props: {
             onChangeResizeMode={handleChangeResizeMode}
           />
         ) : (
-          <MPVVideoControls
+          <VideoControls
             videoRef={videoRef}
             paused={paused}
             onPlayPause={handlePlayPause}
@@ -263,7 +284,6 @@ export default function MPVVideoScreen(props: {
             onChangeResizeMode={handleChangeResizeMode}
           />
         )}
-
         {!isReady && <LoadingOverlay />}
       </View>
     </>
@@ -273,7 +293,7 @@ export default function MPVVideoScreen(props: {
 const LoadingOverlay = () => {
   return (
     <View className="absolute top-0 left-0 right-0 bottom-0 w-100 h-100 bg-black flex items-center justify-center">
-      <ThemedText className="text-white mb-2">Loading...</ThemedText>
+      <ThemedText className="text-white mb-2">Loading MPV...</ThemedText>
       <ActivityIndicator size="large" color="white" />
     </View>
   );

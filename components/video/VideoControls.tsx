@@ -10,11 +10,16 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import Slider from "@react-native-community/slider";
-import { VideoRef, TextTrackType } from "react-native-video";
+import {
+  MpvPlayerViewRef,
+  SubtitleTrack,
+  AudioTrack,
+} from "@/modules/mpv-player";
 
-interface VideoControlsProps {
-  videoRef: React.RefObject<VideoRef | null>;
+interface MPVVideoControlsProps {
+  videoRef: React.RefObject<MpvPlayerViewRef | null>;
   paused: boolean;
   onPlayPause: () => void;
   currentTime: number;
@@ -22,26 +27,17 @@ interface VideoControlsProps {
   onSeek: (time: number) => void;
   onSeekForward: () => void;
   onSeekBackward: () => void;
-  textTracks?: Array<{
-    index: number;
-    title: string;
-    language: string;
-    type: TextTrackType;
-  }>;
-  audioTracks?: Array<{
-    index: number;
-    title: string;
-    language: string;
-  }>;
+  textTracks?: SubtitleTrack[];
+  audioTracks?: AudioTrack[];
   selectedTextTrack?: number;
   selectedAudioTrack?: number;
-  onSelectTextTrack: (index: number) => void;
-  onSelectAudioTrack: (index: number) => void;
-  resizeMode: "contain" | "cover" | "stretch";
-  onChangeResizeMode: (mode: "contain" | "cover" | "stretch") => void;
+  onSelectTextTrack: (id: number) => void;
+  onSelectAudioTrack: (id: number) => void;
+  isZoomedToFill: boolean;
+  onChangeResizeMode: () => void;
 }
 
-export default function VideoControls({
+export default function MPVVideoControls({
   videoRef,
   paused,
   onPlayPause,
@@ -56,21 +52,19 @@ export default function VideoControls({
   selectedAudioTrack,
   onSelectTextTrack,
   onSelectAudioTrack,
-  resizeMode,
+  isZoomedToFill,
   onChangeResizeMode,
-}: VideoControlsProps) {
+}: MPVVideoControlsProps) {
   const [showControls, setShowControls] = useState(true);
   const [showSubtitlesModal, setShowSubtitlesModal] = useState(false);
   const [showAudioModal, setShowAudioModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
+  const router = useRouter();
   const hideControlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
 
-  const isTVOS = Platform.isTV;
-
-  // Auto-hide controls after 3 seconds of inactivity
   useEffect(() => {
     if (showControls && !paused && !isSeeking) {
       hideControlsTimeout.current = setTimeout(() => {
@@ -109,17 +103,6 @@ export default function VideoControls({
     setIsSeeking(false);
   };
 
-  const cycleResizeMode = () => {
-    const modes: Array<"contain" | "cover" | "stretch"> = [
-      "contain",
-      "cover",
-      "stretch",
-    ];
-    const currentIndex = modes.indexOf(resizeMode);
-    const nextIndex = (currentIndex + 1) % modes.length;
-    onChangeResizeMode(modes[nextIndex]);
-  };
-
   return (
     <>
       <Pressable
@@ -133,24 +116,19 @@ export default function VideoControls({
             <View style={styles.topBar}>
               <TouchableOpacity
                 style={styles.iconButton}
-                onPress={cycleResizeMode}
+                onPress={() => router.back()}
               >
-                <Ionicons name="expand" size={24} color="white" />
-                <Text style={styles.smallText}>
-                  {resizeMode === "contain"
-                    ? "Fit"
-                    : resizeMode === "cover"
-                      ? "Fill"
-                      : "Stretch"}
-                </Text>
+                <Ionicons name="arrow-back" size={28} color="white" />
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => setShowSettingsModal(true)}
-              >
-                <Ionicons name="settings-outline" size={24} color="white" />
-              </TouchableOpacity>
+              <View style={styles.topBarRight}>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => setShowSettingsModal(true)}
+                >
+                  <Ionicons name="settings-outline" size={24} color="white" />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Center Controls */}
@@ -251,35 +229,22 @@ export default function VideoControls({
               </TouchableOpacity>
               {textTracks.map((track) => (
                 <TouchableOpacity
-                  key={track.index}
+                  key={track.id}
                   style={styles.modalItem}
                   onPress={() => {
-                    onSelectTextTrack(track.index);
+                    onSelectTextTrack(track.id);
                     setShowSubtitlesModal(false);
                   }}
                 >
                   <View style={{ flex: 1 }}>
                     <Text style={styles.modalItemText}>
-                      {track.language
-                        ? track.language.toUpperCase()
-                        : "Unknown"}
+                      {track.lang ? track.lang.toUpperCase() : "Unknown"}
                     </Text>
-                    {track.title && track.title !== track.language && (
-                      <Text style={styles.modalItemSubtext}>
-                        {track.type
-                          ? `${track.type.split("/").pop()?.toUpperCase()} • `
-                          : ""}
-                        {track.title}
-                      </Text>
+                    {track.title && track.title !== track.lang && (
+                      <Text style={styles.modalItemSubtext}>{track.title}</Text>
                     )}
-                    {(!track.title || track.title === track.language) &&
-                      track.type && (
-                        <Text style={styles.modalItemSubtext}>
-                          {track.type.split("/").pop()?.toUpperCase()}
-                        </Text>
-                      )}
                   </View>
-                  {selectedTextTrack === track.index && (
+                  {selectedTextTrack === track.id && (
                     <Ionicons name="checkmark" size={24} color="#FF6B6B" />
                   )}
                 </TouchableOpacity>
@@ -305,24 +270,28 @@ export default function VideoControls({
             <ScrollView>
               {audioTracks.map((track) => (
                 <TouchableOpacity
-                  key={track.index}
+                  key={track.id}
                   style={styles.modalItem}
                   onPress={() => {
-                    onSelectAudioTrack(track.index);
+                    onSelectAudioTrack(track.id);
                     setShowAudioModal(false);
                   }}
                 >
                   <View style={{ flex: 1 }}>
                     <Text style={styles.modalItemText}>
-                      {track.language
-                        ? track.language.toUpperCase()
-                        : "Unknown"}
+                      {track.lang ? track.lang.toUpperCase() : "Unknown"}
                     </Text>
-                    {track.title && track.title !== track.language && (
+                    {track.title && track.title !== track.lang && (
                       <Text style={styles.modalItemSubtext}>{track.title}</Text>
                     )}
+                    {track.codec && (
+                      <Text style={styles.modalItemSubtext}>
+                        {track.codec.toUpperCase()}
+                        {track.channels ? ` • ${track.channels}ch` : ""}
+                      </Text>
+                    )}
                   </View>
-                  {selectedAudioTrack === track.index && (
+                  {selectedAudioTrack === track.id && (
                     <Ionicons name="checkmark" size={24} color="#FF6B6B" />
                   )}
                 </TouchableOpacity>
@@ -349,36 +318,24 @@ export default function VideoControls({
               <TouchableOpacity
                 style={styles.modalItem}
                 onPress={() => {
-                  onChangeResizeMode("contain");
+                  if (isZoomedToFill) onChangeResizeMode();
                   setShowSettingsModal(false);
                 }}
               >
                 <Text style={styles.modalItemText}>Fit to Screen</Text>
-                {resizeMode === "contain" && (
+                {!isZoomedToFill && (
                   <Ionicons name="checkmark" size={24} color="#FF6B6B" />
                 )}
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modalItem}
                 onPress={() => {
-                  onChangeResizeMode("cover");
+                  if (!isZoomedToFill) onChangeResizeMode();
                   setShowSettingsModal(false);
                 }}
               >
                 <Text style={styles.modalItemText}>Fill Screen</Text>
-                {resizeMode === "cover" && (
-                  <Ionicons name="checkmark" size={24} color="#FF6B6B" />
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalItem}
-                onPress={() => {
-                  onChangeResizeMode("stretch");
-                  setShowSettingsModal(false);
-                }}
-              >
-                <Text style={styles.modalItemText}>Stretch</Text>
-                {resizeMode === "stretch" && (
+                {isZoomedToFill && (
                   <Ionicons name="checkmark" size={24} color="#FF6B6B" />
                 )}
               </TouchableOpacity>
@@ -403,8 +360,14 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     paddingTop: Platform.OS === "ios" ? 50 : 20,
+  },
+  topBarRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   centerControls: {
     flexDirection: "row",

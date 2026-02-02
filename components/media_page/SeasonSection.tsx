@@ -66,6 +66,12 @@ export default function SeasonSection({
     }
   }, []);
 
+  useEffect(() => {
+    if (!focusedEpisode && seasonDetails?.episodes?.[0]) {
+      setFocusedEpisode(seasonDetails?.episodes?.[0]);
+    }
+  }, [seasonDetails]);
+
   if (error) {
     return (
       <ThemedText className="pt-2 text-white">
@@ -257,13 +263,13 @@ function EpisodeCard({
           >
             {episode.thumbnail_uri ? (
               <Image
-                className="w-[145px] h-[100px] rounded-md sm:w-[160px] sm:h-[100px] opacity-90"
+                className="md:w-[240px] md:h-[150px] sm:w-[160px] sm:h-[100px] rounded-md opacity-90"
                 source={`${episode.thumbnail_uri.replace("w500", "w300")}`}
                 contentFit="cover"
                 transition={1000}
               />
             ) : (
-              <View className="w-[145px] h-[100px] rounded-md sm:w-[160px] sm:h-[100px] bg-gray-800" />
+              <View className="md:w-[240px] md:h-[150px] sm:w-[160px] sm:h-[100px] rounded-md bg-gray-800" />
             )}
             {watchProgress && (
               <>
@@ -348,23 +354,23 @@ function EpisodeInfo({
   return (
     <View>
       <ThemedText>
-        <ThemedText className="text-secondary">
+        <ThemedText className="text-secondary text-lg">
           {episode?.episode_number + " • "}
         </ThemedText>
-        <ThemedText className="text-white text-base">
+        <ThemedText className="text-white text-lg">
           {episode?.media_title}
         </ThemedText>
       </ThemedText>
-      <ThemedText className="text-gray-400 sm:text-sm">
+      <ThemedText className="text-gray-400 text-base">
         {info.join(" ⸱ ")}
       </ThemedText>
       {watchedAt ? (
-        <ThemedText className="text-gray-200 text-sm opacity-85">
+        <ThemedText className="text-gray-200 text-base opacity-85">
           {"Last watched " + watchedAt}
         </ThemedText>
       ) : null}
       {isTV && (
-        <ThemedText className="text-gray-400 mb-4 text-sm">
+        <ThemedText className="text-gray-400 mb-4 text-base">
           {episode?.overview}
         </ThemedText>
       )}

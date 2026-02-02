@@ -1,93 +1,81 @@
-import { Ionicons } from "@expo/vector-icons";
-
 import { Tabs } from "expo-router";
+import React from "react";
+import { Platform, Pressable, View } from "react-native";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { useTextStyles } from "@/hooks/useTextStyles";
 
+/**
+ * This layout is required for the web platform.
+ */
 export default function TabLayout() {
+  const colorScheme = useColorScheme();
+  const textStyles = useTextStyles();
+
+  const tabBarButton = (props: any) => {
+    const style: any = props.style ?? {};
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Pressable
+          {...props}
+          style={({ pressed, focused }) => [
+            style,
+            {
+              opacity: pressed || focused ? 0.6 : 1.0,
+            },
+          ]}
+          className="border-2 border-transparent focus:border-white"
+        />
+      </View>
+    );
+  };
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#FF3B30",
-        tabBarInactiveTintColor: "#8E8E93",
-        tabBarItemStyle: {
-          justifyContent: "center",
-          alignItems: "center",
-          paddingTop: 4,
-        },
+        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+        tabBarActiveBackgroundColor: Colors[colorScheme ?? "light"].background,
         tabBarStyle: {
-          display: "flex",
-          position: "absolute",
-          overflow: "hidden",
-          marginHorizontal: 20,
-          marginBottom: 20,
-          elevation: 2,
-          backgroundColor: "#1C1C1E",
-          borderRadius: 40,
-          height: 64,
-          borderTopWidth: 0,
-          shadowColor: "#000",
-          shadowOffset: {
-            width: 0,
-            height: 4,
-          },
-          shadowOpacity: 0.15,
-          shadowRadius: 5,
+          width: "100%",
         },
+        tabBarPosition: "top",
+        tabBarIconStyle: {
+          height: textStyles.title.lineHeight,
+          width: 0,
+        },
+        headerShown: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
-          headerShown: false,
-          tabBarIcon: ({ focused, color }) => (
-            <Ionicons
-              size={24}
-              name={focused ? "home" : "home-outline"}
-              color={color}
-            />
-          ),
+          tabBarIcon: () => null,
+          tabBarButton,
         }}
       />
       <Tabs.Screen
         name="library"
         options={{
           title: "Library",
-          headerShown: false,
-          tabBarIcon: ({ focused, color }) => (
-            <Ionicons
-              size={24}
-              name={focused ? "albums" : "albums-outline"}
-              color={color}
-            />
-          ),
+          tabBarIcon: () => null,
+          tabBarButton,
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
           title: "Search",
-          headerShown: false,
-          tabBarIcon: ({ focused, color }) => (
-            <Ionicons
-              size={24}
-              name={focused ? "search" : "search-outline"}
-              color={color}
-            />
-          ),
+          tabBarIcon: () => null,
+          tabBarButton,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
-          headerShown: false,
-          tabBarIcon: ({ focused, color }) => (
-            <Ionicons
-              size={24}
-              name={focused ? "settings" : "settings-outline"}
-              color={color}
-            />
-          ),
+          tabBarIcon: () => null,
+          tabBarButton,
         }}
       />
     </Tabs>

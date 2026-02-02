@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   TouchableOpacity,
@@ -8,9 +8,12 @@ import {
   ScrollView,
   Platform,
   StyleSheet,
+  useTVEventHandler,
+  HWEvent,
+  TVFocusGuideView,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import Slider from "@react-native-community/slider";
 import {
   MpvPlayerViewRef,
@@ -37,7 +40,7 @@ interface MPVVideoControlsProps {
   onChangeResizeMode: () => void;
 }
 
-export default function MPVVideoControls({
+export default function MPVVideoControlsTV({
   videoRef,
   paused,
   onPlayPause,
@@ -55,33 +58,83 @@ export default function MPVVideoControls({
   isZoomedToFill,
   onChangeResizeMode,
 }: MPVVideoControlsProps) {
-  const [showControls, setShowControls] = useState(true);
+  const [controlsVisible, setControlsVisible] = useState(true);
   const [showSubtitlesModal, setShowSubtitlesModal] = useState(false);
   const [showAudioModal, setShowAudioModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [sliderFocused, setSliderFocused] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
-  const router = useRouter();
-  const hideControlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const hideControlsTimeoutRef = useRef<any>(null);
+  const controlsOpenTimer = useCallback(() => {
+    setControlsVisible(true);
+    if (hideControlsTimeoutRef.current) {
+      clearTimeout(hideControlsTimeoutRef.current);
+    }
+    hideControlsTimeoutRef.current = setTimeout(() => {
+      setControlsVisible(false);
+    }, 3500);
+  }, []);
 
   useEffect(() => {
-    if (showControls && !paused && !isSeeking) {
-      hideControlsTimeout.current = setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
+    controlsOpenTimer();
+  }, [controlsOpenTimer]);
+
+  // Animate fade in/out
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: controlsVisible ? 1 : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [controlsVisible, fadeAnim]);
+
+  // detect d-pad input
+  const myTVEventHandler = (evt: HWEvent) => {
+    const { eventType } = evt;
+    if (eventType === "playPause") {
+      onPlayPause();
+    }
+    if (
+      [
+        "playPause",
+        "select",
+        "up",
+        "down",
+        "left",
+        "right",
+        "longLeft",
+        "longRight",
+      ].includes(eventType)
+    ) {
+      controlsOpenTimer();
     }
 
-    return () => {
-      if (hideControlsTimeout.current) {
-        clearTimeout(hideControlsTimeout.current);
-      }
-    };
-  }, [showControls, paused, isSeeking]);
+    if (!controlsVisible) return;
 
-  const handleScreenPress = () => {
-    setShowControls(!showControls);
+    switch (eventType) {
+      case "left":
+        if (sliderFocused) {
+          onSeekBackward();
+        }
+        break;
+      case "right":
+        if (sliderFocused) {
+          onSeekForward();
+        }
+        break;
+      case "select":
+        if (sliderFocused) {
+          onPlayPause();
+        }
+        break;
+      default:
+        break;
+    }
   };
+
+  useTVEventHandler(myTVEventHandler);
 
   const formatTime = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
@@ -103,103 +156,118 @@ export default function MPVVideoControls({
     setIsSeeking(false);
   };
 
+  const isModalOpen = showSubtitlesModal || showAudioModal || showSettingsModal;
+
   return (
-    <>
-      <Pressable
-        style={styles.overlay}
-        onPress={handleScreenPress}
-        accessible={false}
+    <View style={styles.overlay}>
+      {!controlsVisible && (
+        <View
+          focusable
+          hasTVPreferredFocus={!controlsVisible && !isModalOpen}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      <Animated.View
+        style={[styles.controlsContainer, { opacity: fadeAnim }]}
+        pointerEvents={controlsVisible ? "auto" : "none"}
       >
-        {showControls && (
-          <View style={styles.controlsContainer}>
-            {/* Top Bar */}
-            <View style={styles.topBar}>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => router.back()}
-              >
-                <Ionicons name="arrow-back" size={28} color="white" />
-              </TouchableOpacity>
-
-              <View style={styles.topBarRight}>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={() => setShowSettingsModal(true)}
-                >
-                  <Ionicons name="settings-outline" size={24} color="white" />
-                </TouchableOpacity>
-              </View>
+        <View style={styles.bottomBar}>
+          {/* Slider */}
+          <TVFocusGuideView
+            style={styles.progressContainer}
+            autoFocus
+            trapFocusUp
+            trapFocusLeft
+            trapFocusRight
+          >
+            <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
+            <View
+              focusable
+              onFocus={() => setSliderFocused(true)}
+              onBlur={() => setSliderFocused(false)}
+              style={styles.slider}
+              className="rounded-full focus:bg-black/20"
+            >
+              <Slider
+                className="h-10"
+                minimumValue={0}
+                maximumValue={duration || 1}
+                value={currentTime}
+                onValueChange={handleSliderChange}
+                onSlidingComplete={handleSliderComplete}
+                minimumTrackTintColor={
+                  sliderFocused ? "#FF6B6B" : "rgba(255,255,255,0.5)"
+                }
+                maximumTrackTintColor={
+                  sliderFocused
+                    ? "rgba(255,255,255,1)"
+                    : "rgba(255,255,255,0.5)"
+                }
+                thumbTintColor={
+                  sliderFocused ? "#FF6B6B" : "rgba(255,255,255,1)"
+                }
+              />
             </View>
-
-            {/* Center Controls */}
-            <View style={styles.centerControls}>
-              <TouchableOpacity
-                style={styles.controlButton}
-                onPress={onSeekBackward}
-              >
-                <Ionicons name="play-back" size={40} color="white" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.controlButton, styles.playButton]}
+            <Text style={styles.timeText}>{formatTime(duration)}</Text>
+          </TVFocusGuideView>
+          {/* Control Buttons */}
+          <TVFocusGuideView
+            className="flex flex-row justify-between items-center mt-2"
+            autoFocus
+            trapFocusLeft
+            trapFocusRight
+            trapFocusDown
+          >
+            <View className="flex-row items-center gap-2">
+              <FocusablePressable focusable onPress={onSeekBackward}>
+                <Ionicons name="play-back" size={25} color="white" />
+              </FocusablePressable>
+              <FocusablePressable
+                focusable
                 onPress={onPlayPause}
+                hasTVPreferredFocus={controlsVisible && !isModalOpen}
               >
                 <Ionicons
                   name={paused ? "play" : "pause"}
-                  size={50}
+                  size={25}
                   color="white"
                 />
-              </TouchableOpacity>
+              </FocusablePressable>
+              <FocusablePressable focusable onPress={onSeekForward}>
+                <Ionicons name="play-forward" size={25} color="white" />
+              </FocusablePressable>
+            </View>
 
-              <TouchableOpacity
-                style={styles.controlButton}
-                onPress={onSeekForward}
+            <View className="flex flex-row items-center gap-2">
+              {textTracks.length > 0 && (
+                <FocusablePressable
+                  focusable
+                  onPress={() => setShowSubtitlesModal(true)}
+                >
+                  <Ionicons name="chatbox-outline" size={24} color="white" />
+                </FocusablePressable>
+              )}
+
+              {audioTracks.length > 0 && (
+                <FocusablePressable
+                  focusable
+                  onPress={() => setShowAudioModal(true)}
+                >
+                  <Ionicons name="volume-high" size={24} color="white" />
+                </FocusablePressable>
+              )}
+
+              <FocusablePressable
+                focusable
+                style={styles.iconButton}
+                onPress={() => setShowSettingsModal(true)}
               >
-                <Ionicons name="play-forward" size={40} color="white" />
-              </TouchableOpacity>
+                <Ionicons name="settings-outline" size={24} color="white" />
+              </FocusablePressable>
             </View>
-
-            {/* Bottom Bar */}
-            <View style={styles.bottomBar}>
-              <View style={styles.progressContainer}>
-                <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
-                <Slider
-                  style={styles.slider}
-                  minimumValue={0}
-                  maximumValue={duration || 1}
-                  value={currentTime}
-                  onValueChange={handleSliderChange}
-                  onSlidingComplete={handleSliderComplete}
-                  minimumTrackTintColor="#FF6B6B"
-                  maximumTrackTintColor="rgba(255,255,255,0.3)"
-                  thumbTintColor="#FF6B6B"
-                />
-                <Text style={styles.timeText}>{formatTime(duration)}</Text>
-              </View>
-
-              <View style={styles.bottomButtons}>
-                {textTracks.length > 0 && (
-                  <TouchableOpacity
-                    style={styles.iconButton}
-                    onPress={() => setShowSubtitlesModal(true)}
-                  >
-                    <Ionicons name="chatbox-outline" size={24} color="white" />
-                  </TouchableOpacity>
-                )}
-
-                {audioTracks.length > 0 && (
-                  <TouchableOpacity
-                    style={styles.iconButton}
-                    onPress={() => setShowAudioModal(true)}
-                  >
-                    <Ionicons name="volume-high" size={24} color="white" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          </View>
-        )}
-      </Pressable>
+          </TVFocusGuideView>
+        </View>
+      </Animated.View>
 
       {/* Subtitles Modal */}
       <Modal
@@ -221,6 +289,10 @@ export default function MPVVideoControls({
                   onSelectTextTrack(-1);
                   setShowSubtitlesModal(false);
                 }}
+                focusable
+                hasTVPreferredFocus={
+                  showSubtitlesModal && selectedTextTrack === -1
+                }
               >
                 <Text style={styles.modalItemText}>Off</Text>
                 {selectedTextTrack === -1 && (
@@ -235,6 +307,10 @@ export default function MPVVideoControls({
                     onSelectTextTrack(track.id);
                     setShowSubtitlesModal(false);
                   }}
+                  focusable
+                  hasTVPreferredFocus={
+                    showSubtitlesModal && selectedTextTrack === track.id
+                  }
                 >
                   <View style={{ flex: 1 }}>
                     <Text style={styles.modalItemText}>
@@ -276,6 +352,10 @@ export default function MPVVideoControls({
                     onSelectAudioTrack(track.id);
                     setShowAudioModal(false);
                   }}
+                  focusable
+                  hasTVPreferredFocus={
+                    showAudioModal && selectedAudioTrack === track.id
+                  }
                 >
                   <View style={{ flex: 1 }}>
                     <Text style={styles.modalItemText}>
@@ -317,6 +397,8 @@ export default function MPVVideoControls({
             <ScrollView>
               <TouchableOpacity
                 style={styles.modalItem}
+                focusable
+                hasTVPreferredFocus={showSettingsModal && !isZoomedToFill}
                 onPress={() => {
                   if (isZoomedToFill) onChangeResizeMode();
                   setShowSettingsModal(false);
@@ -329,6 +411,8 @@ export default function MPVVideoControls({
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modalItem}
+                focusable
+                hasTVPreferredFocus={showSettingsModal && isZoomedToFill}
                 onPress={() => {
                   if (!isZoomedToFill) onChangeResizeMode();
                   setShowSettingsModal(false);
@@ -343,9 +427,17 @@ export default function MPVVideoControls({
           </View>
         </Pressable>
       </Modal>
-    </>
+    </View>
   );
 }
+
+const FocusablePressable = ({ children, ...props }: any) => {
+  return (
+    <Pressable {...props} className="p-2 focus:bg-white/20 rounded-full">
+      {children}
+    </Pressable>
+  );
+};
 
 const styles = StyleSheet.create({
   overlay: {
@@ -355,7 +447,7 @@ const styles = StyleSheet.create({
   controlsContainer: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
   },
   topBar: {
     flexDirection: "row",
@@ -368,12 +460,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-  },
-  centerControls: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 40,
   },
   bottomBar: {
     padding: 20,
@@ -397,14 +483,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end",
     gap: 15,
-  },
-  controlButton: {
-    padding: 10,
-  },
-  playButton: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 50,
-    padding: 20,
   },
   iconButton: {
     padding: 10,

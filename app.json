@@ -19,13 +19,7 @@
           }
         }
       ],
-      [
-        "expo-video",
-        {
-          "supportsBackgroundPlayback": true,
-          "supportsPictureInPicture": true
-        }
-      ],
+
       [
         "expo-build-properties",
         {
@@ -37,7 +31,8 @@
       "expo-router",
       "expo-font",
       "expo-web-browser",
-      "expo-secure-store"
+      "expo-secure-store",
+      "react-native-video"
     ],
     "android": {
       "edgeToEdgeEnabled": true,

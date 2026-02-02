@@ -16,6 +16,7 @@
   "dependencies": {
     "@expo-google-fonts/cabin": "^0.4.2",
     "@expo/vector-icons": "^15.0.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/slider": "5.0.1",
     "@shopify/flash-list": "2.0.2",
     "@tanstack/react-query": "^5.90.12",
@@ -34,7 +35,6 @@
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
     "expo-system-ui": "~6.0.8",
-    "expo-video": "~3.0.15",
     "expo-web-browser": "~15.0.8",
     "nativewind": "^4.2.1",
     "prettier-plugin-tailwindcss": "^0.5.14",
@@ -45,6 +45,7 @@
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
+    "react-native-video": "^6.19.0",
     "react-native-web": "^0.21.0",
     "react-native-worklets": "0.5.1",
     "tailwindcss": "^3.4.19",
