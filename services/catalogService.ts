@@ -17,7 +17,7 @@ export const useTrendingMovies = () => {
   return useQuery({
     queryKey: ["trending-movies"],
     queryFn: fetchTrendingMovies,
-    staleTime: 1000 * 60 * 5, // cache for 5 mins
+    staleTime: 1000 * 60 * 120, // cache for 120 mins
     select: (data: any) => data.data,
   });
 };
@@ -26,7 +26,7 @@ export const useTrendingShows = () => {
   return useQuery({
     queryKey: ["trending-shows"],
     queryFn: fetchTrendingShows,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 120,
     select: (data: any) => data.data,
   });
 };

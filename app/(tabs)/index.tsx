@@ -9,6 +9,7 @@ import {
 } from "./../../services/catalogService";
 import HorizontalList from "@/components/HorizontalList";
 import HomeDetails from "@/components/home/HomeDetails";
+import { useFocusEffect } from "expo-router";
 
 export default function Index() {
   const queryClient = useQueryClient();
@@ -23,6 +24,17 @@ export default function Index() {
     ]);
     setRefreshing(false);
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      Promise.all([
+        // probably no need to refresh trending that quickly
+        // queryClient.invalidateQueries({ queryKey: ["trending-movies"] }),
+        // queryClient.invalidateQueries({ queryKey: ["trending-shows"] }),
+        queryClient.invalidateQueries({ queryKey: ["continue-watching"] }),
+      ]);
+    }, []),
+  );
 
   const rows = [
     { key: "trendingShows", header: "Trending Shows", query: useTrendingShows },
