@@ -5,14 +5,25 @@ import { formatRelativeTime } from "../utils/dateUtils";
 /*
     For fetching watched media and resume progress
 */
+export interface PlayerSettings {
+  player?: string;
+  resize_mode?: string;
+  audio_idx?: number;
+  audio_lang?: string;
+  subtitle_idx?: number;
+  subtitle_lang?: string;
+}
+
 export interface WatchProgress {
+  client_platform: string;
   episode_source_id: string;
   stream_protocol: string;
   encoded_data: string;
-  season_number: number;
-  episode_number: number;
+  season_number?: number;
+  episode_number?: number;
   current_progress_seconds: number;
   total_duration_seconds: number;
+  player_settings: PlayerSettings | null;
 }
 
 export interface NextEpisode {
@@ -170,6 +181,7 @@ export interface PlaybackPayload {
   encoded_data: string;
   current_progress_seconds: number;
   total_duration_seconds: number;
+  player_settings?: PlayerSettings;
 }
 
 export const updatePlaybackProgress = async (

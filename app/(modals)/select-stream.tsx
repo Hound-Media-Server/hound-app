@@ -90,7 +90,7 @@ export default function SelectStreamScreen() {
         className="rounded-lg mb-2 border-2 border-transparent focus:border-white"
         onPress={() => {
           router.replace(
-            getStreamUrl(item.stream.encoded_data, {
+            getStreamUrl(item.stream.encoded_data, false, {
               id: id as string,
               type: type as string,
               season: seasonNumber,

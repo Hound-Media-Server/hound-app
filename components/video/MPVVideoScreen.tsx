@@ -8,7 +8,10 @@ import {
 import * as NavigationBar from "expo-navigation-bar";
 import { StatusBar } from "expo-status-bar";
 import { useLayoutEffect, useRef, useState, useEffect } from "react";
-import { updatePlaybackProgress } from "@/services/watchDataService";
+import {
+  updatePlaybackProgress,
+  PlayerSettings,
+} from "@/services/watchDataService";
 import { MpvPlayerView, MpvPlayerViewRef } from "@/modules/mpv-player";
 import VideoControls from "./VideoControls";
 import VideoControlsTV from "./VideoControls.tv";
@@ -23,6 +26,13 @@ export default function MPVVideoScreen(props: {
   seasonNumber?: number;
   episodeNumber?: number;
   encodedData: string;
+  streamsMatch: boolean;
+  playerSettings?: PlayerSettings | null;
+  onChangePlayer?: (
+    player: "exoplayer" | "mpv",
+    currentTime: number,
+    settings?: any,
+  ) => void;
 }) {
   const { width, height } = useWindowDimensions();
   const videoRef = useRef<MpvPlayerViewRef>(null);
@@ -33,8 +43,11 @@ export default function MPVVideoScreen(props: {
   const [audioTracks, setAudioTracks] = useState<any[]>([]);
   const [selectedTextTrack, setSelectedTextTrack] = useState<number>(-1);
   const [selectedAudioTrack, setSelectedAudioTrack] = useState<number>(1);
-  const [isZoomedToFill, setIsZoomedToFill] = useState(false);
+  const [isZoomedToFill, setIsZoomedToFill] = useState(
+    props.playerSettings?.resize_mode === "cover",
+  );
   const [isReady, setIsReady] = useState(false);
+  const tracksInitialized = useRef(false);
 
   useEffect(() => {
     if (!isReady || paused) return;
@@ -55,6 +68,18 @@ export default function MPVVideoScreen(props: {
             encoded_data: props.encodedData,
             current_progress_seconds: Math.floor(position),
             total_duration_seconds: Math.floor(dur || 0),
+            player_settings: {
+              player: "mpv",
+              resize_mode: isZoomedToFill ? "cover" : "contain",
+              audio_idx: selectedAudioTrack,
+              audio_lang:
+                audioTracks.find((t: any) => t.id === selectedAudioTrack)
+                  ?.lang || "",
+              subtitle_idx: selectedTextTrack,
+              subtitle_lang:
+                textTracks.find((t: any) => t.id === selectedTextTrack)?.lang ||
+                "",
+            },
           }).catch((err) => {
             console.error("Failed to update playback progress:", err);
           });
@@ -72,15 +97,24 @@ export default function MPVVideoScreen(props: {
     props.mediaType,
     props.seasonNumber,
     props.episodeNumber,
+    props.episodeNumber,
     props.encodedData,
+    isZoomedToFill,
+    selectedAudioTrack,
+    selectedTextTrack,
+    audioTracks,
+    textTracks,
   ]);
 
   const handleLoad = async () => {
-    setIsReady(true);
+    // seems like current implementation triggers onReady faster
+    // than expected, duration/etc. not available yet
     try {
       const dur = await videoRef.current?.getDuration();
+      setIsReady(true);
       if (dur) setDuration(dur);
     } catch (error) {
+      setIsReady(true);
       console.error("Error getting duration:", error);
     }
   };
@@ -96,8 +130,78 @@ export default function MPVVideoScreen(props: {
       const currentSub = await videoRef.current?.getCurrentSubtitleTrack();
       const currentAudio = await videoRef.current?.getCurrentAudioTrack();
 
-      if (currentSub !== undefined) setSelectedTextTrack(currentSub);
-      if (currentAudio !== undefined) setSelectedAudioTrack(currentAudio);
+      let targetSub = currentSub;
+      let targetAudio = currentAudio;
+
+      if (tracksInitialized.current) return;
+      tracksInitialized.current = true;
+
+      if (props.playerSettings) {
+        const { player, subtitle_idx, subtitle_lang, audio_idx, audio_lang } =
+          props.playerSettings;
+
+        if (
+          subtitles &&
+          (selectedTextTrack === -1 || selectedTextTrack === undefined)
+        ) {
+          // if streams match continue watching data, use subtitle_idx
+          if (
+            subtitle_idx !== undefined &&
+            subtitle_idx !== -1 &&
+            props.streamsMatch &&
+            subtitles.find((t: any) => t.id === subtitle_idx)
+          ) {
+            targetSub = subtitle_idx;
+          }
+          // otherwise fallback to subtitle_lang
+          else {
+            const matchByLang = subtitles.find(
+              (t: any) => t.lang === subtitle_lang,
+            );
+            if (matchByLang) {
+              targetSub = matchByLang.id;
+            }
+          }
+        }
+        if (
+          audio &&
+          (selectedAudioTrack === 1 || selectedAudioTrack === undefined)
+        ) {
+          // if streams match continue watching data, use audio_idx
+          if (
+            audio_idx !== undefined &&
+            audio_idx !== -1 &&
+            props.streamsMatch &&
+            audio.find((t: any) => t.id === audio_idx)
+          ) {
+            targetAudio = audio_idx;
+          }
+          // otherwise fallback to audio_lang
+          else {
+            const matchByLang = audio.find((t: any) => t.lang === audio_lang);
+            if (matchByLang) {
+              targetAudio = matchByLang.id;
+            }
+          }
+        }
+      }
+
+      if (targetSub !== undefined && targetSub !== currentSub) {
+        if (targetSub === -1) {
+          await videoRef.current?.disableSubtitles();
+        } else {
+          await videoRef.current?.setSubtitleTrack(targetSub);
+        }
+        setSelectedTextTrack(targetSub);
+      } else if (currentSub !== undefined) {
+        setSelectedTextTrack(currentSub);
+      }
+      if (targetAudio !== undefined && targetAudio !== currentAudio) {
+        await videoRef.current?.setAudioTrack(targetAudio);
+        setSelectedAudioTrack(targetAudio);
+      } else if (currentAudio !== undefined) {
+        setSelectedAudioTrack(currentAudio);
+      }
     } catch (error) {
       console.error("Error getting tracks:", error);
     }
@@ -248,6 +352,7 @@ export default function MPVVideoScreen(props: {
         {Platform.isTV ? (
           <VideoControlsTV
             videoRef={videoRef}
+            player="mpv"
             paused={paused}
             onPlayPause={handlePlayPause}
             currentTime={currentTime}
@@ -263,10 +368,12 @@ export default function MPVVideoScreen(props: {
             onSelectAudioTrack={handleSelectAudioTrack}
             isZoomedToFill={isZoomedToFill}
             onChangeResizeMode={handleChangeResizeMode}
+            onChangePlayer={props.onChangePlayer}
           />
         ) : (
           <VideoControls
             videoRef={videoRef}
+            player="mpv"
             paused={paused}
             onPlayPause={handlePlayPause}
             currentTime={currentTime}
@@ -282,6 +389,7 @@ export default function MPVVideoScreen(props: {
             onSelectAudioTrack={handleSelectAudioTrack}
             isZoomedToFill={isZoomedToFill}
             onChangeResizeMode={handleChangeResizeMode}
+            onChangePlayer={props.onChangePlayer}
           />
         )}
         {!isReady && <LoadingOverlay />}

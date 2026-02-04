@@ -8,6 +8,8 @@ export interface LoginResponse {
   }
 }
 
+const clientID = "hound-app";
+
 export async function login(
   host: string,
   username: string,
@@ -19,22 +21,18 @@ export async function login(
   }
   baseUrl = baseUrl.replace(/\/$/, "");
 
-  let platform = "android";
-  if (Platform.OS === "web") {
-    platform = "web";
-  } else if (Platform.isTVOS) {
-    platform = "tvos";
-  } else if (Platform.isTV) {
-    platform = "tv";
-  } else if (Platform.OS === "ios") {
-    platform = "ios";
-  }
+  // platforms: web, android-mobile, android-tv, ios, ipados, tvos
+  let platform = Platform.OS as string;
+  if (Platform.isTVOS) platform = "tvos";
+  if (Platform.OS === "android" && Platform.isTV) platform = "android-tv";
+  if (Platform.OS === "android" && !Platform.isTV) platform = "android-mobile";
 
   const response = await fetch(`${baseUrl}/api/v1/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-Client": platform,
+      "X-Client-Id": clientID,
+      "X-Client-Platform": platform,
     },
     body: JSON.stringify({ username, password }),
   });
@@ -51,6 +49,5 @@ export async function login(
     }
     throw new Error(errorMessage);
   }
-
   return response.json();
 }

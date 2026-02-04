@@ -18,8 +18,9 @@ import {
   AudioTrack,
 } from "@/modules/mpv-player";
 
-interface MPVVideoControlsProps {
+interface VideoControlsProps {
   videoRef: React.RefObject<MpvPlayerViewRef | null>;
+  player: "mpv" | "exoplayer";
   paused: boolean;
   onPlayPause: () => void;
   currentTime: number;
@@ -35,10 +36,16 @@ interface MPVVideoControlsProps {
   onSelectAudioTrack: (id: number) => void;
   isZoomedToFill: boolean;
   onChangeResizeMode: () => void;
+  onChangePlayer?: (
+    player: "exoplayer" | "mpv",
+    currentTime: number,
+    settings?: any,
+  ) => void;
 }
 
-export default function MPVVideoControls({
+export default function VideoControls({
   videoRef,
+  player,
   paused,
   onPlayPause,
   currentTime,
@@ -54,7 +61,8 @@ export default function MPVVideoControls({
   onSelectAudioTrack,
   isZoomedToFill,
   onChangeResizeMode,
-}: MPVVideoControlsProps) {
+  onChangePlayer,
+}: VideoControlsProps) {
   const [showControls, setShowControls] = useState(true);
   const [showSubtitlesModal, setShowSubtitlesModal] = useState(false);
   const [showAudioModal, setShowAudioModal] = useState(false);
@@ -314,6 +322,7 @@ export default function MPVVideoControls({
         >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Settings</Text>
+            <Text style={styles.modalItemText}>Player: {player}</Text>
             <ScrollView>
               <TouchableOpacity
                 style={styles.modalItem}
@@ -339,6 +348,28 @@ export default function MPVVideoControls({
                   <Ionicons name="checkmark" size={24} color="#FF6B6B" />
                 )}
               </TouchableOpacity>
+
+              {onChangePlayer && (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => {
+                    const otherPlayer = player === "mpv" ? "exoplayer" : "mpv";
+                    onChangePlayer(otherPlayer, currentTime, {
+                      subtitle_idx: selectedTextTrack,
+                      audio_idx: selectedAudioTrack,
+                      resize_mode: isZoomedToFill ? "cover" : "contain",
+                    });
+                    setShowSettingsModal(false);
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.modalItemText}>
+                      Switch to {player === "mpv" ? "ExoPlayer" : "MPV"}
+                    </Text>
+                  </View>
+                  <Ionicons name="swap-horizontal" size={24} color="white" />
+                </TouchableOpacity>
+              )}
             </ScrollView>
           </View>
         </Pressable>

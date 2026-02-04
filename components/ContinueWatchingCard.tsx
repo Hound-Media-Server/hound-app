@@ -27,14 +27,16 @@ export default function ContinueWatchingCard({
   // resume case
   if (item.watch_action_type == "resume") {
     const wp = item.watch_progress;
-    // for resume, show stream modal
-    route = getStreamUrl(wp.encoded_data, {
+    // for resume
+    // TODO: allow fallback to select stream if failure
+    route = getStreamUrl(wp.encoded_data, true, {
       id: itemID,
       type: mediaType,
       title: wp.media_title,
       season: wp.season_number,
       episode: wp.episode_number,
       startTime: wp.current_progress_seconds,
+      playerSettings: JSON.stringify(wp.player_settings),
     });
     title = wp?.media_title;
     if (mediaType === "tv") {

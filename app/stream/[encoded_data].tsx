@@ -10,17 +10,40 @@ import VideoScreen from "@/components/video/ExoplayerVideoScreen";
 import { getSetting } from "@/stores/settingsStore";
 
 export default function Stream() {
-  const { encoded_data, startTime, id, type, season, episode, title } =
-    useLocalSearchParams();
+  const {
+    encoded_data,
+    startTime,
+    id,
+    type,
+    season,
+    episode,
+    title,
+    streamsMatch,
+    playerSettings,
+  } = useLocalSearchParams();
   const { session } = useSession();
-  const [playerSetting, setPlayerSetting] = useState<string | null>(null);
+  const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
+  const [currentProgress, setCurrentProgress] = useState<number>(
+    startTime ? parseInt(startTime as string, 10) : 0,
+  );
+
+  const parsedPlayerSettings = playerSettings
+    ? JSON.parse(playerSettings as string)
+    : null;
+
+  const [currentSettings, setCurrentSettings] = useState<any>(
+    parsedPlayerSettings || {},
+  );
 
   useEffect(() => {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
 
     // Load setting
     getSetting("player").then((val) => {
-      setPlayerSetting(val ?? "exoplayer");
+      // Use player from context if available, otherwise fallback to settings
+      const preferredPlayer =
+        (parsedPlayerSettings?.player as string) || val || "exoplayer";
+      setCurrentPlayer(preferredPlayer);
     });
 
     return () => {
@@ -28,10 +51,22 @@ export default function Stream() {
     };
   }, []);
 
+  const handlePlayerChange = async (
+    newPlayer: "exoplayer" | "mpv",
+    currentTime: number,
+    settings?: any,
+  ) => {
+    setCurrentProgress(currentTime);
+    setCurrentPlayer(newPlayer);
+    if (settings) {
+      setCurrentSettings((prev: any) => ({ ...prev, ...settings }));
+    }
+  };
+
   useKeepAwake();
 
   if (!session) return null;
-  if (playerSetting === null) {
+  if (currentPlayer === null) {
     return (
       <View className="flex-1 bg-black items-center justify-center">
         <ActivityIndicator size="large" color="white" />
@@ -43,25 +78,31 @@ export default function Stream() {
 
   return (
     <View className="flex-1 bg-black justify-center items-center">
-      {playerSetting === "mpv" ? (
+      {currentPlayer === "mpv" ? (
         <MPVVideoScreen
           src={url}
-          startTime={startTime ? parseInt(startTime as string, 10) : 0}
+          startTime={currentProgress}
           id={id as string}
           mediaType={type as "movie" | "tv"}
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
           encodedData={encoded_data as string}
+          streamsMatch={streamsMatch === "true" ? true : false}
+          playerSettings={{ ...currentSettings, player: "mpv" }}
+          onChangePlayer={handlePlayerChange}
         />
       ) : (
         <VideoScreen
           src={url}
-          startTime={startTime ? parseInt(startTime as string, 10) : 0}
+          startTime={currentProgress}
           id={id as string}
           mediaType={type as "movie" | "tv"}
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
           encodedData={encoded_data as string}
+          streamsMatch={streamsMatch === "true" ? true : false}
+          playerSettings={{ ...currentSettings, player: "exoplayer" }}
+          onChangePlayer={handlePlayerChange}
         />
       )}
     </View>

@@ -85,6 +85,7 @@ export default function TVDetails() {
     let targetEpisode: number | undefined;
     let encodedData: string | null = null;
     let startTime: number = 0;
+    let playerSettings: string | undefined;
     if (watchAction) {
       if (
         watchAction.watch_action_type === "resume" &&
@@ -94,6 +95,9 @@ export default function TVDetails() {
         targetEpisode = watchAction.watch_progress.episode_number;
         encodedData = watchAction.watch_progress.encoded_data;
         startTime = watchAction.watch_progress.current_progress_seconds;
+        playerSettings = JSON.stringify(
+          watchAction.watch_progress.player_settings,
+        );
       } else if (
         watchAction.watch_action_type === "next_episode" &&
         watchAction.next_episode
@@ -120,13 +124,14 @@ export default function TVDetails() {
           );
           if (match) {
             router.navigate(
-              getStreamUrl(match.encoded_data, {
+              getStreamUrl(match.encoded_data, true, {
                 id: id as string,
                 type: "tv",
                 title: details?.media_title,
                 season: targetSeason,
                 episode: targetEpisode,
                 startTime: startTime,
+                playerSettings: playerSettings,
               }),
             );
             return;
@@ -144,6 +149,7 @@ export default function TVDetails() {
           episode: targetEpisode,
           startTime: resumeStartTime,
           title: details?.media_title,
+          playerSettings: playerSettings,
         }),
       );
     } else {

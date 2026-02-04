@@ -36,6 +36,9 @@ export default function MovieDetails() {
       queryClient.invalidateQueries({
         queryKey: ["movie-watch-data", id],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["movie-watch-progress", id],
+      });
     }, [id, queryClient]),
   );
 
@@ -57,6 +60,7 @@ export default function MovieDetails() {
   const handlePlayPress = async () => {
     let encodedData: string | null = null;
     let startTime: number = 0;
+    let playerSettings: string | undefined;
 
     if (watchAction) {
       if (
@@ -65,6 +69,9 @@ export default function MovieDetails() {
       ) {
         encodedData = watchAction.watch_progress.encoded_data;
         startTime = watchAction.watch_progress.current_progress_seconds;
+        playerSettings = JSON.stringify(
+          watchAction.watch_progress.player_settings,
+        );
       }
     }
 
@@ -75,11 +82,12 @@ export default function MovieDetails() {
         const match = streams.find((s: any) => s.encoded_data === encodedData);
         if (match) {
           router.navigate(
-            getStreamUrl(match.encoded_data, {
+            getStreamUrl(match.encoded_data, true, {
               id: id as string,
               type: "movie",
               title: details?.media_title,
               startTime: startTime,
+              playerSettings: playerSettings,
             }),
           );
           return;
@@ -95,6 +103,7 @@ export default function MovieDetails() {
         type: "movie",
         startTime: watchAction?.watch_progress?.current_progress_seconds || 0,
         title: details?.media_title,
+        playerSettings: playerSettings,
       }),
     );
   };

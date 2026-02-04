@@ -8,7 +8,10 @@ import {
 import * as NavigationBar from "expo-navigation-bar";
 import { StatusBar } from "expo-status-bar";
 import { useLayoutEffect, useRef, useState, useEffect } from "react";
-import { updatePlaybackProgress } from "@/services/watchDataService";
+import {
+  updatePlaybackProgress,
+  PlayerSettings,
+} from "@/services/watchDataService";
 import Video, {
   VideoRef,
   OnLoadData,
@@ -32,6 +35,13 @@ export default function VideoScreen(props: {
   seasonNumber?: number;
   episodeNumber?: number;
   encodedData: string;
+  streamsMatch?: boolean;
+  playerSettings?: PlayerSettings | null;
+  onChangePlayer?: (
+    player: "exoplayer" | "mpv",
+    currentTime: number,
+    settings?: any,
+  ) => void;
 }) {
   const { width, height } = useWindowDimensions();
   const videoRef = useRef<VideoRef>(null);
@@ -41,10 +51,14 @@ export default function VideoScreen(props: {
   const [textTracks, setTextTracks] = useState<any[]>([]);
   const [audioTracks, setAudioTracks] = useState<any[]>([]);
   const [selectedTextTrack, setSelectedTextTrack] = useState<number>(-1);
-  const [selectedAudioTrack, setSelectedAudioTrack] = useState<number>(0);
-  const [isZoomedToFill, setIsZoomedToFill] = useState(false);
+  const [selectedAudioTrack, setSelectedAudioTrack] = useState<number>(1);
+  const [isZoomedToFill, setIsZoomedToFill] = useState(
+    props.playerSettings?.resize_mode === "cover",
+  );
   const [isReady, setIsReady] = useState(false);
   const initialSeekDone = useRef(false);
+  const audioInitialized = useRef(false);
+  const subtitleInitialized = useRef(false);
 
   // Update playback progress every 5 seconds
   useEffect(() => {
@@ -59,6 +73,18 @@ export default function VideoScreen(props: {
           encoded_data: props.encodedData,
           current_progress_seconds: Math.floor(currentTime),
           total_duration_seconds: Math.floor(duration),
+          player_settings: {
+            player: "exoplayer",
+            resize_mode: isZoomedToFill ? "cover" : "contain",
+            audio_idx: selectedAudioTrack,
+            audio_lang:
+              audioTracks.find((t: any) => t.id === selectedAudioTrack)?.lang ||
+              "",
+            subtitle_idx: selectedTextTrack,
+            subtitle_lang:
+              textTracks.find((t: any) => t.id === selectedTextTrack)?.lang ||
+              "",
+          },
         }).catch((err) => {
           console.error("Failed to update playback progress:", err);
         });
@@ -73,7 +99,13 @@ export default function VideoScreen(props: {
     props.mediaType,
     props.seasonNumber,
     props.episodeNumber,
+    props.episodeNumber,
     props.encodedData,
+    isZoomedToFill,
+    selectedAudioTrack,
+    selectedTextTrack,
+    audioTracks,
+    textTracks,
   ]);
 
   const handleLoad = (data: OnLoadData) => {
@@ -93,23 +125,79 @@ export default function VideoScreen(props: {
 
   const handleTextTracks = (data: OnTextTracksData) => {
     // Convert react-native-video track format to MPV format for controls compatibility
+    // 1-indexed to follow mpv
     const tracks = data.textTracks.map((track) => ({
-      id: track.index,
+      id: track.index + 1,
       title: track.title,
       lang: track.language,
-      selected: track.index === selectedTextTrack,
+      selected: track.index + 1 === selectedTextTrack,
     }));
+    setSelectedTextTrack((prev) => {
+      if (subtitleInitialized.current) return prev;
+      subtitleInitialized.current = true;
+
+      const context = props.playerSettings;
+      let targetSub = prev;
+      if (context) {
+        const { subtitle_idx, subtitle_lang } = context;
+        // if streams match continue watching data, use subtitle_idx
+        if (
+          subtitle_idx !== undefined &&
+          subtitle_idx !== -1 &&
+          props.streamsMatch &&
+          tracks.find((t: any) => t.id === subtitle_idx)
+        ) {
+          targetSub = subtitle_idx;
+        }
+        // otherwise fallback to subtitle_lang
+        else {
+          const matchByLang = tracks.find((t: any) => t.lang === subtitle_lang);
+          if (matchByLang) {
+            targetSub = matchByLang.id;
+          }
+        }
+      }
+      return targetSub;
+    });
     setTextTracks(tracks);
   };
 
   const handleAudioTracks = (data: OnAudioTracksData) => {
     // Convert react-native-video track format to MPV format for controls compatibility
+    // 1-indexed to follow mpv
     const tracks = data.audioTracks.map((track) => ({
-      id: track.index,
+      id: track.index + 1,
       title: track.title,
       lang: track.language,
-      selected: track.index === selectedAudioTrack,
+      selected: track.index + 1 === selectedAudioTrack,
     }));
+    setSelectedAudioTrack((prev) => {
+      if (audioInitialized.current) return prev;
+      audioInitialized.current = true;
+
+      const context = props.playerSettings;
+      let targetAudio = prev;
+      if (context) {
+        const { audio_idx, audio_lang } = context;
+        // if streams match continue watching data, use audio_idx
+        if (
+          audio_idx !== undefined &&
+          audio_idx !== -1 &&
+          props.streamsMatch &&
+          tracks.find((t: any) => t.id === audio_idx)
+        ) {
+          targetAudio = audio_idx;
+        }
+        // otherwise fallback to audio_lang
+        else {
+          const matchByLang = tracks.find((t: any) => t.lang === audio_lang);
+          if (matchByLang) {
+            targetAudio = matchByLang.id;
+          }
+        }
+      }
+      return targetAudio;
+    });
     setAudioTracks(tracks);
   };
 
@@ -194,19 +282,22 @@ export default function VideoScreen(props: {
           onError={handleError}
           progressUpdateInterval={1000}
           selectedTextTrack={
+            // exoplayer is zero-indexed, but we store one-indexed to fit mpv
             selectedTextTrack === -1
               ? { type: SelectedTrackType.DISABLED }
-              : { type: SelectedTrackType.INDEX, value: selectedTextTrack }
+              : { type: SelectedTrackType.INDEX, value: selectedTextTrack - 1 }
           }
           selectedAudioTrack={
-            selectedAudioTrack >= 0
-              ? { type: SelectedTrackType.INDEX, value: selectedAudioTrack }
+            // exoplayer is zero-indexed, but we store one-indexed to fit mpv
+            selectedAudioTrack >= 1
+              ? { type: SelectedTrackType.INDEX, value: selectedAudioTrack - 1 }
               : undefined
           }
         />
         {Platform.isTV ? (
           <VideoControlsTV
             videoRef={videoRef as any}
+            player={"exoplayer"}
             paused={paused}
             onPlayPause={handlePlayPause}
             currentTime={currentTime}
@@ -222,10 +313,12 @@ export default function VideoScreen(props: {
             onSelectAudioTrack={handleSelectAudioTrack}
             isZoomedToFill={isZoomedToFill}
             onChangeResizeMode={handleChangeResizeMode}
+            onChangePlayer={props.onChangePlayer}
           />
         ) : (
           <VideoControls
             videoRef={videoRef as any}
+            player="exoplayer"
             paused={paused}
             onPlayPause={handlePlayPause}
             currentTime={currentTime}
@@ -241,6 +334,7 @@ export default function VideoScreen(props: {
             onSelectAudioTrack={handleSelectAudioTrack}
             isZoomedToFill={isZoomedToFill}
             onChangeResizeMode={handleChangeResizeMode}
+            onChangePlayer={props.onChangePlayer}
           />
         )}
         {!isReady && <LoadingOverlay />}
