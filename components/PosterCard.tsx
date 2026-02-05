@@ -55,7 +55,7 @@ export default function PosterCard({
         );
       }}
     >
-      <View className="flex-1">
+      <View>
         {imgSource ? (
           <Image
             source={imgSource}

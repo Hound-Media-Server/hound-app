@@ -65,7 +65,7 @@ export default function ContinueWatchingCard({
   }
   return (
     <TouchableHighlight
-      className="flex-1 group rounded-lg"
+      className="group rounded-lg"
       focusable
       hasTVPreferredFocus={hasTVPreferredFocus || false}
       onFocus={() => {
@@ -103,7 +103,7 @@ export default function ContinueWatchingCard({
         router.navigate(route as Route);
       }}
     >
-      <View className="flex-1">
+      <View>
         <View className="rounded-lg">
           {imgSource ? (
             <Image
