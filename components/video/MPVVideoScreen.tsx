@@ -97,7 +97,6 @@ export default function MPVVideoScreen(props: {
     props.mediaType,
     props.seasonNumber,
     props.episodeNumber,
-    props.episodeNumber,
     props.encodedData,
     isZoomedToFill,
     selectedAudioTrack,

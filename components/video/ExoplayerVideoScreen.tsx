@@ -47,6 +47,8 @@ export default function VideoScreen(props: {
   const videoRef = useRef<VideoRef>(null);
   const [paused, setPaused] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const currentTimeRef = useRef(0); // for setInterval, refs don't get stale
+  const durationRef = useRef(0);
   const [duration, setDuration] = useState(0);
   const [textTracks, setTextTracks] = useState<any[]>([]);
   const [audioTracks, setAudioTracks] = useState<any[]>([]);
@@ -63,16 +65,15 @@ export default function VideoScreen(props: {
   // Update playback progress every 5 seconds
   useEffect(() => {
     if (!isReady || paused) return;
-
     const interval = setInterval(() => {
       // Don't set playback progress if below 5 minutes
-      if (currentTime > 300) {
+      if (currentTimeRef.current > 300) {
         updatePlaybackProgress(props.id, props.mediaType, {
           season_number: props.seasonNumber,
           episode_number: props.episodeNumber,
           encoded_data: props.encodedData,
-          current_progress_seconds: Math.floor(currentTime),
-          total_duration_seconds: Math.floor(duration),
+          current_progress_seconds: Math.floor(currentTimeRef.current),
+          total_duration_seconds: Math.floor(durationRef.current),
           player_settings: {
             player: "exoplayer",
             resize_mode: isZoomedToFill ? "cover" : "contain",
@@ -99,7 +100,6 @@ export default function VideoScreen(props: {
     props.mediaType,
     props.seasonNumber,
     props.episodeNumber,
-    props.episodeNumber,
     props.encodedData,
     isZoomedToFill,
     selectedAudioTrack,
@@ -111,16 +111,19 @@ export default function VideoScreen(props: {
   const handleLoad = (data: OnLoadData) => {
     setIsReady(true);
     setDuration(data.duration);
+    durationRef.current = data.duration;
 
     // Seek to start time if provided
     if (props.startTime && !initialSeekDone.current) {
       videoRef.current?.seek(props.startTime);
+      currentTimeRef.current = props.startTime;
       initialSeekDone.current = true;
     }
   };
 
   const handleProgress = (data: OnProgressData) => {
     setCurrentTime(data.currentTime);
+    currentTimeRef.current = data.currentTime;
   };
 
   const handleTextTracks = (data: OnTextTracksData) => {

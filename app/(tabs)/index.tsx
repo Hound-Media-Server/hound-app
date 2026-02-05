@@ -55,7 +55,7 @@ export default function Index() {
   return (
     <SafeAreaView className="flex-1 bg-black h-full">
       {Platform.isTV && <HomeDetails />}
-      <View className="flex-1">
+      <View className="flex-1 pb-5">
         <FlatList
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
