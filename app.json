@@ -19,7 +19,6 @@
           }
         }
       ],
-
       [
         "expo-build-properties",
         {
@@ -39,7 +38,8 @@
       "splash": {
         "image": "./assets/images/splash.png"
       },
-      "package": "com.anonymous.houndapp"
+      "package": "com.anonymous.houndapp",
+      "permissions": []
     },
     "ios": {
       "splash": {
@@ -63,6 +63,13 @@
       "eas": {
         "projectId": "1906e8aa-5f95-48be-b39b-07340f2e9e78"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/1906e8aa-5f95-48be-b39b-07340f2e9e78",
+      "checkAutomatically": "ON_ERROR_RECOVERY"
     }
   }
 }
