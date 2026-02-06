@@ -21,6 +21,8 @@ import {
   getAddToCollectionUrl,
 } from "@/utils/navigation";
 import { ImageBackground } from "expo-image";
+import TVDetailsTV from "./TVDetails.tv";
+import { Platform } from "react-native";
 
 export default function TVDetails() {
   const queryClient = useQueryClient();
@@ -217,11 +219,11 @@ export default function TVDetails() {
                 {details?.genres?.map((item: any) => item.name).join(", ")}
               </ThemedText>
               {!!creators && (
-                <ThemedText className="text-gray-400 mt-1 sm:text-lg">
+                <ThemedText className="text-gray-300 mt-1 sm:text-lg">
                   {creators}
                 </ThemedText>
               )}
-              <ThemedText className="text-gray-300 text-md sm:text-lg mt-1">
+              <ThemedText className="text-gray-400 text-md sm:text-lg mt-1">
                 {details?.overview}
               </ThemedText>
             </View>

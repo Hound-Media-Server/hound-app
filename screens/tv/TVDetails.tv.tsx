@@ -77,7 +77,7 @@ export default function TVDetails() {
   } else if (!isContinueLoading) {
     // evaluate necessity of checking if first episode for all tmdb shows are
     // s1e1 or if there are edge cases
-    playLabel = "▶︎ Play S1E1abc";
+    playLabel = "▶︎ Play S1E1";
   }
 
   const handlePlayPress = async () => {
@@ -217,11 +217,11 @@ export default function TVDetails() {
                 {details?.genres?.map((item: any) => item.name).join(", ")}
               </ThemedText>
               {!!creators && (
-                <ThemedText className="text-gray-400 mt-1 sm:text-lg">
+                <ThemedText className="text-gray-300 mt-1 sm:text-lg">
                   {creators}
                 </ThemedText>
               )}
-              <ThemedText className="text-gray-300 text-md sm:text-lg mt-1">
+              <ThemedText className="text-gray-400 text-md sm:text-lg mt-1">
                 {details?.overview}
               </ThemedText>
             </View>
