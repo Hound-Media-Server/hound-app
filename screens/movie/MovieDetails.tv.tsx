@@ -16,6 +16,7 @@ import {
   getAddToCollectionUrl,
 } from "@/utils/navigation";
 import GradientBackgroundView from "@/components/media_page/GradientBackgroundView";
+import FocusButton from "@/components/FocusButton";
 
 export default function MovieDetails() {
   const queryClient = useQueryClient();
@@ -115,12 +116,14 @@ export default function MovieDetails() {
   // create array to render info in a row
   const info = [];
   if (details?.duration) {
-    info.push(
-      Math.floor(details?.duration / 60) +
-        "h " +
-        (details?.duration % 60) +
-        "m",
-    );
+    details.duration <= 60
+      ? info.push(details.duration + "m")
+      : info.push(
+          Math.floor(details?.duration / 60) +
+            "h " +
+            (details?.duration % 60) +
+            "m",
+        );
   }
   if (creators) {
     info.push(creators);
@@ -133,36 +136,6 @@ export default function MovieDetails() {
       >
         <View className="flex-1 w-3/5">
           <View className="absolute bottom-0">
-            <View className="flex-row gap-3 mb-2">
-              <TouchableOpacity
-                focusable
-                hasTVPreferredFocus
-                onPress={handlePlayPress}
-                activeOpacity={0.75}
-                className="p-2 bg-secondary rounded-2xl w-[120px] sm:w-[150px] items-center"
-              >
-                <ThemedText className="text-primary text-md sm:text-lg">
-                  {playLabel}
-                </ThemedText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() =>
-                  router.push(
-                    getAddToCollectionUrl(
-                      "movie",
-                      details?.media_source,
-                      details?.source_id,
-                    ),
-                  )
-                }
-                activeOpacity={0.75}
-                className="p-2 bg-white rounded-2xl w-[120px] sm:w-[150px] items-center"
-              >
-                <ThemedText className="text-primary text-md sm:text-lg">
-                  Add to Collection
-                </ThemedText>
-              </TouchableOpacity>
-            </View>
             <ThemedText className="text-white text-3xl leading-[36px]">
               {details?.media_title}
               <ThemedText className="text-gray-400 text-2xl leading-[32px]">
@@ -185,6 +158,25 @@ export default function MovieDetails() {
             <ThemedText className="text-gray-400 text-md sm:text-lg mt-1">
               {details?.overview}
             </ThemedText>
+            <View className="flex-row gap-3 mt-3">
+              <FocusButton
+                onPress={handlePlayPress}
+                label={playLabel}
+                hasTVPreferredFocus
+              />
+              <FocusButton
+                onPress={() =>
+                  router.push(
+                    getAddToCollectionUrl(
+                      "movie",
+                      details?.media_source,
+                      details?.source_id,
+                    ),
+                  )
+                }
+                label="Add to Collection"
+              />
+            </View>
           </View>
         </View>
       </GradientBackgroundView>

@@ -87,7 +87,7 @@ export default function Stream() {
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
           encodedData={encoded_data as string}
-          streamsMatch={streamsMatch === "true" ? true : false}
+          streamsMatch={true}
           playerSettings={{ ...currentSettings, player: "mpv" }}
           onChangePlayer={handlePlayerChange}
         />
@@ -100,7 +100,7 @@ export default function Stream() {
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
           encodedData={encoded_data as string}
-          streamsMatch={streamsMatch === "true" ? true : false}
+          streamsMatch={true}
           playerSettings={{ ...currentSettings, player: "exoplayer" }}
           onChangePlayer={handlePlayerChange}
         />

@@ -26,11 +26,11 @@ export default function GradientBackgroundView({
         <LinearGradient
           start={{ x: 0, y: 0.35 }}
           end={{ x: 0, y: 1 }}
-          colors={["rgba(0,0,0,0)", "rgba(9,4,41,0.85)", "rgba(9,4,41,1)"]}
+          colors={["rgba(0,0,0,0)", "rgba(9,4,41,0.9)", "rgba(9,4,41,1)"]}
           className="absolute w-full h-full"
         />
         <LinearGradient
-          colors={["rgba(9,4,41,1)", "rgba(9,4,41,0.8)", "rgba(0,0,0,0)"]}
+          colors={["rgba(9,4,41,1)", "rgba(9,4,41,0.7)", "rgba(0,0,0,0)"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0.6, y: 0 }}
           className="absolute w-full h-full"

@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
+  TVFocusGuideView,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useRef, useEffect, useState } from "react";
@@ -49,7 +50,7 @@ export default function SeasonSection({
   );
   const [focusedEpisode, setFocusedEpisode] = useState<any | null>(null);
   const [focusedWatchedAt, setFocusedWatchedAt] = useState<string | null>(null);
-  const flatListRef = useRef<FlatList>(null);
+  const seasonsListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     if (seasons && seasons.length > 0) {
@@ -57,7 +58,7 @@ export default function SeasonSection({
         (s: any) => s.season_number === defaultSeason,
       );
       if (index !== -1) {
-        flatListRef.current?.scrollToIndex({
+        seasonsListRef.current?.scrollToIndex({
           index,
           animated: true,
           viewPosition: 0.25,
@@ -79,49 +80,61 @@ export default function SeasonSection({
       </ThemedText>
     );
   }
-  return (
+  return wrapTVFocusGuideView(
     <>
       <View>
         <View className="mb-5 -mx-5">
-          <FlatList
-            data={seasons}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20 }}
-            ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
-            renderItem={({ item }: { item: any }) => (
-              <TouchableOpacity
-                focusable
-                onPress={() => setSelectedSeasonNum(item.season_number)}
-                className={
-                  "rounded-xl p-2 opacity-70 border-2 border-transparent focus:border-white " +
-                  (item?.season_number === selectedSeasonNum
-                    ? "bg-secondary"
-                    : "bg-gray-200")
-                }
-                activeOpacity={isTV ? 1 : 0.75}
-              >
-                {
-                  <ThemedText className="text-primary">
-                    {item.season_number === 0
-                      ? "Specials"
-                      : "Season " + item.season_number}
-                  </ThemedText>
-                }
-              </TouchableOpacity>
-            )}
-            keyExtractor={(item) => item.source_id}
-            ref={flatListRef}
-            onScrollToIndexFailed={(info) => {
-              setTimeout(() => {
-                flatListRef.current?.scrollToIndex({
-                  index: info.index,
-                  animated: false,
-                  viewPosition: 0.25,
-                });
-              }, 100);
-            }}
-          />
+          {wrapTVFocusGuideView(
+            <FlatList
+              data={seasons}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 20 }}
+              ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
+              renderItem={({ item }: { item: any }) => (
+                <TouchableOpacity
+                  focusable
+                  onPress={() => setSelectedSeasonNum(item.season_number)}
+                  onFocus={() =>
+                    isTV && setSelectedSeasonNum(item.season_number)
+                  }
+                  className={
+                    "items-center justify-center rounded-xl p-2 " +
+                    (item?.season_number === selectedSeasonNum
+                      ? isTV
+                        ? "bg-secondary/50"
+                        : "bg-secondary"
+                      : isTV
+                        ? "bg-gray-600"
+                        : "bg-gray-200") +
+                    (isTV && " h-[40px] w-[100px] focus:bg-secondary")
+                  }
+                  activeOpacity={isTV ? 1 : 0.75}
+                >
+                  {
+                    <ThemedText
+                      className={"text-primary" + (isTV && " text-lg")}
+                    >
+                      {item.season_number === 0
+                        ? "Specials"
+                        : "Season " + item.season_number}
+                    </ThemedText>
+                  }
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => item.source_id}
+              ref={seasonsListRef}
+              onScrollToIndexFailed={(info) => {
+                setTimeout(() => {
+                  seasonsListRef.current?.scrollToIndex({
+                    index: info.index,
+                    animated: false,
+                    viewPosition: 0.25,
+                  });
+                }, 100);
+              }}
+            />,
+          )}
         </View>
         <View>
           {isLoading ? (
@@ -129,21 +142,23 @@ export default function SeasonSection({
               <ActivityIndicator color="white" size="large" />
             </View>
           ) : (
-            <EpisodeSection
-              seasonDetails={seasonDetails}
-              watchedEpisodeData={watchedEpisodeData}
-              watchProgress={watchProgress}
-              sourceID={sourceID}
-              mediaTitle={mediaTitle}
-              focusedEpisode={focusedEpisode}
-              focusedWatchedAt={focusedWatchedAt}
-              setFocusedEpisode={setFocusedEpisode}
-              setFocusedWatchedAt={setFocusedWatchedAt}
-            />
+            wrapTVFocusGuideView(
+              <EpisodeSection
+                seasonDetails={seasonDetails}
+                watchedEpisodeData={watchedEpisodeData}
+                watchProgress={watchProgress}
+                sourceID={sourceID}
+                mediaTitle={mediaTitle}
+                focusedEpisode={focusedEpisode}
+                focusedWatchedAt={focusedWatchedAt}
+                setFocusedEpisode={setFocusedEpisode}
+                setFocusedWatchedAt={setFocusedWatchedAt}
+              />,
+            )
           )}
         </View>
       </View>
-    </>
+    </>,
   );
 }
 
@@ -169,31 +184,61 @@ function EpisodeSection({
   setFocusedWatchedAt: (watchedAt: string | null) => void;
 }) {
   const flashlistRef = useRef<FlashListRef<any>>(null);
+  const flatlistRef = useRef<FlatList<any>>(null);
 
+  // react-native-tvos seems to play better with FlatList, but performance suffers on larger
+  // lists. In the future, prefer a pagination selection if seasons have too many episodes,
+  // since it's not good UX to have to scroll through too many episodes.
   return (
-    <View>
-      <FlashList
-        ref={flashlistRef}
-        data={seasonDetails?.episodes}
-        showsVerticalScrollIndicator={false}
-        showsHorizontalScrollIndicator={false}
-        removeClippedSubviews={false}
-        horizontal={isTV}
-        renderItem={({ item, index }: { item: any; index: number }) => (
-          <EpisodeCard
-            index={index}
-            episode={item}
-            watchedAt={watchedEpisodeData?.get(item.source_id) || null}
-            watchProgress={watchProgress?.get(item.source_id) || null}
-            sourceID={sourceID}
-            mediaTitle={mediaTitle}
-            setFocusedEpisode={setFocusedEpisode}
-            setFocusedWatchedAt={setFocusedWatchedAt}
-            flashlistRef={flashlistRef}
-          />
-        )}
-        keyExtractor={(item) => item.source_id}
-      />
+    <View focusable className={isTV ? "opacity-50 focus:opacity-100" : ""}>
+      {seasonDetails?.episodes.length <= 100 ? (
+        <FlatList
+          ref={flatlistRef}
+          data={seasonDetails?.episodes}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          removeClippedSubviews={false}
+          horizontal={isTV}
+          renderItem={({ item, index }: { item: any; index: number }) => (
+            <EpisodeCard
+              index={index}
+              episode={item}
+              watchedAt={watchedEpisodeData?.get(item.source_id) || null}
+              watchProgress={watchProgress?.get(item.source_id) || null}
+              sourceID={sourceID}
+              mediaTitle={mediaTitle}
+              setFocusedEpisode={setFocusedEpisode}
+              setFocusedWatchedAt={setFocusedWatchedAt}
+              episodeListRef={flatlistRef}
+            />
+          )}
+          keyExtractor={(item) => item.source_id}
+        />
+      ) : (
+        <FlashList
+          ref={flashlistRef}
+          data={seasonDetails?.episodes}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          removeClippedSubviews={false}
+          horizontal={isTV}
+          renderItem={({ item, index }: { item: any; index: number }) => (
+            <EpisodeCard
+              index={index}
+              episode={item}
+              watchedAt={watchedEpisodeData?.get(item.source_id) || null}
+              watchProgress={watchProgress?.get(item.source_id) || null}
+              sourceID={sourceID}
+              mediaTitle={mediaTitle}
+              setFocusedEpisode={setFocusedEpisode}
+              setFocusedWatchedAt={setFocusedWatchedAt}
+              episodeListRef={flashlistRef}
+            />
+          )}
+          keyExtractor={(item) => item.source_id}
+        />
+      )}
+
       {isTV && (
         <View className="h-[80px] mt-3">
           <EpisodeInfo episode={focusedEpisode} watchedAt={focusedWatchedAt} />
@@ -212,7 +257,7 @@ function EpisodeCard({
   mediaTitle,
   setFocusedEpisode,
   setFocusedWatchedAt,
-  flashlistRef,
+  episodeListRef,
 }: {
   index: number;
   episode: any;
@@ -222,7 +267,9 @@ function EpisodeCard({
   mediaTitle?: string;
   setFocusedEpisode: (episode: any) => void;
   setFocusedWatchedAt: (watchedAt: string | null) => void;
-  flashlistRef: React.RefObject<FlashListRef<any> | null>;
+  episodeListRef:
+    | React.RefObject<FlashListRef<any> | null>
+    | React.RefObject<FlatList<any> | null>;
 }) {
   var info: string[] = [];
   if (episode?.duration) {
@@ -239,10 +286,11 @@ function EpisodeCard({
             className="border-2 border-transparent rounded-lg focus:border-white"
             activeOpacity={isTV ? 1 : 0.7}
             focusable
+            hasTVPreferredFocus={isTV && index === 0}
             onFocus={() => {
               setFocusedEpisode(episode);
               setFocusedWatchedAt(watchedAt);
-              flashlistRef?.current?.scrollToIndex({
+              episodeListRef?.current?.scrollToIndex({
                 index: index,
                 animated: true,
                 viewPosition: 0.25,
@@ -354,26 +402,31 @@ function EpisodeInfo({
   return (
     <View>
       <ThemedText>
-        <ThemedText className="text-secondary text-lg">
+        <ThemedText className="text-secondary text-lg md:text-2xl">
           {episode?.episode_number + " • "}
         </ThemedText>
-        <ThemedText className="text-white text-lg">
+        <ThemedText className="text-white text-lg md:text-2xl">
           {episode?.media_title}
         </ThemedText>
       </ThemedText>
-      <ThemedText className="text-gray-400 text-base">
+      <ThemedText className="text-gray-300 text-base md:text-xl">
         {info.join(" ⸱ ")}
       </ThemedText>
       {watchedAt ? (
-        <ThemedText className="text-gray-200 text-base opacity-85">
+        <ThemedText className="text-secondary opacity-85 text-base md:text-xl">
           {"Last watched " + watchedAt}
         </ThemedText>
       ) : null}
       {isTV && (
-        <ThemedText className="text-gray-400 mb-4 text-base">
+        <ThemedText className="text-gray-400 mb-4 text-base md:text-xl">
           {episode?.overview}
         </ThemedText>
       )}
     </View>
   );
+}
+
+function wrapTVFocusGuideView(children: React.ReactNode) {
+  if (!Platform.isTV) return children;
+  return <TVFocusGuideView autoFocus>{children}</TVFocusGuideView>;
 }

@@ -36,6 +36,7 @@ export function getSelectStreamUrl(params: StreamUrlParams) {
 }
 
 export function getAddToCollectionUrl(media_type: string, media_source: string, source_id: string) {
+  media_type = media_type === "tvshow" ? "tv" : media_type;
   const queryParts = [];
   queryParts.push(`media_type=${media_type}`);
   queryParts.push(`media_source=${media_source}`);

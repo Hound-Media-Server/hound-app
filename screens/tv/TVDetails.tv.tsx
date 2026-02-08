@@ -4,6 +4,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Modal,
+  Dimensions,
 } from "react-native";
 import React from "react";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
@@ -21,10 +23,14 @@ import {
   getAddToCollectionUrl,
 } from "@/utils/navigation";
 import { ImageBackground } from "expo-image";
+import GradientBackgroundView from "@/components/media_page/GradientBackgroundView";
+import FocusButton from "@/components/FocusButton";
 
 export default function TVDetails() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams();
+  const [showSeasonsModal, setShowSeasonsModal] = React.useState(false);
+  const SCREEN_HEIGHT = Dimensions.get("window").height;
 
   useFocusEffect(
     React.useCallback(() => {
@@ -177,102 +183,74 @@ export default function TVDetails() {
       : details?.seasons;
   return (
     <>
-      <View className="flex-1 relative bg-primary">
-        <ParallaxScrollView
-          headerHeight={300}
-          headerImage={
-            details?.backdrop_uri ? (
-              <ImageBackground
-                source={{ uri: details?.backdrop_uri }}
-                className="absolute w-full h-96"
-                contentFit="cover"
-              />
-            ) : (
-              <View className="absolute w-full h-96 bg-zinc-900 border-b border-zinc-800" />
-            )
-          }
+      <View className="flex-1">
+        <GradientBackgroundView
+          uri={details?.backdrop_uri as string}
+          className="h-full w-full px-8 py-8"
         >
-          <View className="px-5 sm:px-8 md:px-24">
-            <View className="flex-row">
-              <TouchableOpacity
-                focusable
-                hasTVPreferredFocus
-                onPress={handlePlayPress}
-                activeOpacity={0.75}
-                className="p-2 mb-3 bg-secondary rounded-2xl w-[120px] sm:w-[150px] items-center"
-              >
-                <ThemedText className="text-primary text-md sm:text-lg">
-                  {playLabel}
-                </ThemedText>
-              </TouchableOpacity>
-            </View>
-            <View className="me-5">
+          <View className="flex-1 w-3/5">
+            <View className="absolute bottom-0">
               <ThemedText className="text-white text-3xl leading-[36px]">
                 {details?.media_title}
                 <ThemedText className="text-gray-400 text-2xl leading-[32px]">
-                  {" (" + details?.release_date?.split("-")[0] + ")"}
+                  {" (" + details?.release_date.split("-")[0] + ")"}
                 </ThemedText>
               </ThemedText>
               <ThemedText className="text-secondary mt-1 opacity-80 sm:text-lg">
                 {details?.genres?.map((item: any) => item.name).join(", ")}
               </ThemedText>
-              {!!creators && (
-                <ThemedText className="text-gray-300 mt-1 sm:text-lg">
-                  {creators}
-                </ThemedText>
-              )}
+              {/* {creators && (
+              <ThemedText className="text-gray-300 mt-1 sm:text-lg">
+                by {creators}
+              </ThemedText>
+            )} */}
               <ThemedText className="text-gray-400 text-md sm:text-lg mt-1">
                 {details?.overview}
               </ThemedText>
-            </View>
-            <TouchableOpacity
-              onPress={() =>
-                router.push(
-                  getAddToCollectionUrl(
-                    "tvshow",
-                    details?.media_source,
-                    details?.source_id,
-                  ),
-                )
-              }
-              activeOpacity={0.75}
-              className="p-2 mt-3 bg-white rounded-2xl w-[120px] sm:w-[150px] items-center"
-            >
-              <ThemedText className="text-primary text-md sm:text-lg">
-                Add to Collection
-              </ThemedText>
-            </TouchableOpacity>
-            {!!details?.seasons?.length && (
-              <View className="mt-2">
-                <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
-                  Seasons
-                </ThemedText>
-                <SeasonSection
-                  sourceID={id as string}
-                  seasons={seasonsData}
-                  defaultSeason={seasonsData[0]?.season_number}
-                  mediaTitle={details?.media_title}
+              <View className="flex-row gap-3 mt-3">
+                <FocusButton
+                  onPress={handlePlayPress}
+                  label={playLabel}
+                  hasTVPreferredFocus
+                />
+                <FocusButton
+                  label="View Episodes"
+                  onPress={() => setShowSeasonsModal(true)}
+                />
+                <FocusButton
+                  onPress={() =>
+                    router.push(
+                      getAddToCollectionUrl(
+                        "tv",
+                        details?.media_source,
+                        details?.source_id,
+                      ),
+                    )
+                  }
+                  label="Add to Collection"
                 />
               </View>
-            )}
-            {!!details?.cast?.length && (
-              <View className="mt-2">
-                <ThemedText className=" text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
-                  Cast
-                </ThemedText>
-                <View className="-mx-5">
-                  <HorizontalList
-                    itemData={details?.cast}
-                    itemType="cast"
-                    showDescription={true}
-                  />
-                </View>
-              </View>
-            )}
+            </View>
           </View>
-        </ParallaxScrollView>
-        <View className="ms-5 me-5 sm:px-8 md:px-24"></View>
+        </GradientBackgroundView>
       </View>
+      <Modal
+        visible={showSeasonsModal}
+        animationType="fade"
+        onRequestClose={() => setShowSeasonsModal(false)}
+      >
+        <View
+          className="flex-1 bg-primary p-5"
+          style={{ paddingTop: SCREEN_HEIGHT / 5 }}
+        >
+          <SeasonSection
+            sourceID={id as string}
+            seasons={seasonsData}
+            defaultSeason={seasonsData[0]?.season_number}
+            mediaTitle={details?.media_title}
+          />
+        </View>
+      </Modal>
     </>
   );
 }

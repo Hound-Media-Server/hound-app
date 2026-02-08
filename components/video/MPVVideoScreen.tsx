@@ -138,30 +138,28 @@ export default function MPVVideoScreen(props: {
       if (props.playerSettings) {
         const { player, subtitle_idx, subtitle_lang, audio_idx, audio_lang } =
           props.playerSettings;
+        console.log("player settings");
+        console.log(props.playerSettings);
 
+        // if streams match continue watching data, use subtitle_idx
         if (
-          subtitles &&
-          (selectedTextTrack === -1 || selectedTextTrack === undefined)
+          subtitle_idx !== undefined &&
+          subtitle_idx !== -1 &&
+          props.streamsMatch &&
+          subtitles?.find((t: any) => t.id === subtitle_idx)
         ) {
-          // if streams match continue watching data, use subtitle_idx
-          if (
-            subtitle_idx !== undefined &&
-            subtitle_idx !== -1 &&
-            props.streamsMatch &&
-            subtitles.find((t: any) => t.id === subtitle_idx)
-          ) {
-            targetSub = subtitle_idx;
-          }
-          // otherwise fallback to subtitle_lang
-          else {
-            const matchByLang = subtitles.find(
-              (t: any) => t.lang === subtitle_lang,
-            );
-            if (matchByLang) {
-              targetSub = matchByLang.id;
-            }
+          targetSub = subtitle_idx;
+        }
+        // otherwise fallback to subtitle_lang
+        else {
+          const matchByLang = subtitles?.find(
+            (t: any) => t.lang === subtitle_lang,
+          );
+          if (matchByLang) {
+            targetSub = matchByLang.id;
           }
         }
+
         if (
           audio &&
           (selectedAudioTrack === 1 || selectedAudioTrack === undefined)

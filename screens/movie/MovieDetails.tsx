@@ -122,12 +122,14 @@ export default function MovieDetails() {
   // create array to render info in a row
   const info = [];
   if (details?.duration) {
-    info.push(
-      Math.floor(details?.duration / 60) +
-        "h " +
-        (details?.duration % 60) +
-        "m",
-    );
+    details.duration <= 60
+      ? info.push(details.duration + "m")
+      : info.push(
+          Math.floor(details?.duration / 60) +
+            "h " +
+            (details?.duration % 60) +
+            "m",
+        );
   }
   if (creators) {
     info.push(creators);
