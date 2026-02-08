@@ -1,4 +1,4 @@
-import { FontAwesome, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { Platform } from "react-native";
 
 import TabLayoutTV from "./TabLayout.tv";

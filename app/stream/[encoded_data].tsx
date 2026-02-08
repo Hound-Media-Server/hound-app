@@ -26,18 +26,16 @@ export default function Stream() {
   const [currentProgress, setCurrentProgress] = useState<number>(
     startTime ? parseInt(startTime as string, 10) : 0,
   );
-
+  const [playerHasChanged, setPlayerHasChanged] = useState(false);
   const parsedPlayerSettings = playerSettings
     ? JSON.parse(playerSettings as string)
     : null;
-
   const [currentSettings, setCurrentSettings] = useState<any>(
     parsedPlayerSettings || {},
   );
 
   useEffect(() => {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-
     // Load setting
     getSetting("player").then((val) => {
       // Use player from context if available, otherwise fallback to settings
@@ -45,7 +43,6 @@ export default function Stream() {
         (parsedPlayerSettings?.player as string) || val || "exoplayer";
       setCurrentPlayer(preferredPlayer);
     });
-
     return () => {
       ScreenOrientation.unlockAsync();
     };
@@ -58,6 +55,7 @@ export default function Stream() {
   ) => {
     setCurrentProgress(currentTime);
     setCurrentPlayer(newPlayer);
+    setPlayerHasChanged(true);
     if (settings) {
       setCurrentSettings((prev: any) => ({ ...prev, ...settings }));
     }
@@ -87,7 +85,9 @@ export default function Stream() {
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
           encodedData={encoded_data as string}
-          streamsMatch={true}
+          streamsMatch={
+            streamsMatch === "true" || playerHasChanged
+          } /* if we're just changing players, we want to preserve settings */
           playerSettings={{ ...currentSettings, player: "mpv" }}
           onChangePlayer={handlePlayerChange}
         />
@@ -100,7 +100,9 @@ export default function Stream() {
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
           encodedData={encoded_data as string}
-          streamsMatch={true}
+          streamsMatch={
+            streamsMatch === "true" || playerHasChanged
+          } /* if we're just changing players, we want to preserve settings */
           playerSettings={{ ...currentSettings, player: "exoplayer" }}
           onChangePlayer={handlePlayerChange}
         />

@@ -55,9 +55,10 @@ export default function Search() {
 
   return (
     <SafeAreaView className="flex-1 bg-black items-center">
-      <View className="w-full p-5 flex flex-row">
+      <View className="h-[100px]" />
+      <View className="w-full px-5">
         <TextInput
-          className="w-full bg-zinc-800 text-white p-4 rounded-lg border border-zinc-700 focus:border-indigo-500 focus:outline-none"
+          className="w-full bg-zinc-800 text-white p-4 rounded-md border border-zinc-700 focus:border-indigo-500 focus:outline-none"
           placeholder="Search..."
           value={searchQuery}
           onChangeText={setSearchQuery}

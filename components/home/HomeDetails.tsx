@@ -12,7 +12,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusStore } from "@/stores/focusStore";
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
-const HERO_HEIGHT = SCREEN_HEIGHT / 2.5;
+const HERO_HEIGHT = SCREEN_HEIGHT / 1.8;
 
 export default function HomeDetails() {
   const focusedItem = useFocusStore((s) => s.focusedItem);
@@ -39,7 +39,7 @@ export default function HomeDetails() {
         }}
       />
       <View className="absolute left-0 bottom-0 ps-5 pe-5 pb-5">
-        <ThemedText className="text-white text-2xl mb-1">
+        <ThemedText className="text-white text-3xl mb-1">
           {focusedItem.media_title}
           {releaseYear && (
             <ThemedText className="text-gray-400 text-2xl">
@@ -51,22 +51,26 @@ export default function HomeDetails() {
         {focusedItem.media_subtitle && (
           <ThemedText>
             {focusedItem.season_number && focusedItem.episode_number && (
-              <ThemedText className="text-gray-300 opacity-90 text-lg">
+              <ThemedText className="text-gray-300 opacity-90 text-xl">
                 S{focusedItem.season_number}E{focusedItem.episode_number}
                 {" | "}
               </ThemedText>
             )}
-            <ThemedText className="text-gray-400 text-lg">
+            <ThemedText className="text-gray-400 text-xl">
               {focusedItem.media_subtitle}
             </ThemedText>
           </ThemedText>
         )}
         {focusedItem.genres && (
-          <ThemedText className="text-secondary opacity-90 text-sm">
+          <ThemedText className="text-secondary opacity-90 text-base">
             {genres}
           </ThemedText>
         )}
-        <ThemedText className="text-gray-300 text-md">
+        <ThemedText
+          className="text-gray-300 text-lg"
+          numberOfLines={3}
+          ellipsizeMode="tail"
+        >
           {focusedItem.overview}
         </ThemedText>
       </View>

@@ -1,5 +1,5 @@
 import { apiClient } from "./apiClient";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatRelativeTime } from "../utils/dateUtils";
 
 /*
@@ -72,6 +72,19 @@ const fetchMovieContinueWatching = (id: string) => {
 
 const fetchShowContinueWatching = (id: string) => {
   return apiClient<ContinueWatchingResponse>(`/tv/${id}/continue_watching`);
+};
+
+export const updatePlaybackProgress = async (
+  id: string,
+  mediaType: "movie" | "tv",
+  data: PlaybackPayload,
+) => {
+  const endpoint =
+    mediaType === "movie" ? `/movie/${id}/playback` : `/tv/${id}/playback`;
+  return apiClient(endpoint, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 };
 
 export const useMovieWatchData = (id: string) => {
@@ -184,15 +197,37 @@ export interface PlaybackPayload {
   player_settings?: PlayerSettings;
 }
 
-export const updatePlaybackProgress = async (
-  id: string,
-  mediaType: "movie" | "tv",
-  data: PlaybackPayload,
-) => {
-  const endpoint =
-    mediaType === "movie" ? `/movie/${id}/playback` : `/tv/${id}/playback`;
-  return apiClient(endpoint, {
-    method: "POST",
-    body: JSON.stringify(data),
+export const useUpdatePlaybackProgress = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      mediaType,
+      data,
+    }: {
+      id: string;
+      mediaType: "movie" | "tv";
+      data: PlaybackPayload;
+    }) => updatePlaybackProgress(id, mediaType, data),
+    onSuccess: (data, variables) => {
+      if (variables.mediaType === "movie") {
+        queryClient.removeQueries({
+          queryKey: ["movie-watch-progress", variables.id],
+        });
+        queryClient.removeQueries({
+          queryKey: ["movie-continue-watching", variables.id],
+        });
+      } else {
+        queryClient.removeQueries({
+          queryKey: ["show-watch-progress", variables.id],
+        });
+        queryClient.removeQueries({
+          queryKey: ["show-continue-watching", variables.id],
+        });
+      }
+    },
+    onError: (error, variables) => {
+      console.error("Failed to update playback progress:", variables, error);
+    },
   });
 };

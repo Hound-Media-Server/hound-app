@@ -9,7 +9,7 @@ import * as NavigationBar from "expo-navigation-bar";
 import { StatusBar } from "expo-status-bar";
 import { useLayoutEffect, useRef, useState, useEffect } from "react";
 import {
-  updatePlaybackProgress,
+  useUpdatePlaybackProgress,
   PlayerSettings,
 } from "@/services/watchDataService";
 import { MpvPlayerView, MpvPlayerViewRef } from "@/modules/mpv-player";
@@ -36,6 +36,7 @@ export default function MPVVideoScreen(props: {
 }) {
   const { width, height } = useWindowDimensions();
   const videoRef = useRef<MpvPlayerViewRef>(null);
+  const updatePlaybackProgress = useUpdatePlaybackProgress();
   const [paused, setPaused] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -62,26 +63,28 @@ export default function MPVVideoScreen(props: {
 
         // don't set playback progress if below 5 minutes
         if (position && position > 300) {
-          updatePlaybackProgress(props.id, props.mediaType, {
-            season_number: props.seasonNumber,
-            episode_number: props.episodeNumber,
-            encoded_data: props.encodedData,
-            current_progress_seconds: Math.floor(position),
-            total_duration_seconds: Math.floor(dur || 0),
-            player_settings: {
-              player: "mpv",
-              resize_mode: isZoomedToFill ? "cover" : "contain",
-              audio_idx: selectedAudioTrack,
-              audio_lang:
-                audioTracks.find((t: any) => t.id === selectedAudioTrack)
-                  ?.lang || "",
-              subtitle_idx: selectedTextTrack,
-              subtitle_lang:
-                textTracks.find((t: any) => t.id === selectedTextTrack)?.lang ||
-                "",
+          updatePlaybackProgress.mutate({
+            id: props.id,
+            mediaType: props.mediaType,
+            data: {
+              season_number: props.seasonNumber,
+              episode_number: props.episodeNumber,
+              encoded_data: props.encodedData,
+              current_progress_seconds: Math.floor(position),
+              total_duration_seconds: Math.floor(dur || 0),
+              player_settings: {
+                player: "mpv",
+                resize_mode: isZoomedToFill ? "cover" : "contain",
+                audio_idx: selectedAudioTrack,
+                audio_lang:
+                  audioTracks.find((t: any) => t.id === selectedAudioTrack)
+                    ?.lang || "",
+                subtitle_idx: selectedTextTrack,
+                subtitle_lang:
+                  textTracks.find((t: any) => t.id === selectedTextTrack)
+                    ?.lang || "",
+              },
             },
-          }).catch((err) => {
-            console.error("Failed to update playback progress:", err);
           });
         }
       } catch (error) {

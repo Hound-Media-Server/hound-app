@@ -60,6 +60,7 @@ export default function Index() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
+          scrollEnabled={!Platform.isTV}
           ref={verticalListRef}
           data={rows}
           keyExtractor={(item) => item.key}

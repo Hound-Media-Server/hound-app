@@ -9,7 +9,7 @@ import * as NavigationBar from "expo-navigation-bar";
 import { StatusBar } from "expo-status-bar";
 import { useLayoutEffect, useRef, useState, useEffect } from "react";
 import {
-  updatePlaybackProgress,
+  useUpdatePlaybackProgress,
   PlayerSettings,
 } from "@/services/watchDataService";
 import Video, {
@@ -45,6 +45,7 @@ export default function VideoScreen(props: {
 }) {
   const { width, height } = useWindowDimensions();
   const videoRef = useRef<VideoRef>(null);
+  const updatePlaybackProgress = useUpdatePlaybackProgress();
   const [paused, setPaused] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const currentTimeRef = useRef(0); // for setInterval, refs don't get stale
@@ -68,26 +69,28 @@ export default function VideoScreen(props: {
     const interval = setInterval(() => {
       // Don't set playback progress if below 5 minutes
       if (currentTimeRef.current > 300) {
-        updatePlaybackProgress(props.id, props.mediaType, {
-          season_number: props.seasonNumber,
-          episode_number: props.episodeNumber,
-          encoded_data: props.encodedData,
-          current_progress_seconds: Math.floor(currentTimeRef.current),
-          total_duration_seconds: Math.floor(durationRef.current),
-          player_settings: {
-            player: "exoplayer",
-            resize_mode: isZoomedToFill ? "cover" : "contain",
-            audio_idx: selectedAudioTrack,
-            audio_lang:
-              audioTracks.find((t: any) => t.id === selectedAudioTrack)?.lang ||
-              "",
-            subtitle_idx: selectedTextTrack,
-            subtitle_lang:
-              textTracks.find((t: any) => t.id === selectedTextTrack)?.lang ||
-              "",
+        updatePlaybackProgress.mutate({
+          id: props.id,
+          mediaType: props.mediaType,
+          data: {
+            season_number: props.seasonNumber,
+            episode_number: props.episodeNumber,
+            encoded_data: props.encodedData,
+            current_progress_seconds: Math.floor(currentTimeRef.current),
+            total_duration_seconds: Math.floor(durationRef.current),
+            player_settings: {
+              player: "exoplayer",
+              resize_mode: isZoomedToFill ? "cover" : "contain",
+              audio_idx: selectedAudioTrack,
+              audio_lang:
+                audioTracks.find((t: any) => t.id === selectedAudioTrack)
+                  ?.lang || "",
+              subtitle_idx: selectedTextTrack,
+              subtitle_lang:
+                textTracks.find((t: any) => t.id === selectedTextTrack)?.lang ||
+                "",
+            },
           },
-        }).catch((err) => {
-          console.error("Failed to update playback progress:", err);
         });
       }
     }, 5000);

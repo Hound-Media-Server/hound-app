@@ -10,6 +10,7 @@ import PosterCard from "./PosterCard";
 import { ThemedText } from "./ThemedText";
 import ContinueWatchingCard from "./ContinueWatchingCard";
 import { TVFocusGuideView } from "react-native";
+import { FocusItem, useFocusStore } from "@/stores/focusStore";
 
 interface HorizontalListProps {
   useQuery?: () => any;
@@ -33,6 +34,7 @@ export default function HorizontalList({
   onRowFocus,
 }: HorizontalListProps) {
   const flatListRef = useRef<FlatList<any> | null>(null);
+  const setFocusedItem = useFocusStore((s) => s.setFocusedItem);
   const handleFocus = (index: number) => {
     if (!Platform.isTV) return;
     // vertical scroll in parent
@@ -129,7 +131,20 @@ export default function HorizontalList({
                 title={showDescription ? getMediaTitle(item) : ""}
                 subtitle={""}
                 imgAlt={getMediaTitle(item)}
-                onFocus={() => handleFocus(index)}
+                onFocus={() => {
+                  const focusItem: FocusItem = {
+                    media_type: item.media_type,
+                    source_id: item.source_id,
+                    media_title: item.media_title,
+                    overview: item.overview,
+                    backdrop_uri: item.backdrop_uri,
+                    release_date: item.release_date,
+                    status: item.status,
+                    genres: item.genres,
+                  };
+                  setFocusedItem(focusItem);
+                  handleFocus(index);
+                }}
                 hasTVPreferredFocus={rowIndex === 0 && index === 0}
               />
             );

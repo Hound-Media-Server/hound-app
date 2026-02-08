@@ -23,7 +23,6 @@ export default function PosterCard({
 }) {
   if (!item) return;
   const router = useRouter();
-  const setFocusedItem = useFocusStore((s) => s.setFocusedItem);
   let imgSource = item.thumbnail_uri;
   return (
     <TouchableHighlight
@@ -31,17 +30,6 @@ export default function PosterCard({
       focusable
       hasTVPreferredFocus={hasTVPreferredFocus || false}
       onFocus={() => {
-        const focusItem: FocusItem = {
-          media_type: item.media_type,
-          source_id: item.source_id,
-          media_title: item.media_title,
-          overview: item.overview,
-          backdrop_uri: item.backdrop_uri,
-          release_date: item.release_date,
-          status: item.status,
-          genres: item.genres,
-        };
-        setFocusedItem(focusItem);
         onFocus?.();
       }}
       underlayColor={Platform.isTV ? "transparent" : "#000"}

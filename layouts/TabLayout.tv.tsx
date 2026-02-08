@@ -1,83 +1,141 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import React from "react";
-import { Platform, Pressable, View } from "react-native";
-import { Colors } from "@/constants/Colors";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { useTextStyles } from "@/hooks/useTextStyles";
+import { useState } from "react";
+import { Pressable, TouchableHighlight } from "react-native";
 
-/**
- * This layout is required for the web platform.
- */
+function TVTabButton({ onPress, accessibilityState, iconName }: any) {
+  const selected = accessibilityState?.selected;
+  const [tvFocused, setTvFocused] = useState(false);
+
+  return (
+    <TouchableHighlight
+      focusable
+      onPress={onPress}
+      onFocus={() => {
+        setTvFocused(true);
+      }}
+      onBlur={() => setTvFocused(false)}
+      hasTVPreferredFocus={selected}
+      className={
+        "flex items-center justify-center" +
+        (tvFocused ? " opacity-100" : "opacity-0")
+      }
+    >
+      <Ionicons
+        size={24}
+        name={selected ? iconName : `${iconName}-outline`}
+        color={tvFocused ? "#FFD60A" : selected ? "#FF3B30" : "#8E8E93"}
+      />
+    </TouchableHighlight>
+  );
+}
+
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const textStyles = useTextStyles();
-
-  const tabBarButton = (props: any) => {
-    const style: any = props.style ?? {};
-    return (
-      <View className="flex-1 justify-center items-center">
-        <Pressable
-          {...props}
-          style={({ pressed, focused }) => [
-            style,
-            {
-              opacity: pressed || focused ? 0.6 : 1.0,
-            },
-          ]}
-          className="border-2 border-transparent focus:border-white"
-        />
-      </View>
-    );
-  };
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        tabBarActiveBackgroundColor: Colors[colorScheme ?? "light"].background,
+        tabBarActiveTintColor: "#FF3B30",
+        tabBarInactiveTintColor: "#8E8E93",
+        tabBarItemStyle: {
+          justifyContent: "center",
+          alignItems: "center",
+          paddingTop: 4,
+        },
         tabBarStyle: {
-          width: "100%",
+          display: "flex",
+          position: "absolute",
+          overflow: "hidden",
+          opacity: 0.8,
+          top: 10,
+          marginHorizontal: 20,
+          marginBottom: 20,
+          elevation: 2,
+          backgroundColor: "#1C1C1E",
+          borderRadius: 40,
+          height: 64,
+          borderTopWidth: 0,
+          shadowColor: "#000",
+          shadowOffset: {
+            width: 0,
+            height: 4,
+          },
+          shadowOpacity: 0.15,
+          shadowRadius: 5,
         },
-        tabBarPosition: "top",
-        tabBarIconStyle: {
-          height: textStyles.title.lineHeight,
-          width: 0,
-        },
-        headerShown: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: () => null,
-          tabBarButton,
+          headerShown: false,
+          tabBarIcon: ({ focused, color }) => (
+            <TVTabButton
+              onPress={() => {}}
+              accessibilityState={{ selected: focused }}
+              iconName="home"
+            />
+          ),
         }}
       />
       <Tabs.Screen
         name="library"
         options={{
           title: "Library",
-          tabBarIcon: () => null,
-          tabBarButton,
+          headerShown: false,
+          tabBarIcon: ({ focused, color }) => (
+            <TVTabButton
+              onPress={() => {}}
+              accessibilityState={{ selected: focused }}
+              iconName="albums"
+            />
+          ),
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
           title: "Search",
-          tabBarIcon: () => null,
-          tabBarButton,
+          headerShown: false,
+          tabBarIcon: ({ focused, color }) => (
+            <TVTabButton
+              onPress={() => {}}
+              accessibilityState={{ selected: focused }}
+              iconName="search"
+            />
+          ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
-          tabBarIcon: () => null,
-          tabBarButton,
+          headerShown: false,
+          tabBarIcon: ({ focused, color }) => (
+            <TVTabButton
+              onPress={() => {}}
+              accessibilityState={{ selected: focused }}
+              iconName="settings"
+            />
+          ),
         }}
       />
     </Tabs>
   );
+  // return (
+  //     <NativeTabs>
+  //         <NativeTabs.Trigger name="index">
+  //             <Label>Home</Label>
+  //             <Ionicons name="home-outline" size={22} />
+  //         </NativeTabs.Trigger>
+  //         <NativeTabs.Trigger name="explore">
+  //             <Label>Explore</Label>
+  //             <Icon sf="atom" />
+  //         </NativeTabs.Trigger>
+  //         <NativeTabs.Trigger name="library">
+  //             <Label>Library</Label>
+  //             <Icon sf="atom" />
+  //         </NativeTabs.Trigger>
+  //     </NativeTabs>
+  // );
 }
