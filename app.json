@@ -23,6 +23,7 @@
         "expo-build-properties",
         {
           "android": {
+            "usesCleartextTraffic": true,
             "minSdkVersion": 26
           }
         }
@@ -34,7 +35,6 @@
       "react-native-video"
     ],
     "android": {
-      "usesCleartextTraffic": true,
       "edgeToEdgeEnabled": true,
       "splash": {
         "image": "./assets/images/splash.png"
