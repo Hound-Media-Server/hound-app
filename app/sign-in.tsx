@@ -26,7 +26,6 @@ export default function SignIn() {
     try {
       await signIn(host, username, password);
     } catch (e: any) {
-      console.log("Login Failed.", e.message);
       Alert.alert("Login Failed. Check your host/credentials.", e.message);
     } finally {
       setLoading(false);
@@ -50,6 +49,7 @@ export default function SignIn() {
             autoCapitalize="none"
             value={host}
             onChangeText={setHost}
+            autoCorrect={false}
           />
         </View>
 
@@ -62,6 +62,7 @@ export default function SignIn() {
             autoCapitalize="none"
             value={username}
             onChangeText={setUsername}
+            autoCorrect={false}
           />
         </View>
 

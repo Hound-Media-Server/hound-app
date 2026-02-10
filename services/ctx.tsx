@@ -38,7 +38,6 @@ export function useSession() {
       throw new Error("useSession must be wrapped in a <SessionProvider />");
     }
   }
-
   return value;
 }
 
@@ -85,7 +84,6 @@ export function SessionProvider({ children }: PropsWithChildren) {
       token: data.data.token,
       username: data.data.username,
     };
-
     if (
       !newSession.host.startsWith("http://") &&
       !newSession.host.startsWith("https://")

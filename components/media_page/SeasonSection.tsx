@@ -129,7 +129,7 @@ export default function SeasonSection({
                   seasonsListRef.current?.scrollToIndex({
                     index: info.index,
                     animated: false,
-                    viewPosition: 0.25,
+                    viewPosition: 0.5,
                   });
                 }, 100);
               }}
@@ -186,12 +186,12 @@ function EpisodeSection({
   const flashlistRef = useRef<FlashListRef<any>>(null);
   const flatlistRef = useRef<FlatList<any>>(null);
 
-  // react-native-tvos seems to play better with FlatList, but performance suffers on larger
-  // lists. In the future, prefer a pagination selection if seasons have too many episodes,
-  // since it's not good UX to have to scroll through too many episodes.
+  // flashlist nagivation seems  less smooth on react-native-tvos (?), so we default to flatlist for now
+  // performance will suffer on larger lists, need to find a better solution, probably
+  // pagination since it's not good UX to have to scroll through too many episodes anyway
   return (
     <View focusable className={isTV ? "opacity-50 focus:opacity-100" : ""}>
-      {seasonDetails?.episodes.length <= 100 ? (
+      {seasonDetails?.episodes.length <= 1000 || true ? (
         <FlatList
           ref={flatlistRef}
           data={seasonDetails?.episodes}
@@ -207,6 +207,7 @@ function EpisodeSection({
               watchProgress={watchProgress?.get(item.source_id) || null}
               sourceID={sourceID}
               mediaTitle={mediaTitle}
+              focusedEpisode={focusedEpisode}
               setFocusedEpisode={setFocusedEpisode}
               setFocusedWatchedAt={setFocusedWatchedAt}
               episodeListRef={flatlistRef}
@@ -230,6 +231,7 @@ function EpisodeSection({
               watchProgress={watchProgress?.get(item.source_id) || null}
               sourceID={sourceID}
               mediaTitle={mediaTitle}
+              focusedEpisode={focusedEpisode}
               setFocusedEpisode={setFocusedEpisode}
               setFocusedWatchedAt={setFocusedWatchedAt}
               episodeListRef={flashlistRef}
@@ -255,6 +257,7 @@ function EpisodeCard({
   watchProgress,
   sourceID,
   mediaTitle,
+  focusedEpisode,
   setFocusedEpisode,
   setFocusedWatchedAt,
   episodeListRef,
@@ -265,6 +268,7 @@ function EpisodeCard({
   watchProgress: WatchProgress | null;
   sourceID: string;
   mediaTitle?: string;
+  focusedEpisode: any;
   setFocusedEpisode: (episode: any) => void;
   setFocusedWatchedAt: (watchedAt: string | null) => void;
   episodeListRef:
@@ -286,14 +290,14 @@ function EpisodeCard({
             className="border-2 border-transparent rounded-lg focus:border-white"
             activeOpacity={isTV ? 1 : 0.7}
             focusable
-            hasTVPreferredFocus={isTV && index === 0}
+            hasTVPreferredFocus={index === 0}
             onFocus={() => {
               setFocusedEpisode(episode);
               setFocusedWatchedAt(watchedAt);
               episodeListRef?.current?.scrollToIndex({
                 index: index,
                 animated: true,
-                viewPosition: 0.25,
+                viewPosition: 0.5,
               });
             }}
             onPress={() => {

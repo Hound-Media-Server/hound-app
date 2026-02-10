@@ -27,27 +27,36 @@ export async function login(
   if (Platform.OS === "android" && Platform.isTV) platform = "android-tv";
   if (Platform.OS === "android" && !Platform.isTV) platform = "android-mobile";
 
-  const response = await fetch(`${baseUrl}/api/v1/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Client-Id": clientID,
-      "X-Client-Platform": platform,
-    },
-    body: JSON.stringify({ username, password }),
-  });
+  try {
+    const response = await fetch(`${baseUrl}/api/v1/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Client-Id": clientID,
+        "X-Client-Platform": platform,
+      },
+      body: JSON.stringify({ username, password }),
+    });
 
-  if (!response.ok) {
-    let errorMessage = `Login failed: ${response.status}`;
-    try {
-      const errorBody = await response.json();
-      if (errorBody && errorBody.message) {
-        errorMessage = errorBody.message;
+    if (!response.ok) {
+      let errorMessage = `Login failed: ${response.status}`;
+      try {
+        const errorBody = await response.json();
+        if (errorBody && errorBody.message) {
+          errorMessage = errorBody.message;
+        }
+      } catch (e) {
+        // ignore json parse error
       }
-    } catch (e) {
-      // ignore json parse error
+      throw new Error(errorMessage);
     }
-    throw new Error(errorMessage);
+    return response.json();
+  } catch (error: any) {
+    if (error.message === "Network request failed") {
+      throw new Error(
+        `Network error: Could not connect to ${baseUrl}. Please check your connection and host URL.`,
+      );
+    }
+    throw error;
   }
-  return response.json();
 }
