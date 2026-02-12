@@ -40,7 +40,7 @@ export default function ContinueWatchingCard({
     });
     title = wp?.media_title;
     if (mediaType === "tv") {
-      title += ` - S${wp.season_number}E${wp.episode_number}`;
+      title = `S${wp.season_number}E${wp.episode_number} | ${wp?.media_title}`;
     }
     subtitle = mediaType === "tv" ? wp.episode_title : "";
     imgSource = wp?.thumbnail_uri;
@@ -56,7 +56,7 @@ export default function ContinueWatchingCard({
     });
     title = nextEp?.media_title;
     if (mediaType === "tv") {
-      title += ` - S${nextEp.season_number}E${nextEp.episode_number}`;
+      title = `S${nextEp.season_number}E${nextEp.episode_number} | ${nextEp?.media_title}`;
     }
     subtitle = mediaType === "tv" ? nextEp.episode_title : "";
     imgSource = nextEp?.thumbnail_uri;
@@ -137,13 +137,19 @@ export default function ContinueWatchingCard({
         </View>
         <View className="w-[200px]">
           {!!title && (
-            <ThemedText className="text-gray-200 mt-2 text-start">
+            <ThemedText
+              className="text-gray-200 mt-2 text-start"
+              numberOfLines={1}
+            >
               {title}
             </ThemedText>
           )}
           {!!subtitle && (
-            <ThemedText className="text-gray-400 text-sm text-start">
-              {subtitle}
+            <ThemedText
+              className="text-gray-400 text-sm text-start"
+              numberOfLines={1}
+            >
+              "{subtitle}"
             </ThemedText>
           )}
         </View>

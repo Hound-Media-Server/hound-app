@@ -56,7 +56,7 @@ export default function Search() {
   return (
     <SafeAreaView className="flex-1 bg-black items-center">
       <View className="h-[100px]" />
-      <View className="w-full px-5">
+      <View className="w-full px-5 md:px-10">
         <TextInput
           className="w-full bg-zinc-800 text-white p-4 rounded-md border border-zinc-700 focus:border-indigo-500 focus:outline-none"
           placeholder="Search..."
@@ -65,7 +65,7 @@ export default function Search() {
         />
       </View>
       {searchQuery && (
-        <View className="flex-1 w-full p-5">
+        <View className="flex-1 w-full pt-5">
           {error && (
             <View className="mb-4 p-4 bg-red-900/50 border border-red-500 rounded-lg">
               <ThemedText className="text-red-200">

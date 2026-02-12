@@ -62,9 +62,9 @@ export default function HorizontalList({
   }
   if (isLoading) {
     return (
-      <View className="me-5 flex-1">
+      <View className="me-5 md:me-10 flex-1">
         {!!header && (
-          <ThemedText className="text-white text-2xl mb-3 ps-5">
+          <ThemedText className="text-white text-2xl mb-3 ps-5 md:ps-10">
             {header}
           </ThemedText>
         )}
@@ -79,7 +79,7 @@ export default function HorizontalList({
   return wrapTVFocusGuideView(
     <View>
       {!!header && data && (
-        <ThemedText className="text-white text-2xl mb-3 ps-5">
+        <ThemedText className="text-white text-2xl mb-3 ps-5 md:ps-10">
           {header}
         </ThemedText>
       )}
@@ -95,7 +95,7 @@ export default function HorizontalList({
           data={data}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20 }}
+          contentContainerStyle={{ paddingHorizontal: Platform.isTV ? 40 : 20 }}
           ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
           renderItem={({ item, index }) => {
             if (itemType === "cast") {

@@ -12,7 +12,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusStore } from "@/stores/focusStore";
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
-const HERO_HEIGHT = SCREEN_HEIGHT / 1.8;
+const HERO_HEIGHT = SCREEN_HEIGHT / 1.85;
 
 export default function HomeDetails() {
   const focusedItem = useFocusStore((s) => s.focusedItem);
@@ -38,7 +38,7 @@ export default function HomeDetails() {
           height: 300,
         }}
       />
-      <View className="absolute left-0 bottom-0 ps-5 pe-5 pb-5">
+      <View className="absolute left-0 bottom-0 ps-10 pe-10 mb-5 w-4/5">
         <ThemedText className="text-white text-3xl mb-1">
           {focusedItem.media_title}
           {releaseYear && (
@@ -67,8 +67,8 @@ export default function HomeDetails() {
           </ThemedText>
         )}
         <ThemedText
-          className="text-gray-300 text-lg"
-          numberOfLines={3}
+          className="text-gray-400 text-lg"
+          numberOfLines={4}
           ellipsizeMode="tail"
         >
           {focusedItem.overview}

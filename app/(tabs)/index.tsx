@@ -37,17 +37,17 @@ export default function Index() {
   );
 
   const rows = [
-    { key: "trendingShows", header: "Trending Shows", query: useTrendingShows },
-    {
-      key: "trendingMovies",
-      header: "Trending Movies",
-      query: useTrendingMovies,
-    },
     {
       key: "continueWatching",
       header: "Continue Watching",
       query: useContinueWatching,
       itemType: "episode",
+    },
+    { key: "trendingShows", header: "Trending Shows", query: useTrendingShows },
+    {
+      key: "trendingMovies",
+      header: "Trending Movies",
+      query: useTrendingMovies,
     },
   ];
 
