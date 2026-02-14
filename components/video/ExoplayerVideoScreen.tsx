@@ -42,6 +42,8 @@ export default function VideoScreen(props: {
     currentTime: number,
     settings?: any,
   ) => void;
+  hasNextEpisode?: boolean;
+  onNextEpisode?: (settings: any) => void;
 }) {
   const { width, height } = useWindowDimensions();
   const videoRef = useRef<VideoRef>(null);
@@ -62,6 +64,18 @@ export default function VideoScreen(props: {
   const initialSeekDone = useRef(false);
   const audioInitialized = useRef(false);
   const subtitleInitialized = useRef(false);
+
+  const handleNextEpisode = () => {
+    if (props.onNextEpisode) {
+      props.onNextEpisode({
+        subtitle_lang:
+          textTracks.find((t: any) => t.id === selectedTextTrack)?.lang || "",
+        audio_lang:
+          audioTracks.find((t: any) => t.id === selectedAudioTrack)?.lang || "",
+        resize_mode: isZoomedToFill ? "cover" : "contain",
+      });
+    }
+  };
 
   // Update playback progress every 5 seconds
   useEffect(() => {
@@ -320,6 +334,8 @@ export default function VideoScreen(props: {
             isZoomedToFill={isZoomedToFill}
             onChangeResizeMode={handleChangeResizeMode}
             onChangePlayer={props.onChangePlayer}
+            hasNextEpisode={props.hasNextEpisode}
+            onNextEpisode={handleNextEpisode}
           />
         ) : (
           <VideoControls
@@ -341,6 +357,8 @@ export default function VideoScreen(props: {
             isZoomedToFill={isZoomedToFill}
             onChangeResizeMode={handleChangeResizeMode}
             onChangePlayer={props.onChangePlayer}
+            hasNextEpisode={props.hasNextEpisode}
+            onNextEpisode={handleNextEpisode}
           />
         )}
         {!isReady && <LoadingOverlay />}

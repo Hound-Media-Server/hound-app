@@ -44,6 +44,8 @@ interface VideoControlsProps {
     currentTime: number,
     settings?: any,
   ) => void;
+  hasNextEpisode?: boolean;
+  onNextEpisode?: () => void;
 }
 
 export default function VideoControlsTV({
@@ -65,6 +67,8 @@ export default function VideoControlsTV({
   isZoomedToFill,
   onChangeResizeMode,
   onChangePlayer,
+  hasNextEpisode,
+  onNextEpisode,
 }: VideoControlsProps) {
   const [controlsVisible, setControlsVisible] = useState(true);
   const [showSubtitlesModal, setShowSubtitlesModal] = useState(false);
@@ -244,6 +248,11 @@ export default function VideoControlsTV({
               <FocusablePressable focusable onPress={onSeekForward}>
                 <Ionicons name="play-forward" size={25} color="white" />
               </FocusablePressable>
+              {hasNextEpisode && (
+                <FocusablePressable focusable onPress={onNextEpisode}>
+                  <Ionicons name="play-skip-forward" size={25} color="white" />
+                </FocusablePressable>
+              )}
             </View>
 
             <View className="flex flex-row items-center gap-2">

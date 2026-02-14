@@ -33,6 +33,8 @@ export default function MPVVideoScreen(props: {
     currentTime: number,
     settings?: any,
   ) => void;
+  hasNextEpisode?: boolean;
+  onNextEpisode?: (settings: any) => void;
 }) {
   const { width, height } = useWindowDimensions();
   const videoRef = useRef<MpvPlayerViewRef>(null);
@@ -49,6 +51,18 @@ export default function MPVVideoScreen(props: {
   );
   const [isReady, setIsReady] = useState(false);
   const tracksInitialized = useRef(false);
+
+  const handleNextEpisode = () => {
+    if (props.onNextEpisode) {
+      props.onNextEpisode({
+        subtitle_lang:
+          textTracks.find((t: any) => t.id === selectedTextTrack)?.lang || "",
+        audio_lang:
+          audioTracks.find((t: any) => t.id === selectedAudioTrack)?.lang || "",
+        resize_mode: isZoomedToFill ? "cover" : "contain",
+      });
+    }
+  };
 
   useEffect(() => {
     if (!isReady || paused) return;
@@ -131,7 +145,6 @@ export default function MPVVideoScreen(props: {
 
       const currentSub = await videoRef.current?.getCurrentSubtitleTrack();
       const currentAudio = await videoRef.current?.getCurrentAudioTrack();
-
       let targetSub = currentSub;
       let targetAudio = currentAudio;
 
@@ -141,8 +154,6 @@ export default function MPVVideoScreen(props: {
       if (props.playerSettings) {
         const { player, subtitle_idx, subtitle_lang, audio_idx, audio_lang } =
           props.playerSettings;
-        console.log("player settings");
-        console.log(props.playerSettings);
 
         // if streams match continue watching data, use subtitle_idx
         if (
@@ -369,6 +380,8 @@ export default function MPVVideoScreen(props: {
             isZoomedToFill={isZoomedToFill}
             onChangeResizeMode={handleChangeResizeMode}
             onChangePlayer={props.onChangePlayer}
+            hasNextEpisode={props.hasNextEpisode}
+            onNextEpisode={handleNextEpisode}
           />
         ) : (
           <VideoControls
@@ -390,6 +403,8 @@ export default function MPVVideoScreen(props: {
             isZoomedToFill={isZoomedToFill}
             onChangeResizeMode={handleChangeResizeMode}
             onChangePlayer={props.onChangePlayer}
+            hasNextEpisode={props.hasNextEpisode}
+            onNextEpisode={handleNextEpisode}
           />
         )}
         {!isReady && <LoadingOverlay />}

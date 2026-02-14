@@ -17,9 +17,9 @@ export function getStreamUrl(encodedData: string, streamsMatch: boolean, params:
   if (params.season) queryParts.push(`season=${params.season}`);
   if (params.episode) queryParts.push(`episode=${params.episode}`);
   if (params.startTime) queryParts.push(`startTime=${params.startTime}`);
-  if (params.playerSettings) queryParts.push(`playerSettings=${params.playerSettings}`);
+  if (params.playerSettings) queryParts.push(`playerSettings=${encodeURIComponent(params.playerSettings)}`);
 
-  return `/stream/${encodedData}?${queryParts.join("&")}` as any;
+  return `/stream/${encodeURIComponent(encodedData)}?${queryParts.join("&")}` as any;
 }
 
 export function getSelectStreamUrl(params: StreamUrlParams) {
@@ -30,7 +30,7 @@ export function getSelectStreamUrl(params: StreamUrlParams) {
   if (params.season) queryParts.push(`season=${params.season}`);
   if (params.episode) queryParts.push(`episode=${params.episode}`);
   if (params.startTime) queryParts.push(`startTime=${params.startTime}`);
-  if (params.playerSettings) queryParts.push(`playerSettings=${params.playerSettings}`);
+  if (params.playerSettings) queryParts.push(`playerSettings=${encodeURIComponent(params.playerSettings)}`);
 
   return `/select-stream?${queryParts.join("&")}` as any;
 }

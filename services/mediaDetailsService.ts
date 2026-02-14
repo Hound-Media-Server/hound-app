@@ -26,11 +26,12 @@ export const useMovieDetails = (id: string) => {
   });
 };
 
-export const useShowDetails = (id: string) => {
+export const useShowDetails = (id: string, enabled: boolean = true) => {
   return useQuery({
     queryKey: ['show-details', id],
     queryFn: () => fetchShowDetails(id),
     staleTime: 1000 * 60 * 5,
+    enabled: enabled && !!id,
     select: (data: any) => data.data
   });
 };

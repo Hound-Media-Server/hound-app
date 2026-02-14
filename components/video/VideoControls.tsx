@@ -41,6 +41,8 @@ interface VideoControlsProps {
     currentTime: number,
     settings?: any,
   ) => void;
+  hasNextEpisode?: boolean;
+  onNextEpisode?: () => void;
 }
 
 export default function VideoControls({
@@ -62,6 +64,8 @@ export default function VideoControls({
   isZoomedToFill,
   onChangeResizeMode,
   onChangePlayer,
+  hasNextEpisode,
+  onNextEpisode,
 }: VideoControlsProps) {
   const [showControls, setShowControls] = useState(true);
   const [showSubtitlesModal, setShowSubtitlesModal] = useState(false);
@@ -165,6 +169,15 @@ export default function VideoControls({
               >
                 <Ionicons name="play-forward" size={40} color="white" />
               </TouchableOpacity>
+
+              {hasNextEpisode && (
+                <TouchableOpacity
+                  style={styles.controlButton}
+                  onPress={onNextEpisode}
+                >
+                  <Ionicons name="play-skip-forward" size={40} color="white" />
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* Bottom Bar */}
