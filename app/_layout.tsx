@@ -16,6 +16,7 @@ import { Cabin_600SemiBold_Italic } from "@expo-google-fonts/cabin/600SemiBold_I
 import { Cabin_700Bold_Italic } from "@expo-google-fonts/cabin/700Bold_Italic";
 import { cssInterop } from "nativewind";
 import { Image, ImageBackground } from "expo-image";
+import { registerLocale } from "@cospired/i18n-iso-languages";
 
 // enable styling expo image with nativewind classes
 cssInterop(Image, { className: "style" });
@@ -84,6 +85,7 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  registerLocale(require("@cospired/i18n-iso-languages/langs/en.json"));
   // if (Platform.OS === "web") {
   //   return (
   //     <View className="flex-1 justify-center items-center">

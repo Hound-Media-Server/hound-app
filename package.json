@@ -14,6 +14,7 @@
     "deploy": "npx expo export -p web && npx eas-cli@latest deploy"
   },
   "dependencies": {
+    "@cospired/i18n-iso-languages": "^4.2.0",
     "@expo-google-fonts/cabin": "^0.4.2",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",

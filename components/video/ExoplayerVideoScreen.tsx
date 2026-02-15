@@ -25,7 +25,9 @@ import Video, {
 import VideoControls from "./VideoControls";
 import VideoControlsTV from "./VideoControls.tv";
 import { ThemedText } from "../ThemedText";
+import { toAlpha2 } from "@cospired/i18n-iso-languages";
 import { router } from "expo-router";
+import { getAllSettings, SettingsSchema } from "@/stores/settingsStore";
 
 export default function VideoScreen(props: {
   src: string;
@@ -64,6 +66,11 @@ export default function VideoScreen(props: {
   const initialSeekDone = useRef(false);
   const audioInitialized = useRef(false);
   const subtitleInitialized = useRef(false);
+  const [appSettings, setAppSettings] = useState<SettingsSchema | null>(null);
+
+  useEffect(() => {
+    getAllSettings().then(setAppSettings);
+  }, []);
 
   const handleNextEpisode = () => {
     if (props.onNextEpisode) {
@@ -146,10 +153,11 @@ export default function VideoScreen(props: {
   const handleTextTracks = (data: OnTextTracksData) => {
     // Convert react-native-video track format to MPV format for controls compatibility
     // 1-indexed to follow mpv
+    // convert iso 3-letter to 2-letter
     const tracks = data.textTracks.map((track) => ({
       id: track.index + 1,
       title: track.title,
-      lang: track.language,
+      lang: track.language ? toAlpha2(track.language) : undefined,
       selected: track.index + 1 === selectedTextTrack,
     }));
     setSelectedTextTrack((prev) => {
@@ -171,10 +179,19 @@ export default function VideoScreen(props: {
         }
         // otherwise fallback to subtitle_lang
         else {
-          const matchByLang = tracks.find((t: any) => t.lang === subtitle_lang);
+          const targetLang = subtitle_lang || appSettings?.subtitlesLanguage;
+          const matchByLang = tracks.find((t: any) => t.lang === targetLang);
           if (matchByLang) {
             targetSub = matchByLang.id;
           }
+        }
+      } else if (appSettings?.subtitlesLanguage) {
+        // No player settings (new stream), use app defaults
+        const matchByLang = tracks.find(
+          (t: any) => t.lang === appSettings.subtitlesLanguage,
+        );
+        if (matchByLang) {
+          targetSub = matchByLang.id;
         }
       }
       return targetSub;
@@ -185,10 +202,11 @@ export default function VideoScreen(props: {
   const handleAudioTracks = (data: OnAudioTracksData) => {
     // Convert react-native-video track format to MPV format for controls compatibility
     // 1-indexed to follow mpv
+    // convert iso 3-letter to 2-letter
     const tracks = data.audioTracks.map((track) => ({
       id: track.index + 1,
       title: track.title,
-      lang: track.language,
+      lang: track.language ? toAlpha2(track.language) : undefined,
       selected: track.index + 1 === selectedAudioTrack,
     }));
     setSelectedAudioTrack((prev) => {
@@ -210,10 +228,19 @@ export default function VideoScreen(props: {
         }
         // otherwise fallback to audio_lang
         else {
-          const matchByLang = tracks.find((t: any) => t.lang === audio_lang);
+          const targetLang = audio_lang || appSettings?.audioLanguage;
+          const matchByLang = tracks.find((t: any) => t.lang === targetLang);
           if (matchByLang) {
             targetAudio = matchByLang.id;
           }
+        }
+      } else if (appSettings?.audioLanguage) {
+        // No player settings (new stream), use app defaults
+        const matchByLang = tracks.find(
+          (t: any) => t.lang === appSettings.audioLanguage,
+        );
+        if (matchByLang) {
+          targetAudio = matchByLang.id;
         }
       }
       return targetAudio;

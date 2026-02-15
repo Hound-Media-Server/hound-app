@@ -17,6 +17,8 @@ import VideoControls from "./VideoControls";
 import VideoControlsTV from "./VideoControls.tv";
 import { ThemedText } from "../ThemedText";
 import { router } from "expo-router";
+import { toAlpha2 } from "@cospired/i18n-iso-languages";
+import { getAllSettings, SettingsSchema } from "@/stores/settingsStore";
 
 export default function MPVVideoScreen(props: {
   src: string;
@@ -51,6 +53,11 @@ export default function MPVVideoScreen(props: {
   );
   const [isReady, setIsReady] = useState(false);
   const tracksInitialized = useRef(false);
+  const [appSettings, setAppSettings] = useState<SettingsSchema | null>(null);
+
+  useEffect(() => {
+    getAllSettings().then(setAppSettings);
+  }, []);
 
   const handleNextEpisode = () => {
     if (props.onNextEpisode) {
@@ -140,8 +147,18 @@ export default function MPVVideoScreen(props: {
       const subtitles = await videoRef.current?.getSubtitleTracks();
       const audio = await videoRef.current?.getAudioTracks();
 
-      if (subtitles) setTextTracks(subtitles);
-      if (audio) setAudioTracks(audio);
+      // convert iso 3-letter to 2-letter iso codes
+      const convertedSubtitles = subtitles?.map((track) => ({
+        ...track,
+        lang: track.lang ? toAlpha2(track.lang) : undefined,
+      }));
+      const convertedAudio = audio?.map((track) => ({
+        ...track,
+        lang: track.lang ? toAlpha2(track.lang) : undefined,
+      }));
+
+      if (convertedSubtitles) setTextTracks(convertedSubtitles);
+      if (convertedAudio) setAudioTracks(convertedAudio);
 
       const currentSub = await videoRef.current?.getCurrentSubtitleTrack();
       const currentAudio = await videoRef.current?.getCurrentAudioTrack();
@@ -160,14 +177,15 @@ export default function MPVVideoScreen(props: {
           subtitle_idx !== undefined &&
           subtitle_idx !== 0 &&
           props.streamsMatch &&
-          subtitles?.find((t: any) => t.id === subtitle_idx)
+          convertedSubtitles?.find((t: any) => t.id === subtitle_idx)
         ) {
           targetSub = subtitle_idx;
         }
         // otherwise fallback to subtitle_lang
         else {
-          const matchByLang = subtitles?.find(
-            (t: any) => t.lang === subtitle_lang,
+          const targetLang = subtitle_lang || appSettings?.subtitlesLanguage;
+          const matchByLang = convertedSubtitles?.find(
+            (t: any) => t.lang === targetLang,
           );
           if (matchByLang) {
             targetSub = matchByLang.id;
@@ -175,7 +193,7 @@ export default function MPVVideoScreen(props: {
         }
 
         if (
-          audio &&
+          convertedAudio &&
           (selectedAudioTrack === 1 || selectedAudioTrack === undefined)
         ) {
           // if streams match continue watching data, use audio_idx
@@ -183,16 +201,37 @@ export default function MPVVideoScreen(props: {
             audio_idx !== undefined &&
             audio_idx !== -1 &&
             props.streamsMatch &&
-            audio.find((t: any) => t.id === audio_idx)
+            convertedAudio.find((t: any) => t.id === audio_idx)
           ) {
             targetAudio = audio_idx;
           }
           // otherwise fallback to audio_lang
           else {
-            const matchByLang = audio.find((t: any) => t.lang === audio_lang);
+            const targetLang = audio_lang || appSettings?.audioLanguage;
+            const matchByLang = convertedAudio.find(
+              (t: any) => t.lang === targetLang,
+            );
             if (matchByLang) {
               targetAudio = matchByLang.id;
             }
+          }
+        }
+      } else {
+        // No player settings (new stream), use app defaults
+        if (appSettings?.subtitlesLanguage) {
+          const matchByLang = convertedSubtitles?.find(
+            (t: any) => t.lang === appSettings.subtitlesLanguage,
+          );
+          if (matchByLang) {
+            targetSub = matchByLang.id;
+          }
+        }
+        if (appSettings?.audioLanguage) {
+          const matchByLang = convertedAudio?.find(
+            (t: any) => t.lang === appSettings.audioLanguage,
+          );
+          if (matchByLang) {
+            targetAudio = matchByLang.id;
           }
         }
       }

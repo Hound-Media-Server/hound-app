@@ -14,6 +14,7 @@ import {
   Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { getName as getLanguageName } from "@cospired/i18n-iso-languages";
 import Slider from "@react-native-community/slider";
 import {
   MpvPlayerViewRef,
@@ -331,7 +332,9 @@ export default function VideoControlsTV({
                 >
                   <View style={{ flex: 1 }}>
                     <Text style={styles.modalItemText}>
-                      {track.lang ? track.lang.toUpperCase() : "Unknown"}
+                      {track.lang
+                        ? getLanguageName(track.lang, "en")
+                        : "Unknown"}
                     </Text>
                     {track.title && track.title !== track.lang && (
                       <Text style={styles.modalItemSubtext}>{track.title}</Text>
@@ -376,7 +379,9 @@ export default function VideoControlsTV({
                 >
                   <View style={{ flex: 1 }}>
                     <Text style={styles.modalItemText}>
-                      {track.lang ? track.lang.toUpperCase() : "Unknown"}
+                      {track.lang
+                        ? getLanguageName(track.lang, "en")
+                        : "Unknown"}
                     </Text>
                     {track.title && track.title !== track.lang && (
                       <Text style={styles.modalItemSubtext}>{track.title}</Text>
