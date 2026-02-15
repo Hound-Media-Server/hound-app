@@ -44,7 +44,7 @@ export default function MPVVideoScreen(props: {
   const [duration, setDuration] = useState(0);
   const [textTracks, setTextTracks] = useState<any[]>([]);
   const [audioTracks, setAudioTracks] = useState<any[]>([]);
-  const [selectedTextTrack, setSelectedTextTrack] = useState<number>(-1);
+  const [selectedTextTrack, setSelectedTextTrack] = useState<number>(0);
   const [selectedAudioTrack, setSelectedAudioTrack] = useState<number>(1);
   const [isZoomedToFill, setIsZoomedToFill] = useState(
     props.playerSettings?.resize_mode === "cover",
@@ -158,7 +158,7 @@ export default function MPVVideoScreen(props: {
         // if streams match continue watching data, use subtitle_idx
         if (
           subtitle_idx !== undefined &&
-          subtitle_idx !== -1 &&
+          subtitle_idx !== 0 &&
           props.streamsMatch &&
           subtitles?.find((t: any) => t.id === subtitle_idx)
         ) {
@@ -198,7 +198,7 @@ export default function MPVVideoScreen(props: {
       }
 
       if (targetSub !== undefined && targetSub !== currentSub) {
-        if (targetSub === -1) {
+        if (targetSub === 0) {
           await videoRef.current?.disableSubtitles();
         } else {
           await videoRef.current?.setSubtitleTrack(targetSub);
@@ -304,7 +304,7 @@ export default function MPVVideoScreen(props: {
 
   const handleSelectTextTrack = async (id: number) => {
     try {
-      if (id === -1) {
+      if (id === 0) {
         await videoRef.current?.disableSubtitles();
       } else {
         await videoRef.current?.setSubtitleTrack(id);

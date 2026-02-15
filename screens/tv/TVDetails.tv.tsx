@@ -11,8 +11,6 @@ import React from "react";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { useShowDetails } from "@/services/mediaDetailsService";
 import { ThemedText } from "@/components/ThemedText";
-import HorizontalList from "@/components/HorizontalList";
-import ParallaxScrollView from "@/components/ParallaxScrollView";
 import SeasonSection from "@/components/media_page/SeasonSection";
 import { useShowContinueWatching } from "@/services/watchDataService";
 import { fetchShowProviders } from "@/services/providerService";
@@ -21,15 +19,14 @@ import {
   getSelectStreamUrl,
   getStreamUrl,
   getAddToCollectionUrl,
+  getSeasonsUrl,
 } from "@/utils/navigation";
-import { ImageBackground } from "expo-image";
 import GradientBackgroundView from "@/components/media_page/GradientBackgroundView";
 import FocusButton from "@/components/FocusButton";
 
 export default function TVDetails() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams();
-  const [showSeasonsModal, setShowSeasonsModal] = React.useState(false);
   const SCREEN_HEIGHT = Dimensions.get("window").height;
 
   useFocusEffect(
@@ -175,6 +172,7 @@ export default function TVDetails() {
   if (error) {
     return <Text>Error: {error.message}</Text>;
   }
+
   const creators = details?.creators?.map((item: any) => item.name).join(", ");
   // if first season is specials, move it to the end
   const seasonsData =
@@ -182,7 +180,7 @@ export default function TVDetails() {
       ? [...details.seasons.slice(1), details.seasons[0]]
       : details?.seasons;
   return (
-    <>
+    <View className="flex-1">
       <View className="flex-1">
         <GradientBackgroundView
           uri={details?.backdrop_uri as string}
@@ -225,7 +223,11 @@ export default function TVDetails() {
                 />
                 <FocusButton
                   label="View Episodes"
-                  onPress={() => setShowSeasonsModal(true)}
+                  onPress={() =>
+                    router.push(
+                      getSeasonsUrl(id as string, details?.media_title),
+                    )
+                  }
                 />
                 <FocusButton
                   onPress={() =>
@@ -244,23 +246,6 @@ export default function TVDetails() {
           </View>
         </GradientBackgroundView>
       </View>
-      <Modal
-        visible={showSeasonsModal}
-        animationType="fade"
-        onRequestClose={() => setShowSeasonsModal(false)}
-      >
-        <View
-          className="flex-1 bg-primary p-5"
-          style={{ paddingTop: SCREEN_HEIGHT / 5 }}
-        >
-          <SeasonSection
-            sourceID={id as string}
-            seasons={seasonsData}
-            defaultSeason={seasonsData[0]?.season_number}
-            mediaTitle={details?.media_title}
-          />
-        </View>
-      </Modal>
-    </>
+    </View>
   );
 }

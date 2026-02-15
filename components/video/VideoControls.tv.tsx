@@ -303,16 +303,16 @@ export default function VideoControlsTV({
               <TouchableOpacity
                 style={styles.modalItem}
                 onPress={() => {
-                  onSelectTextTrack(-1);
+                  onSelectTextTrack(0);
                   setShowSubtitlesModal(false);
                 }}
                 focusable
                 hasTVPreferredFocus={
-                  showSubtitlesModal && selectedTextTrack === -1
+                  showSubtitlesModal && selectedTextTrack === 0
                 }
               >
                 <Text style={styles.modalItemText}>Off</Text>
-                {selectedTextTrack === -1 && (
+                {selectedTextTrack === 0 && (
                   <Ionicons name="checkmark" size={24} color="#FF6B6B" />
                 )}
               </TouchableOpacity>

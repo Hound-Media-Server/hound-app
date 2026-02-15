@@ -44,3 +44,10 @@ export function getAddToCollectionUrl(media_type: string, media_source: string, 
 
   return `/add-to-collection?${queryParts.join("&")}` as any;
 }
+
+export function getSeasonsUrl(id: string) {
+  const queryParts = [];
+  queryParts.push(`id=${id}`);
+
+  return `/seasons?${queryParts.join("&")}` as any;
+}

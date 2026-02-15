@@ -239,12 +239,12 @@ export default function VideoControls({
               <TouchableOpacity
                 style={styles.modalItem}
                 onPress={() => {
-                  onSelectTextTrack(-1);
+                  onSelectTextTrack(0);
                   setShowSubtitlesModal(false);
                 }}
               >
                 <Text style={styles.modalItemText}>Off</Text>
-                {selectedTextTrack === -1 && (
+                {selectedTextTrack === 0 && (
                   <Ionicons name="checkmark" size={24} color="#FF6B6B" />
                 )}
               </TouchableOpacity>

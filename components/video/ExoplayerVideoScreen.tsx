@@ -55,7 +55,7 @@ export default function VideoScreen(props: {
   const [duration, setDuration] = useState(0);
   const [textTracks, setTextTracks] = useState<any[]>([]);
   const [audioTracks, setAudioTracks] = useState<any[]>([]);
-  const [selectedTextTrack, setSelectedTextTrack] = useState<number>(-1);
+  const [selectedTextTrack, setSelectedTextTrack] = useState<number>(0);
   const [selectedAudioTrack, setSelectedAudioTrack] = useState<number>(1);
   const [isZoomedToFill, setIsZoomedToFill] = useState(
     props.playerSettings?.resize_mode === "cover",
@@ -163,7 +163,7 @@ export default function VideoScreen(props: {
         // if streams match continue watching data, use subtitle_idx
         if (
           subtitle_idx !== undefined &&
-          subtitle_idx !== -1 &&
+          subtitle_idx !== 0 &&
           props.streamsMatch &&
           tracks.find((t: any) => t.id === subtitle_idx)
         ) {
@@ -303,7 +303,7 @@ export default function VideoScreen(props: {
           progressUpdateInterval={1000}
           selectedTextTrack={
             // exoplayer is zero-indexed, but we store one-indexed to fit mpv
-            selectedTextTrack === -1
+            selectedTextTrack === 0
               ? { type: SelectedTrackType.DISABLED }
               : { type: SelectedTrackType.INDEX, value: selectedTextTrack - 1 }
           }

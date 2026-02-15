@@ -71,6 +71,14 @@ function RootLayoutNav() {
           animation: "slide_from_bottom",
         }}
       />
+      <Stack.Screen
+        name="(modals)/seasons"
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          animation: "fade",
+        }}
+      />
     </Stack>
   );
 }
