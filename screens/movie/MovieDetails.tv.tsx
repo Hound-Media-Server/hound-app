@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Text, ActivityIndicator } from "react-native";
 import React from "react";
 import { useLocalSearchParams } from "expo-router";
 import { useMovieDetails } from "@/services/mediaDetailsService";
@@ -16,7 +16,7 @@ import {
   getAddToCollectionUrl,
 } from "@/utils/navigation";
 import GradientBackgroundView from "@/components/media_page/GradientBackgroundView";
-import FocusButton from "@/components/FocusButton";
+import { TVFocusButtonText } from "@/components/TVFocusButton";
 
 export default function MovieDetails() {
   const queryClient = useQueryClient();
@@ -92,7 +92,7 @@ export default function MovieDetails() {
     }
 
     router.navigate(
-      getSelectStreamUrl({
+      await getSelectStreamUrl({
         id: id as string,
         type: "movie",
         startTime: watchAction?.watch_progress?.current_progress_seconds || 0,
@@ -159,7 +159,7 @@ export default function MovieDetails() {
               {details?.overview}
             </ThemedText>
             {details?.cast?.length > 0 && (
-              <ThemedText className="italic text-gray-300 text-sm mt-1">
+              <ThemedText className="italic text-gray-200 text-sm mt-1">
                 Starring{" "}
                 {details.cast
                   .slice(0, 3)
@@ -169,12 +169,12 @@ export default function MovieDetails() {
               </ThemedText>
             )}
             <View className="flex-row gap-3 mt-3">
-              <FocusButton
+              <TVFocusButtonText
                 onPress={handlePlayPress}
                 label={playLabel}
                 hasTVPreferredFocus
               />
-              <FocusButton
+              <TVFocusButtonText
                 onPress={() =>
                   router.push(
                     getAddToCollectionUrl(

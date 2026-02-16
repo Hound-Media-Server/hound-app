@@ -96,7 +96,7 @@ export default function Stream() {
           router.replace(link);
         }, 100);
         /*
-        const selectStream = getSelectStreamUrl({
+        const selectStream = await getSelectStreamUrl({
           id: id as string,
           type: "tv",
           title: title as string,

@@ -4,7 +4,7 @@ import { Platform } from "react-native";
 import { Image } from "expo-image";
 import { RelativePathString, useRouter } from "expo-router";
 import { ThemedText } from "./ThemedText";
-import MediaItemContextModal from "./modals/MediaItemContextModal";
+import { MediaItemContextModal } from "./modals/MediaContextModal";
 import { getMediaPageUrl } from "@/utils/navigation";
 
 export default function MediaItemCard({

@@ -1,3 +1,6 @@
+import { getSetting } from "@/stores/settingsStore";
+import { fetchMovieProviders, fetchShowProviders } from "@/services/providerService";
+
 export interface StreamUrlParams {
   id: string;
   type: string;
@@ -22,7 +25,31 @@ export function getStreamUrl(encodedData: string, streamsMatch: boolean, params:
   return `/stream/${encodeURIComponent(encodedData)}?${queryParts.join("&")}` as any;
 }
 
-export function getSelectStreamUrl(params: StreamUrlParams) {
+// direct play or select stream based on user preferences
+export async function getSelectStreamUrl(params: StreamUrlParams, forceSelect?: boolean) {
+  const playAction = getSetting("playAction");
+
+  if (playAction === "direct" && !forceSelect) {
+    try {
+      let providersRes;
+      if (params.type === "movie") {
+        providersRes = await fetchMovieProviders(params.id);
+      } else if (params.type === "tv") {
+        providersRes = await fetchShowProviders(
+          params.id,
+          params.season ? parseInt(params.season as string, 10) : undefined,
+          params.episode ? parseInt(params.episode as string, 10) : undefined
+        );
+      }
+      const firstStream = providersRes?.data?.providers?.[0]?.streams?.[0];
+      if (firstStream) {
+        return getStreamUrl(firstStream.encoded_data, false, params);
+      }
+    } catch (e) {
+      console.error("Error fetching providers for direct play:", e);
+    }
+  }
+  // show select stream modal case
   const queryParts = [];
   queryParts.push(`id=${params.id}`);
   queryParts.push(`type=${params.type}`);

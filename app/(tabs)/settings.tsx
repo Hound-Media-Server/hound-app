@@ -17,6 +17,9 @@ import * as Updates from "expo-updates";
 export default function Settings() {
   const { signOut } = useSession();
   const [player, setPlayer] = useState<string>("exoplayer");
+  const [playAction, setPlayAction] = useState<"direct" | "select" | undefined>(
+    undefined,
+  );
 
   async function onFetchUpdateAsync() {
     try {
@@ -36,11 +39,19 @@ export default function Settings() {
   useEffect(() => {
     const val = getSetting("defaultPlayer");
     if (val) setPlayer(val);
+    setPlayAction(getSetting("playAction"));
   }, []);
 
   const handleSetPlayer = (newPlayer: "mpv" | "exoplayer") => {
     setSetting("defaultPlayer", newPlayer);
     setPlayer(newPlayer);
+  };
+
+  const handleTogglePlayAction = () => {
+    if (!playAction) return;
+    const newPlayAction = playAction === "direct" ? "select" : "direct";
+    setSetting("playAction", newPlayAction);
+    setPlayAction(newPlayAction);
   };
 
   return (
@@ -54,6 +65,7 @@ export default function Settings() {
       </Text>
       <Text className="text-white">Platform: {Platform.OS}</Text>
       <Text className="text-white">Player: {player}</Text>
+      <Text className="text-white">PlayAction: {playAction}</Text>
       <TouchableOpacity
         onPress={() => onFetchUpdateAsync()}
         hasTVPreferredFocus
@@ -72,6 +84,12 @@ export default function Settings() {
         className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
       >
         <Text className="text-white">set exoplayer</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => handleTogglePlayAction()}
+        className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
+      >
+        <Text className="text-white">toggle play action</Text>
       </TouchableOpacity>
       <TouchableOpacity
         className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}

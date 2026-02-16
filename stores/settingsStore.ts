@@ -1,15 +1,19 @@
 import { createMMKV } from "react-native-mmkv";
-
+/*
+  playAction: whether pressing play should show select-stream or directly play top stream
+*/
 export type SettingsSchema = {
   subtitlesLanguage?: string;
   audioLanguage?: string;
   defaultPlayer?: "exoplayer" | "mpv";
+  playAction?: "direct" | "select"; 
 };
 
 const DEFAULTS: SettingsSchema = {
   subtitlesLanguage: "en",
   audioLanguage: "en",
   defaultPlayer: "exoplayer",
+  playAction: "direct",
 };
 
 const STORAGE_KEY = "@app_settings";

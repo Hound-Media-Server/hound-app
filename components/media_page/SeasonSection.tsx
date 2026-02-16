@@ -304,9 +304,9 @@ function EpisodeCard({
                 viewPosition: 0.5,
               });
             }}
-            onPress={() => {
+            onPress={async () => {
               router.navigate(
-                getSelectStreamUrl({
+                await getSelectStreamUrl({
                   id: sourceID,
                   type: "tv",
                   season: episode.season_number,

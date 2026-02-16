@@ -142,7 +142,7 @@ export default function TVDetails() {
       }
       // if stream doesn't exist in providers response, open select stream modal
       router.navigate(
-        getSelectStreamUrl({
+        await getSelectStreamUrl({
           id: id as string,
           type: "tv",
           season: targetSeason,

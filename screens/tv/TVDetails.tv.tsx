@@ -1,17 +1,8 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Dimensions,
-} from "react-native";
+import { View, Text, ActivityIndicator, Alert } from "react-native";
 import React from "react";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { useShowDetails } from "@/services/mediaDetailsService";
 import { ThemedText } from "@/components/ThemedText";
-import SeasonSection from "@/components/media_page/SeasonSection";
 import { useShowContinueWatching } from "@/services/watchDataService";
 import { fetchShowProviders } from "@/services/providerService";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,12 +13,14 @@ import {
   getSeasonsUrl,
 } from "@/utils/navigation";
 import GradientBackgroundView from "@/components/media_page/GradientBackgroundView";
-import FocusButton from "@/components/FocusButton";
+import {
+  TVFocusButtonText,
+  TVFocusButtonMore,
+} from "@/components/TVFocusButton";
 
 export default function TVDetails() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams();
-  const SCREEN_HEIGHT = Dimensions.get("window").height;
 
   useFocusEffect(
     React.useCallback(() => {
@@ -145,7 +138,7 @@ export default function TVDetails() {
       }
       // if stream doesn't exist in providers response, open select stream modal
       router.navigate(
-        getSelectStreamUrl({
+        await getSelectStreamUrl({
           id: id as string,
           type: "tv",
           season: targetSeason,
@@ -175,10 +168,7 @@ export default function TVDetails() {
 
   const creators = details?.creators?.map((item: any) => item.name).join(", ");
   // if first season is specials, move it to the end
-  const seasonsData =
-    details?.seasons?.[0]?.season_number === 0
-      ? [...details.seasons.slice(1), details.seasons[0]]
-      : details?.seasons;
+
   return (
     <View className="flex-1">
       <View className="flex-1">
@@ -206,7 +196,7 @@ export default function TVDetails() {
                 {details?.overview}
               </ThemedText>
               {details?.cast?.length > 0 && (
-                <ThemedText className="italic text-gray-300 text-sm mt-1">
+                <ThemedText className="italic text-gray-200 text-sm mt-1">
                   Starring{" "}
                   {details.cast
                     .slice(0, 3)
@@ -216,20 +206,17 @@ export default function TVDetails() {
                 </ThemedText>
               )}
               <View className="flex-row gap-3 mt-3">
-                <FocusButton
+                {/* <TVFocusButtonMore onPress={() => {}} /> */}
+                <TVFocusButtonText
                   onPress={handlePlayPress}
                   label={playLabel}
                   hasTVPreferredFocus
                 />
-                <FocusButton
+                <TVFocusButtonText
                   label="View Episodes"
-                  onPress={() =>
-                    router.push(
-                      getSeasonsUrl(id as string, details?.media_title),
-                    )
-                  }
+                  onPress={() => router.push(getSeasonsUrl(id as string))}
                 />
-                <FocusButton
+                <TVFocusButtonText
                   onPress={() =>
                     router.push(
                       getAddToCollectionUrl(

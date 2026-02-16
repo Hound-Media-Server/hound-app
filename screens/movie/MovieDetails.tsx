@@ -98,7 +98,7 @@ export default function MovieDetails() {
     }
 
     router.navigate(
-      getSelectStreamUrl({
+      await getSelectStreamUrl({
         id: id as string,
         type: "movie",
         startTime: watchAction?.watch_progress?.current_progress_seconds || 0,
