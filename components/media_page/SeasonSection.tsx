@@ -99,21 +99,21 @@ export default function SeasonSection({
                     isTV && setSelectedSeasonNum(item.season_number)
                   }
                   className={
-                    "items-center justify-center rounded-xl p-2 " +
+                    "items-center justify-center rounded-xl p-2" +
                     (item?.season_number === selectedSeasonNum
                       ? isTV
-                        ? "bg-secondary/50"
-                        : "bg-secondary"
+                        ? " bg-secondary/50"
+                        : " bg-secondary"
                       : isTV
-                        ? "bg-gray-600"
-                        : "bg-gray-200") +
-                    (isTV && " h-[40px] w-[100px] focus:bg-secondary")
+                        ? " bg-gray-600"
+                        : " bg-gray-400") +
+                    (isTV ? " h-[40px] w-[100px] focus:bg-secondary" : "")
                   }
                   activeOpacity={isTV ? 1 : 0.75}
                 >
                   {
                     <ThemedText
-                      className={"text-primary" + (isTV && " text-lg")}
+                      className={"text-primary" + (isTV ? " text-lg" : "")}
                     >
                       {item.season_number === 0
                         ? "Specials"
@@ -191,7 +191,7 @@ function EpisodeSection({
   // pagination since it's not good UX to have to scroll through too many episodes anyway
   return (
     <View focusable className={isTV ? "opacity-50 focus:opacity-100" : ""}>
-      {seasonDetails?.episodes.length <= 1000 || true ? (
+      {seasonDetails?.episodes.length <= 50 ? (
         <FlatList
           ref={flatlistRef}
           data={seasonDetails?.episodes}
@@ -211,6 +211,7 @@ function EpisodeSection({
               setFocusedEpisode={setFocusedEpisode}
               setFocusedWatchedAt={setFocusedWatchedAt}
               episodeListRef={flatlistRef}
+              animateScroll={false}
             />
           )}
           keyExtractor={(item) => item.source_id}
@@ -235,6 +236,7 @@ function EpisodeSection({
               setFocusedEpisode={setFocusedEpisode}
               setFocusedWatchedAt={setFocusedWatchedAt}
               episodeListRef={flashlistRef}
+              animateScroll={true}
             />
           )}
           keyExtractor={(item) => item.source_id}
@@ -261,6 +263,7 @@ function EpisodeCard({
   setFocusedEpisode,
   setFocusedWatchedAt,
   episodeListRef,
+  animateScroll,
 }: {
   index: number;
   episode: any;
@@ -274,6 +277,7 @@ function EpisodeCard({
   episodeListRef:
     | React.RefObject<FlashListRef<any> | null>
     | React.RefObject<FlatList<any> | null>;
+  animateScroll: boolean;
 }) {
   var info: string[] = [];
   if (episode?.duration) {
@@ -296,7 +300,7 @@ function EpisodeCard({
               setFocusedWatchedAt(watchedAt);
               episodeListRef?.current?.scrollToIndex({
                 index: index,
-                animated: true,
+                animated: animateScroll,
                 viewPosition: 0.5,
               });
             }}

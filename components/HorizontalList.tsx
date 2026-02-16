@@ -52,9 +52,18 @@ export default function HorizontalList({
     const { data: queryData, isLoading: queryLoading, error } = useQuery();
     if (error) {
       return (
-        <ThemedText className="text-white bg-black">
-          Error fetching {header}: {error.message}
-        </ThemedText>
+        <View className="me-5 md:me-10 flex-1">
+          {!!header && (
+            <ThemedText className="text-white text-2xl mb-3 ps-5 md:ps-10">
+              {header}
+            </ThemedText>
+          )}
+          <View className="w-full h-[100px] justify-center items-center">
+            <ThemedText className="text-white bg-black">
+              Error fetching {header}: {error.message}
+            </ThemedText>
+          </View>
+        </View>
       );
     }
     isLoading = queryLoading || isLoading;
