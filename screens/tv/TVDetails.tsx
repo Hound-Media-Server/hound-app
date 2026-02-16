@@ -21,8 +21,6 @@ import {
   getAddToCollectionUrl,
 } from "@/utils/navigation";
 import { ImageBackground } from "expo-image";
-import TVDetailsTV from "./TVDetails.tv";
-import { Platform } from "react-native";
 
 export default function TVDetails() {
   const queryClient = useQueryClient();
