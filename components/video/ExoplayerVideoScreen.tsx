@@ -66,11 +66,7 @@ export default function VideoScreen(props: {
   const initialSeekDone = useRef(false);
   const audioInitialized = useRef(false);
   const subtitleInitialized = useRef(false);
-  const [appSettings, setAppSettings] = useState<SettingsSchema | null>(null);
-
-  useEffect(() => {
-    getAllSettings().then(setAppSettings);
-  }, []);
+  const [appSettings] = useState<SettingsSchema>(getAllSettings());
 
   const handleNextEpisode = () => {
     if (props.onNextEpisode) {

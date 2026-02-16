@@ -34,13 +34,12 @@ export default function Settings() {
   }
 
   useEffect(() => {
-    getSetting("player").then((val) => {
-      if (val) setPlayer(val);
-    });
+    const val = getSetting("defaultPlayer");
+    if (val) setPlayer(val);
   }, []);
 
-  const handleSetPlayer = async (newPlayer: "mpv" | "exoplayer") => {
-    await setSetting("player", newPlayer);
+  const handleSetPlayer = (newPlayer: "mpv" | "exoplayer") => {
+    setSetting("defaultPlayer", newPlayer);
     setPlayer(newPlayer);
   };
 

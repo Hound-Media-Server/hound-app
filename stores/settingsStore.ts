@@ -1,61 +1,52 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createMMKV } from "react-native-mmkv";
 
 export type SettingsSchema = {
   subtitlesLanguage?: string;
   audioLanguage?: string;
-  player?: "exoplayer" | "mpv";
+  defaultPlayer?: "exoplayer" | "mpv";
 };
 
 const DEFAULTS: SettingsSchema = {
   subtitlesLanguage: "en",
   audioLanguage: "en",
-  player: "exoplayer",
+  defaultPlayer: "exoplayer",
 };
 
 const STORAGE_KEY = "@app_settings";
 
-let cache: SettingsSchema | null = null;
-let loadingPromise: Promise<SettingsSchema> | null = null;
+const storage = createMMKV();
 
-async function load(): Promise<SettingsSchema> {
-  if (cache) return cache;
-  if (!loadingPromise) {
-    loadingPromise = (async () => {
-      try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
-        const parsed = raw ? JSON.parse(raw) : {};
-        cache = { ...DEFAULTS, ...(typeof parsed === "object" ? parsed : {}) };
-      } catch (e) {
-        console.error("Failed to load settings:", e);
-        cache = { ...DEFAULTS };
-      }
-      return cache as SettingsSchema;
-    })();
+function load(): SettingsSchema {
+  try {
+    const raw = storage.getString(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return { ...DEFAULTS, ...(typeof parsed === "object" ? parsed : {}) };
+  } catch (e) {
+    console.error("Failed to load settings:", e);
+    return { ...DEFAULTS };
   }
-  return loadingPromise;
 }
 
 // get one setting
-export async function getSetting<K extends keyof SettingsSchema>(
+export function getSetting<K extends keyof SettingsSchema>(
   key: K
-): Promise<SettingsSchema[K]> {
-  const settings = await load();
+): SettingsSchema[K] {
+  const settings = load();
   return settings[key];
 }
 
 /**
  * Set one setting
  */
-export async function setSetting<K extends keyof SettingsSchema>(
+export function setSetting<K extends keyof SettingsSchema>(
   key: K,
   value: SettingsSchema[K]
 ) {
-  const settings = await load();
+  const settings = load();
   const updated = { ...settings, [key]: value };
 
-  cache = updated;
   try {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    storage.set(STORAGE_KEY, JSON.stringify(updated));
   } catch (e) {
     console.error("Failed to save setting:", e);
   }
@@ -64,6 +55,6 @@ export async function setSetting<K extends keyof SettingsSchema>(
 /**
  * Get all settings
  */
-export async function getAllSettings(): Promise<SettingsSchema> {
+export function getAllSettings(): SettingsSchema {
   return load();
 }

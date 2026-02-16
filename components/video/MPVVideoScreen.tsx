@@ -53,11 +53,7 @@ export default function MPVVideoScreen(props: {
   );
   const [isReady, setIsReady] = useState(false);
   const tracksInitialized = useRef(false);
-  const [appSettings, setAppSettings] = useState<SettingsSchema | null>(null);
-
-  useEffect(() => {
-    getAllSettings().then(setAppSettings);
-  }, []);
+  const [appSettings] = useState<SettingsSchema>(getAllSettings());
 
   const handleNextEpisode = () => {
     if (props.onNextEpisode) {

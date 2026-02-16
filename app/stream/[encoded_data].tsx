@@ -123,12 +123,12 @@ export default function Stream() {
   useEffect(() => {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
     // Load setting
-    getSetting("player").then((val) => {
-      // Use player from context if available, otherwise fallback to settings
-      const preferredPlayer =
-        (parsedPlayerSettings?.player as string) || val || "exoplayer";
-      setCurrentPlayer(preferredPlayer);
-    });
+    const val = getSetting("defaultPlayer");
+    // Use player from context if available, otherwise fallback to settings
+    const preferredPlayer =
+      (parsedPlayerSettings?.player as string) || val || "exoplayer";
+    setCurrentPlayer(preferredPlayer);
+
     return () => {
       ScreenOrientation.unlockAsync();
     };
