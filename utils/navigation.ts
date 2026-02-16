@@ -35,6 +35,12 @@ export function getSelectStreamUrl(params: StreamUrlParams) {
   return `/select-stream?${queryParts.join("&")}` as any;
 }
 
+export function getMediaPageUrl(media_type: string, media_source: string, source_id: string): string {
+  if (!media_type) return "";
+  media_type = media_type === "tvshow" ? "tv" : media_type;
+  return `/${media_type === "movie" ? "movie" : "tv"}/${media_source + "-" + source_id}`;
+}
+
 export function getAddToCollectionUrl(media_type: string, media_source: string, source_id: string) {
   media_type = media_type === "tvshow" ? "tv" : media_type;
   const queryParts = [];

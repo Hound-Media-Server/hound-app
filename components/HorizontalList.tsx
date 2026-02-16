@@ -6,7 +6,7 @@ import {
   Text,
 } from "react-native";
 import React, { useRef } from "react";
-import PosterCard from "./PosterCard";
+import MediaItemCard from "./MediaItemCard";
 import { ThemedText } from "./ThemedText";
 import ContinueWatchingCard from "./ContinueWatchingCard";
 import { TVFocusGuideView } from "react-native";
@@ -109,19 +109,21 @@ export default function HorizontalList({
           renderItem={({ item, index }) => {
             if (itemType === "cast") {
               return (
-                <PosterCard
-                  item={item}
-                  title={showDescription ? item.name : ""}
-                  subtitle={showDescription ? item.character : ""}
+                <MediaItemCard
+                  mediaItem={item}
+                  title={item.name}
+                  subtitle={item.character}
+                  showDescription={showDescription}
                 />
               );
             }
             if (itemType === "search") {
               return (
-                <PosterCard
-                  item={item}
+                <MediaItemCard
+                  mediaItem={item}
                   title={getMediaTitle(item)}
                   imgAlt={getMediaTitle(item)}
+                  showDescription={showDescription}
                 />
               );
             }
@@ -135,11 +137,12 @@ export default function HorizontalList({
               );
             }
             return (
-              <PosterCard
-                item={item}
-                title={showDescription ? getMediaTitle(item) : ""}
+              <MediaItemCard
+                mediaItem={item}
+                title={getMediaTitle(item)}
                 subtitle={""}
                 imgAlt={getMediaTitle(item)}
+                showDescription={showDescription}
                 onFocus={() => {
                   const focusItem: FocusItem = {
                     media_type: item.media_type,
