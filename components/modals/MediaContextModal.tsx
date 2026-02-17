@@ -4,7 +4,7 @@ import {
   getSelectStreamUrl,
 } from "@/utils/navigation";
 import { RelativePathString, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Modal,
   StyleSheet,
@@ -33,6 +33,12 @@ export function MediaItemContextModal({
   // in tv longpress, after modal opens, onPress() for the first element is called
   // even though it is not a separate press, so we intercept. Might need a better solution
   const [tvPressedOnce, setTvPressedOnce] = useState(false);
+
+  useEffect(() => {
+    if (!visible) {
+      setTvPressedOnce(false);
+    }
+  }, [visible]);
 
   return (
     <Modal
@@ -133,6 +139,12 @@ export function WatchEventContextModal({
   const [focusedIndex, setFocusedIndex] = useState(0);
 
   if (!mediaItem) return null;
+
+  useEffect(() => {
+    if (!visible) {
+      setTvPressedOnce(false);
+    }
+  }, [visible]);
 
   async function handlePlay(forceSelect?: boolean) {
     const mediaType = mediaItem.media_type?.replace("tvshow", "tv") || "";
