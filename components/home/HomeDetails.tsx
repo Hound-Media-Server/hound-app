@@ -19,11 +19,13 @@ export default function HomeDetails() {
   if (!focusedItem) return null;
   const releaseYear = focusedItem.release_date?.slice(0, 4);
   const genres = focusedItem.genres?.map((g) => g.name).join(", ");
+  // TODO: HACKY, we need a better way to support image sizes in hound
+  const backdropUri = focusedItem?.backdrop_uri?.replace("w500", "w1280");
   return (
     <View className="relative" style={{ height: HERO_HEIGHT }}>
-      {focusedItem.backdrop_uri && (
+      {backdropUri && (
         <Image
-          source={focusedItem.backdrop_uri}
+          source={backdropUri}
           className="opacity-80"
           style={{ height: HERO_HEIGHT }}
         />

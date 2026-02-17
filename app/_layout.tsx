@@ -17,6 +17,7 @@ import { Cabin_700Bold_Italic } from "@expo-google-fonts/cabin/700Bold_Italic";
 import { cssInterop } from "nativewind";
 import { Image, ImageBackground } from "expo-image";
 import { registerLocale } from "@cospired/i18n-iso-languages";
+import { GlobalModalHost } from "@/components/modals/GlobalModalHost";
 
 // enable styling expo image with nativewind classes
 cssInterop(Image, { className: "style" });
@@ -114,6 +115,7 @@ export default function RootLayout() {
         <RootLayoutNav />
       </QueryClientProvider>
       <ToastManager theme="dark" showProgressBar={false} useModal={false} />
+      <GlobalModalHost />
     </SessionProvider>
   );
 }

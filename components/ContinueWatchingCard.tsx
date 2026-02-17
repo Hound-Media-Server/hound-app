@@ -1,11 +1,11 @@
 import { View, Text, TouchableHighlight, Platform } from "react-native";
-import React, { useState } from "react";
+import React from "react";
 import { Image } from "expo-image";
 import { Route, useRouter } from "expo-router";
 import { ThemedText } from "./ThemedText";
 import { getSelectStreamUrl, getStreamUrl } from "@/utils/navigation";
 import { FocusItem, useFocusStore } from "@/stores/focusStore";
-import { WatchEventContextModal } from "./modals/MediaContextModal";
+import { useModalStore } from "@/stores/modalStore";
 
 export default function ContinueWatchingCard({
   item,
@@ -19,7 +19,7 @@ export default function ContinueWatchingCard({
   if (!item) return;
   const router = useRouter();
   const setFocusedItem = useFocusStore((s) => s.setFocusedItem);
-  const [showContextMenu, setShowContextMenu] = useState(false);
+  const openModal = useModalStore((s) => s.open);
 
   let route = "";
   let title = "";
@@ -109,7 +109,15 @@ export default function ContinueWatchingCard({
           }
           router.navigate(finalRoute as Route);
         }}
-        onLongPress={() => setShowContextMenu(true)}
+        onLongPress={() =>
+          openModal({
+            type: "watchEvent",
+            props: {
+              modalTitle: title,
+              mediaItem: item,
+            },
+          })
+        }
       >
         <View>
           <View className="rounded-lg">
@@ -163,13 +171,6 @@ export default function ContinueWatchingCard({
           </View>
         </View>
       </TouchableHighlight>
-      <WatchEventContextModal
-        mediaItem={item}
-        modalTitle={title}
-        visible={showContextMenu}
-        setVisible={setShowContextMenu}
-        onClose={() => setShowContextMenu(false)}
-      />
     </>
   );
 }

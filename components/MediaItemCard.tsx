@@ -4,8 +4,8 @@ import { Platform } from "react-native";
 import { Image } from "expo-image";
 import { RelativePathString, useRouter } from "expo-router";
 import { ThemedText } from "./ThemedText";
-import { MediaItemContextModal } from "./modals/MediaContextModal";
 import { getMediaPageUrl } from "@/utils/navigation";
+import { useModalStore } from "@/stores/modalStore";
 
 export default function MediaItemCard({
   mediaItem,
@@ -26,7 +26,8 @@ export default function MediaItemCard({
 }) {
   if (!mediaItem) return;
   const router = useRouter();
-  const [showContextMenu, setShowContextMenu] = useState(false);
+  const openModal = useModalStore((s) => s.open);
+
   let imgSource = mediaItem.thumbnail_uri;
   return (
     <>
@@ -49,7 +50,13 @@ export default function MediaItemCard({
           router.navigate(mediaPageUrl as RelativePathString);
         }}
         onLongPress={() => {
-          setShowContextMenu(true);
+          openModal({
+            type: "mediaItem",
+            props: {
+              modalTitle: title ? title : "",
+              mediaItem: mediaItem,
+            },
+          });
         }}
       >
         <View>
@@ -78,13 +85,6 @@ export default function MediaItemCard({
           )}
         </View>
       </TouchableHighlight>
-      <MediaItemContextModal
-        mediaItem={mediaItem}
-        visible={showContextMenu}
-        setVisible={setShowContextMenu}
-        onClose={() => setShowContextMenu(false)}
-        modalTitle={title || ""}
-      />
     </>
   );
 }
