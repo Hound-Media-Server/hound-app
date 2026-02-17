@@ -2,7 +2,7 @@ import { RelativePathString, useRouter } from "expo-router";
 import { ContextModal, ModalAction } from "./Modal";
 import { getAddToCollectionUrl, getMediaPageUrl } from "@/utils/navigation";
 
-export function MediaItemModal({
+export default function MediaPosterModal({
   mediaItem,
   modalTitle,
   visible,

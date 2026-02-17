@@ -242,7 +242,6 @@ function EpisodeSection({
           keyExtractor={(item) => item.source_id}
         />
       )}
-
       {isTV && (
         <View className="h-[80px] mt-3">
           <EpisodeInfo episode={focusedEpisode} watchedAt={focusedWatchedAt} />

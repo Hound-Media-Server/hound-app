@@ -16,7 +16,10 @@ import {
   getAddToCollectionUrl,
 } from "@/utils/navigation";
 import GradientBackgroundView from "@/components/media_page/GradientBackgroundView";
-import { TVFocusButtonText } from "@/components/TVFocusButton";
+import {
+  TVFocusButtonMore,
+  TVFocusButtonText,
+} from "@/components/TVFocusButton";
 
 export default function MovieDetails() {
   const queryClient = useQueryClient();
@@ -169,6 +172,7 @@ export default function MovieDetails() {
               </ThemedText>
             )}
             <View className="flex-row gap-3 mt-3">
+              <TVFocusButtonMore onPress={() => {}} />
               <TVFocusButtonText
                 onPress={handlePlayPress}
                 label={playLabel}

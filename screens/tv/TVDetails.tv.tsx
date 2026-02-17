@@ -206,7 +206,7 @@ export default function TVDetails() {
                 </ThemedText>
               )}
               <View className="flex-row gap-3 mt-3">
-                {/* <TVFocusButtonMore onPress={() => {}} /> */}
+                <TVFocusButtonMore onPress={() => {}} />
                 <TVFocusButtonText
                   onPress={handlePlayPress}
                   label={playLabel}

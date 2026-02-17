@@ -1,6 +1,6 @@
 import { useModalStore } from "@/stores/modalStore";
-import { WatchEventModal } from "./WatchEventModal";
-import { MediaItemModal } from "./MediaItemModal";
+import MediaPosterModal from "./MediaPosterModal";
+import ContinueWatchingModal from "./ContinueWatchingModal";
 
 export function GlobalModalHost() {
   const modal = useModalStore((s) => s.modal);
@@ -10,10 +10,10 @@ export function GlobalModalHost() {
 
   switch (modal.type) {
     case "mediaItem":
-      return <MediaItemModal {...modal.props} visible onClose={close} />;
+      return <MediaPosterModal {...modal.props} visible onClose={close} />;
 
     case "watchEvent":
-      return <WatchEventModal {...modal.props} visible onClose={close} />;
+      return <ContinueWatchingModal {...modal.props} visible onClose={close} />;
 
     default:
       return null;

@@ -62,7 +62,7 @@ export default function ContinueWatchingCard({
   return (
     <>
       <TouchableHighlight
-        className="group rounded-lg"
+        className={"rounded-lg" + Platform.isTV ? "group" : ""}
         focusable
         hasTVPreferredFocus={hasTVPreferredFocus || false}
         onFocus={() => {
@@ -129,7 +129,7 @@ export default function ContinueWatchingCard({
                 transition={1000}
               />
             ) : (
-              <View className="group-focus:border-white w-[200px] h-[112px] rounded-lg bg-zinc-800 border-2 border-zinc-700 items-center justify-center">
+              <View className="group-focus:border-white border-zinc-700 border-2 w-[200px] h-[112px] rounded-lg bg-zinc-800 items-center justify-center">
                 <ThemedText className="text-gray-500">No Image</ThemedText>
               </View>
             )}

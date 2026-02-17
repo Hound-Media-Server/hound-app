@@ -39,7 +39,7 @@ export function TVFocusButtonMore({
       focusable
       className="bg-gray-600 focus:bg-secondary/85 rounded-2xl items-center justify-center w-[32px]"
     >
-      <Ionicons name="ellipsis-vertical" size={24} color="primary" />
+      <Ionicons name="ellipsis-vertical" size={18} color="primary" />
     </Pressable>
   );
 }

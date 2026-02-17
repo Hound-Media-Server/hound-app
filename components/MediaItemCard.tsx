@@ -32,7 +32,7 @@ export default function MediaItemCard({
   return (
     <>
       <TouchableHighlight
-        className="group rounded-lg"
+        className={"rounded-lg" + Platform.isTV ? "group" : ""}
         focusable
         hasTVPreferredFocus={hasTVPreferredFocus || false}
         onFocus={() => {

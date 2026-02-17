@@ -2,7 +2,7 @@ import { RelativePathString, useRouter } from "expo-router";
 import { ContextModal, ModalAction } from "./Modal";
 import { getMediaPageUrl, getSelectStreamUrl } from "@/utils/navigation";
 
-export function WatchEventModal({
+export default function ContinueWatchingModal({
   mediaItem,
   modalTitle,
   visible,
