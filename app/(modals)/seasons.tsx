@@ -1,11 +1,25 @@
 import { View, ActivityIndicator, Dimensions } from "react-native";
 import React from "react";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useFocusEffect } from "expo-router";
 import { useShowDetails } from "@/services/mediaDetailsService";
 import SeasonSection from "@/components/media_page/SeasonSection";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function SeasonsScreen() {
+  const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      queryClient.invalidateQueries({
+        queryKey: ["show-watch-progress", id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["show-watch-data", id],
+      });
+    }, [id, queryClient]),
+  );
+
   const { data: showDetails, isLoading } = useShowDetails(id);
   const SCREEN_HEIGHT = Dimensions.get("window").height;
 

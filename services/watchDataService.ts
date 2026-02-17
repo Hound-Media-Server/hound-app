@@ -211,18 +211,24 @@ export const useUpdatePlaybackProgress = () => {
     }) => updatePlaybackProgress(id, mediaType, data),
     onSuccess: (data, variables) => {
       if (variables.mediaType === "movie") {
-        queryClient.removeQueries({
+        queryClient.invalidateQueries({
           queryKey: ["movie-watch-progress", variables.id],
         });
-        queryClient.removeQueries({
+        queryClient.invalidateQueries({
           queryKey: ["movie-continue-watching", variables.id],
         });
+        queryClient.invalidateQueries({
+          queryKey: ["movie-watch-data", variables.id],
+        });
       } else {
-        queryClient.removeQueries({
+        queryClient.invalidateQueries({
           queryKey: ["show-watch-progress", variables.id],
         });
-        queryClient.removeQueries({
+        queryClient.invalidateQueries({
           queryKey: ["show-continue-watching", variables.id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["show-watch-data", variables.id],
         });
       }
     },
