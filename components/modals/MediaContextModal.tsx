@@ -4,6 +4,7 @@ import {
   getSelectStreamUrl,
 } from "@/utils/navigation";
 import { RelativePathString, useRouter } from "expo-router";
+import { useState } from "react";
 import {
   Modal,
   StyleSheet,
@@ -11,6 +12,7 @@ import {
   View,
   Text,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 
 export function MediaItemContextModal({
@@ -27,6 +29,11 @@ export function MediaItemContextModal({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  // in tv longpress, after modal opens, onPress() for the first element is called
+  // even though it is not a separate press, so we intercept. Might need a better solution
+  const [tvPressedOnce, setTvPressedOnce] = useState(false);
+
   return (
     <Modal
       visible={visible}
@@ -34,10 +41,28 @@ export function MediaItemContextModal({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.modalOverlay} onPress={() => setVisible(false)}>
+      {Platform.isTV && !tvPressedOnce && (
+        <Pressable
+          focusable
+          hasTVPreferredFocus={!tvPressedOnce}
+          className="absolute top-0 left-0 w-full h-full"
+          onPress={() => {
+            setTvPressedOnce(true);
+          }}
+        />
+      )}
+      <Pressable
+        style={styles.modalOverlay}
+        focusable={false}
+        onPress={() => {
+          !Platform.isTV && setVisible(false);
+        }}
+      >
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>{modalTitle}</Text>
           <TouchableOpacity
+            focusable
+            hasTVPreferredFocus={!Platform.isTV || tvPressedOnce}
             style={styles.modalItem}
             onPress={() => {
               const mediaPageUrl = getMediaPageUrl(
@@ -48,13 +73,19 @@ export function MediaItemContextModal({
               router.navigate(mediaPageUrl as RelativePathString);
               setVisible(false);
             }}
+            onFocus={() => setFocusedIndex(0)}
           >
             <Text
-              style={styles.modalItemText}
+              style={
+                focusedIndex === 0
+                  ? styles.modalItemTextFocused
+                  : styles.modalItemText
+              }
             >{`Open ${mediaItem.media_type === "movie" ? "Movie" : "Show"} Page`}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.modalItem}
+            focusable
             onPress={() => {
               const addToCollectionUrl = getAddToCollectionUrl(
                 mediaItem.media_type,
@@ -64,8 +95,17 @@ export function MediaItemContextModal({
               router.navigate(addToCollectionUrl as RelativePathString);
               setVisible(false);
             }}
+            onFocus={() => setFocusedIndex(1)}
           >
-            <Text style={styles.modalItemText}>Add to Collection</Text>
+            <Text
+              style={
+                focusedIndex === 1
+                  ? styles.modalItemTextFocused
+                  : styles.modalItemText
+              }
+            >
+              Add to Collection
+            </Text>
           </TouchableOpacity>
         </View>
       </Pressable>
@@ -87,32 +127,43 @@ export function WatchEventContextModal({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const mediaType = mediaItem.media_type.replace("tvshow", "tv");
-  const mediaSourceID = mediaItem.media_source + "-" + mediaItem.source_id;
+  // in tv longpress, after modal opens, onPress() for the first element is called
+  // even though it is not a separate press, so we intercept. Might need a better solution
+  const [tvPressedOnce, setTvPressedOnce] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(0);
+
+  if (!mediaItem) return null;
 
   async function handlePlay(forceSelect?: boolean) {
+    const mediaType = mediaItem.media_type?.replace("tvshow", "tv") || "";
+    const mediaSourceID = mediaItem.media_source + "-" + mediaItem.source_id;
+
     let params: any = {
-      id: mediaSourceID,
       type: mediaType,
+      id: mediaSourceID,
       title: modalTitle,
     };
 
     if (mediaItem.watch_action_type === "resume") {
       const wp = mediaItem.watch_progress;
-      params = {
-        ...params,
-        season: wp.season_number,
-        episode: wp.episode_number,
-        startTime: wp.current_progress_seconds,
-        playerSettings: JSON.stringify(wp.player_settings),
-      };
+      if (wp) {
+        params = {
+          ...params,
+          season: wp.season_number,
+          episode: wp.episode_number,
+          startTime: wp.current_progress_seconds,
+          playerSettings: JSON.stringify(wp.player_settings),
+        };
+      }
     } else if (mediaItem.watch_action_type === "next_episode") {
       const nextEp = mediaItem.next_episode;
-      params = {
-        ...params,
-        season: nextEp.season_number,
-        episode: nextEp.episode_number,
-      };
+      if (nextEp) {
+        params = {
+          ...params,
+          season: nextEp.season_number,
+          episode: nextEp.episode_number,
+        };
+      }
     }
     const url = await getSelectStreamUrl(params, forceSelect);
     router.navigate(url as RelativePathString);
@@ -126,23 +177,64 @@ export function WatchEventContextModal({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.modalOverlay} onPress={() => setVisible(false)}>
+      {Platform.isTV && !tvPressedOnce && (
+        <Pressable
+          focusable
+          hasTVPreferredFocus={!tvPressedOnce}
+          className="absolute top-0 left-0 w-full h-full"
+          onPress={() => {
+            setTvPressedOnce(true);
+          }}
+        />
+      )}
+      <Pressable
+        style={styles.modalOverlay}
+        focusable={false}
+        onPress={() => {
+          !Platform.isTV && setVisible(false);
+        }}
+      >
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>{modalTitle}</Text>
           <TouchableOpacity
             style={styles.modalItem}
-            onPress={() => handlePlay(false)}
+            onPress={() => {
+              handlePlay(false);
+            }}
+            hasTVPreferredFocus={!Platform.isTV || tvPressedOnce}
+            focusable
+            onFocus={() => setFocusedIndex(0)}
           >
-            <Text style={styles.modalItemText}>Play</Text>
+            <Text
+              style={
+                focusedIndex === 0
+                  ? styles.modalItemTextFocused
+                  : styles.modalItemText
+              }
+            >
+              Play
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.modalItem}
             onPress={() => handlePlay(true)}
+            focusable
+            onFocus={() => setFocusedIndex(1)}
           >
-            <Text style={styles.modalItemText}>Select Stream...</Text>
+            <Text
+              style={
+                focusedIndex === 1
+                  ? styles.modalItemTextFocused
+                  : styles.modalItemText
+              }
+            >
+              Select Stream...
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.modalItem}
+            focusable
+            onFocus={() => setFocusedIndex(2)}
             onPress={() => {
               const mediaPageUrl = getMediaPageUrl(
                 mediaItem.media_type,
@@ -154,8 +246,16 @@ export function WatchEventContextModal({
             }}
           >
             <Text
-              style={styles.modalItemText}
-            >{`Open ${mediaItem.media_type === "movie" ? "movie" : "Show"} Page`}</Text>
+              style={
+                focusedIndex === 2
+                  ? styles.modalItemTextFocused
+                  : styles.modalItemText
+              }
+            >
+              {`Open ${
+                mediaItem.media_type === "movie" ? "Movie" : "Show"
+              } Page`}
+            </Text>
           </TouchableOpacity>
         </View>
       </Pressable>
@@ -194,6 +294,11 @@ const styles = StyleSheet.create({
   },
   modalItemText: {
     color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  modalItemTextFocused: {
+    color: "#FF6B6B",
     fontSize: 16,
     fontWeight: "600",
   },

@@ -61,7 +61,7 @@ function RootLayoutNav() {
         options={{
           headerShown: false,
           presentation: "modal",
-          animation: "slide_from_bottom",
+          animation: "fade",
         }}
       />
       <Stack.Screen
@@ -69,7 +69,7 @@ function RootLayoutNav() {
         options={{
           headerShown: false,
           presentation: "transparentModal",
-          animation: "slide_from_bottom",
+          animation: "fade",
         }}
       />
       <Stack.Screen
