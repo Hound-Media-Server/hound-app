@@ -21,10 +21,12 @@ import {
   getAddToCollectionUrl,
 } from "@/utils/navigation";
 import { ImageBackground } from "expo-image";
+import { useModalStore } from "@/stores/modalStore";
 
 export default function TVDetails() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams();
+  const openModal = useModalStore((s) => s.open);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -225,23 +227,46 @@ export default function TVDetails() {
                 {details?.overview}
               </ThemedText>
             </View>
-            <TouchableOpacity
-              onPress={() =>
-                router.push(
-                  getAddToCollectionUrl(
-                    "tvshow",
-                    details?.media_source,
-                    details?.source_id,
-                  ),
-                )
-              }
-              activeOpacity={0.75}
-              className="p-2 mt-3 bg-white rounded-2xl w-[120px] sm:w-[150px] items-center"
-            >
-              <ThemedText className="text-primary text-md sm:text-lg">
-                Add to Collection
-              </ThemedText>
-            </TouchableOpacity>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() =>
+                  router.push(
+                    getAddToCollectionUrl(
+                      "tvshow",
+                      details?.media_source,
+                      details?.source_id,
+                    ),
+                  )
+                }
+                activeOpacity={0.75}
+                className="p-2 mt-3 bg-white rounded-2xl w-[120px] sm:w-[150px] items-center"
+              >
+                <ThemedText className="text-primary text-md sm:text-lg">
+                  Add to Collection
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  openModal({
+                    type: "playOptions",
+                    props: {
+                      mediaItem: {
+                        ...details,
+                        watch_progress: continueWatching?.watch_progress,
+                      },
+                      modalTitle: details?.media_title,
+                      autoFocus: true,
+                    },
+                  })
+                }
+                activeOpacity={0.75}
+                className="p-2 mt-3 bg-gray-600 rounded-2xl w-[120px] sm:w-[150px] items-center"
+              >
+                <ThemedText className="text-white text-md sm:text-lg">
+                  More
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
             {!!details?.seasons?.length && (
               <View className="mt-2">
                 <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">

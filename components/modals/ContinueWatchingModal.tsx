@@ -7,11 +7,13 @@ export default function ContinueWatchingModal({
   modalTitle,
   visible,
   onClose,
+  autoFocus,
 }: {
   mediaItem: any;
   modalTitle: string;
   visible: boolean;
   onClose: () => void;
+  autoFocus?: boolean;
 }) {
   const router = useRouter();
   if (!mediaItem) return null;
@@ -53,7 +55,12 @@ export default function ContinueWatchingModal({
   }
 
   return (
-    <ContextModal visible={visible} onClose={onClose} modalTitle={modalTitle}>
+    <ContextModal
+      visible={visible}
+      onClose={onClose}
+      modalTitle={modalTitle}
+      autoFocus={autoFocus}
+    >
       <ModalAction
         label="Play"
         onPress={() => {

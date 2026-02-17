@@ -1,6 +1,7 @@
 import { useModalStore } from "@/stores/modalStore";
 import MediaPosterModal from "./MediaPosterModal";
 import ContinueWatchingModal from "./ContinueWatchingModal";
+import PlayOptionsModal from "./PlayOptionsModal";
 
 export function GlobalModalHost() {
   const modal = useModalStore((s) => s.modal);
@@ -14,6 +15,9 @@ export function GlobalModalHost() {
 
     case "watchEvent":
       return <ContinueWatchingModal {...modal.props} visible onClose={close} />;
+
+    case "playOptions":
+      return <PlayOptionsModal {...modal.props} visible onClose={close} />;
 
     default:
       return null;

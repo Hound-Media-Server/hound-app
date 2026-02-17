@@ -7,16 +7,23 @@ export default function MediaPosterModal({
   modalTitle,
   visible,
   onClose,
+  autoFocus,
 }: {
   mediaItem: any;
   modalTitle: string;
   visible: boolean;
   onClose: () => void;
+  autoFocus?: boolean;
 }) {
   const router = useRouter();
 
   return (
-    <ContextModal visible={visible} onClose={onClose} modalTitle={modalTitle}>
+    <ContextModal
+      visible={visible}
+      onClose={onClose}
+      modalTitle={modalTitle}
+      autoFocus={autoFocus}
+    >
       <ModalAction
         label={`Open ${
           mediaItem.media_type === "movie" ? "Movie" : "Show"

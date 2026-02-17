@@ -74,12 +74,18 @@ export default function MediaItemCard({
             </View>
           )}
           {showDescription && !!title && (
-            <ThemedText className="text-gray-200 mt-2 text-start px-1 w-[120px]">
+            <ThemedText
+              className="text-gray-200 mt-2 text-start px-1 w-[120px]"
+              numberOfLines={2}
+            >
               {title}
             </ThemedText>
           )}
           {showDescription && !!subtitle && (
-            <ThemedText className="text-gray-400 text-sm text-start px-1 w-[120px]">
+            <ThemedText
+              className="text-gray-400 text-sm text-start px-1 w-[120px]"
+              numberOfLines={1}
+            >
               {subtitle}
             </ThemedText>
           )}

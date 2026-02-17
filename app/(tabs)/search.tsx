@@ -89,6 +89,7 @@ export default function Search() {
               itemType="search"
               header="TV Shows"
               rowIndex={1}
+              showDescription
             />
             <View className="mb-5" />
             <HorizontalList
@@ -97,6 +98,7 @@ export default function Search() {
               itemType="search"
               header="Movies"
               rowIndex={2}
+              showDescription
             />
             <View className="mb-[100px]" />
           </ScrollView>

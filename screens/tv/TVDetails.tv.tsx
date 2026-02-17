@@ -17,10 +17,12 @@ import {
   TVFocusButtonText,
   TVFocusButtonMore,
 } from "@/components/TVFocusButton";
+import { useModalStore } from "@/stores/modalStore";
 
 export default function TVDetails() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams();
+  const openModal = useModalStore((s) => s.open);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -206,7 +208,21 @@ export default function TVDetails() {
                 </ThemedText>
               )}
               <View className="flex-row gap-3 mt-3">
-                <TVFocusButtonMore onPress={() => {}} />
+                <TVFocusButtonMore
+                  onPress={() =>
+                    openModal({
+                      type: "playOptions",
+                      props: {
+                        mediaItem: {
+                          ...details,
+                          watch_progress: continueWatching?.watch_progress,
+                        },
+                        modalTitle: details?.media_title,
+                        autoFocus: true,
+                      },
+                    })
+                  }
+                />
                 <TVFocusButtonText
                   onPress={handlePlayPress}
                   label={playLabel}

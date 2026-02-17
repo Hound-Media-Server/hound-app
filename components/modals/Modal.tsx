@@ -24,18 +24,20 @@ export function ContextModal({
   modalTitle,
   children,
   onClose,
+  autoFocus,
 }: {
   visible: boolean;
   modalTitle: string;
   children: React.ReactNode;
   onClose: () => void;
+  autoFocus?: boolean;
 }) {
-  const [tvPressedOnce, setTvPressedOnce] = useState(false);
+  const [tvPressedOnce, setTvPressedOnce] = useState(autoFocus ?? false);
   useEffect(() => {
     if (!visible) {
-      setTvPressedOnce(false);
+      setTvPressedOnce(autoFocus ?? false);
     }
-  }, [visible]);
+  }, [visible, autoFocus]);
 
   return (
     <Modal
@@ -63,7 +65,9 @@ export function ContextModal({
       >
         <ModalInternalContext.Provider value={{ tvPressedOnce }}>
           <Pressable style={styles.modalContent}>
-            <ThemedText style={styles.modalTitle}>{modalTitle}</ThemedText>
+            <ThemedText numberOfLines={1} style={styles.modalTitle}>
+              {modalTitle}
+            </ThemedText>
             {children}
           </Pressable>
         </ModalInternalContext.Provider>
@@ -85,7 +89,7 @@ export function ModalAction({
   return (
     <Pressable
       style={styles.modalItem}
-      className="px-2 rounded-lg focus:bg-gray-800"
+      className="p-3 rounded-lg focus:bg-gray-800 mb-2"
       focusable={Platform.isTV}
       hasTVPreferredFocus={
         Platform.isTV && hasTVPreferredFocus && tvPressedOnce

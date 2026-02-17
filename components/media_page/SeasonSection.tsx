@@ -19,6 +19,7 @@ import {
 import { router } from "expo-router";
 import { getSelectStreamUrl } from "@/utils/navigation";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { useModalStore } from "@/stores/modalStore";
 
 const isTV = Platform.isTV;
 
@@ -278,6 +279,7 @@ function EpisodeCard({
     | React.RefObject<FlatList<any> | null>;
   animateScroll: boolean;
 }) {
+  const openModal = useModalStore((s) => s.open);
   var info: string[] = [];
   if (episode?.duration) {
     info.push(episode.duration + " m");
@@ -314,6 +316,22 @@ function EpisodeCard({
                   title: mediaTitle,
                 }),
               );
+            }}
+            onLongPress={() => {
+              openModal({
+                type: "playOptions",
+                props: {
+                  mediaItem: {
+                    ...episode,
+                    media_type: "tv",
+                    media_source: sourceID.split("-")[0],
+                    source_id: sourceID.split("-")[1],
+                    watch_progress: watchProgress,
+                    startTime: watchProgress?.current_progress_seconds,
+                  },
+                  modalTitle: mediaTitle + " - " + episode.media_title,
+                },
+              });
             }}
           >
             {episode.thumbnail_uri ? (

@@ -4,7 +4,7 @@ import { create } from "zustand";
     mediaItem -> regular posters, for root media items such as tv shows and movies
     watchEvent -> continue watching tiles, episode tiles give play options
 */
-type ModalType = "mediaItem" | "watchEvent";
+type ModalType = "mediaItem" | "watchEvent" | "playOptions";
 
 type ModalState =
   | {
@@ -12,6 +12,7 @@ type ModalState =
       props: {
         mediaItem: any;
         modalTitle: string;
+        autoFocus?: boolean;
       };
     }
   | {
@@ -19,6 +20,15 @@ type ModalState =
       props: {
         mediaItem: any;
         modalTitle: string;
+        autoFocus?: boolean;
+      };
+    }
+  | {
+      type: "playOptions";
+      props: {
+        mediaItem: any;
+        modalTitle: string;
+        autoFocus?: boolean;
       };
     }
   | null;
