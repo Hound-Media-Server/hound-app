@@ -18,6 +18,7 @@ import {
   SubtitleTrack,
   AudioTrack,
 } from "@/modules/mpv-player";
+import { ThemedText } from "../ThemedText";
 
 interface VideoControlsProps {
   videoRef: React.RefObject<MpvPlayerViewRef | null>;
@@ -133,6 +134,22 @@ export default function VideoControls({
               >
                 <Ionicons name="arrow-back" size={28} color="white" />
               </TouchableOpacity>
+              <View>
+                <ThemedText className="text-white">
+                  Selected TT: {selectedTextTrack}
+                </ThemedText>
+                <ThemedText className="text-white">
+                  TRACKS:{" "}
+                  {textTracks.map((track) => {
+                    return (
+                      <ThemedText key={track.id} className="text-white">
+                        {track.id}: {track.lang}: {track.selected}:{" "}
+                        {track.title}
+                      </ThemedText>
+                    );
+                  })}
+                </ThemedText>
+              </View>
 
               <View style={styles.topBarRight}>
                 <TouchableOpacity

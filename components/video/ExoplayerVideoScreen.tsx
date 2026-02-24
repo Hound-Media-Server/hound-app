@@ -316,12 +316,6 @@ export default function VideoScreen(props: {
           ref={videoRef}
           source={{ uri: props.src }}
           style={{ width, height }}
-          controls
-        />
-        {/* <Video
-          ref={videoRef}
-          source={{ uri: props.src }}
-          style={{ width, height }}
           paused={paused}
           resizeMode={isZoomedToFill ? ResizeMode.COVER : ResizeMode.CONTAIN}
           onLoad={handleLoad}
@@ -330,12 +324,7 @@ export default function VideoScreen(props: {
           onAudioTracks={handleAudioTracks}
           onError={handleError}
           progressUpdateInterval={1000}
-          selectedTextTrack={
-            // exoplayer is zero-indexed, but we store one-indexed to fit mpv
-            selectedTextTrack === 0
-              ? { type: SelectedTrackType.DISABLED }
-              : { type: SelectedTrackType.INDEX, value: selectedTextTrack - 1 }
-          }
+          selectedTextTrack={{ type: SelectedTrackType.INDEX, value: 2 }}
           selectedAudioTrack={
             // exoplayer is zero-indexed, but we store one-indexed to fit mpv
             selectedAudioTrack >= 1
@@ -389,8 +378,8 @@ export default function VideoScreen(props: {
             hasNextEpisode={props.hasNextEpisode}
             onNextEpisode={handleNextEpisode}
           />
-        )} */}
-        {/* {!isReady && <LoadingOverlay />} */}
+        )}
+        {!isReady && <LoadingOverlay />}
       </View>
     </>
   );
