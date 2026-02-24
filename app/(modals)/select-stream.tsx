@@ -7,11 +7,8 @@ import {
   ActivityIndicator,
   Platform,
 } from "react-native";
-import {
-  useMovieProviders,
-  useShowProviders,
-} from "@/services/providerService";
-import React, { useMemo, useRef } from "react";
+import { useUnifiedStreams } from "@/services/providerService";
+import React, { useRef } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import { Ionicons } from "@expo/vector-icons";
@@ -33,6 +30,17 @@ export default function SelectStreamScreen() {
   const episodeNumber = episode ? parseInt(episode) : undefined;
   const startTimeNum = startTime ? parseInt(startTime) : undefined;
 
+  const {
+    data: providersData,
+    isLoading,
+    error,
+  } = useUnifiedStreams(
+    type as string,
+    id as string,
+    seasonNumber,
+    episodeNumber,
+  );
+
   if (type !== "movie" && type !== "tv") {
     return (
       <View className="flex-1 bg-primary justify-center items-center">
@@ -41,56 +49,30 @@ export default function SelectStreamScreen() {
     );
   }
 
-  const {
-    data: providers,
-    isLoading,
-    error,
-  } = type === "movie"
-    ? useMovieProviders(id as string, true)
-    : useShowProviders(id as string, true, seasonNumber, episodeNumber);
-  if (error) {
-    Alert.alert("Error", error.message);
-    router.back();
-  }
   let displayTitle = title;
   if (seasonNumber && episodeNumber) {
     displayTitle += ` S${seasonNumber}E${episodeNumber}`;
   }
 
-  // flatten provider-stream to render for flatlist
-  const flattenedData = useMemo(() => {
-    if (!providers?.providers) return [];
-    const items: any[] = [];
-    providers.providers.forEach((provider: any) => {
-      if (provider.streams && provider.streams.length > 0) {
-        items.push({ type: "header", title: provider.provider });
-        provider.streams.forEach((stream: any) => {
-          items.push({ type: "stream", provider: provider.provider, stream });
-        });
-      }
-    });
-    return items;
-  }, [providers]);
-
   const renderItem = ({ item, index }: { item: any; index: number }) => {
     if (item.type === "header") {
       return (
         <View className="ml-2 mb-2 mt-2">
-          <ThemedText className="text-white text-lg">{item.title}</ThemedText>
+          <ThemedText className="text-white text-lg">{item?.title}</ThemedText>
         </View>
       );
     }
     return (
       <TouchableHighlight
         focusable
-        hasTVPreferredFocus={index === 1} // First stream after first header
-        key={item.provider + "-" + item.stream.info_hash}
+        hasTVPreferredFocus={index === 0}
+        key={item.provider + "-" + item.info_hash}
         underlayColor="#1e293b"
         activeOpacity={Platform.isTV ? 1 : 0.7}
         className="rounded-lg mb-2 border-2 border-transparent focus:border-white"
         onPress={() => {
           router.replace(
-            getStreamUrl(item.stream.encoded_data, false, {
+            getStreamUrl(item.encoded_data, false, {
               id: id as string,
               type: type as string,
               season: seasonNumber,
@@ -110,10 +92,10 @@ export default function SelectStreamScreen() {
       >
         <View className="bg-slate-800 p-3 rounded-lg border border-slate-700">
           <ThemedText className="text-white text-[16px] mb-1">
-            {item.stream.title}
+            {item?.title}
           </ThemedText>
           <ThemedText className="text-gray-300 text-sm">
-            {item.stream.description}
+            {item?.description}
           </ThemedText>
         </View>
       </TouchableHighlight>
@@ -124,12 +106,12 @@ export default function SelectStreamScreen() {
     <View className="flex-1 bg-primary">
       <FlatList
         ref={flatListRef}
-        data={flattenedData}
+        data={providersData?.streams}
         renderItem={renderItem}
         keyExtractor={(item, index) =>
           item.type === "header"
             ? `header-${item.title}`
-            : `stream-${item.provider}-${item.stream.info_hash}-${index}`
+            : `stream-${item.provider}-${item.info_hash}-${index}`
         }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: 20 }}

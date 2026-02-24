@@ -1,5 +1,5 @@
 import { getSetting } from "@/stores/settingsStore";
-import { fetchMovieProviders, fetchShowProviders } from "@/services/providerService";
+import { fetchMediaFiles, fetchProviders } from "@/services/providerService";
 
 export interface StreamUrlParams {
   id: string;
@@ -28,22 +28,27 @@ export function getStreamUrl(encodedData: string, streamsMatch: boolean, params:
 // direct play or select stream based on user preferences
 export async function getSelectStreamUrl(params: StreamUrlParams, forceSelect?: boolean) {
   const playAction = getSetting("playAction");
-
   if (playAction === "direct" && !forceSelect) {
     try {
-      let providersRes;
-      if (params.type === "movie") {
-        providersRes = await fetchMovieProviders(params.id);
-      } else if (params.type === "tv") {
-        providersRes = await fetchShowProviders(
-          params.id,
-          params.season ? parseInt(params.season as string, 10) : undefined,
-          params.episode ? parseInt(params.episode as string, 10) : undefined
-        );
+      const mediaFilesRes = await fetchMediaFiles(
+        params.type === "movie" ? "movie" : "tv",
+        params.id,
+        params.season ? parseInt(params.season as string, 10) : undefined,
+        params.episode ? parseInt(params.episode as string, 10) : undefined
+      );
+      if (mediaFilesRes?.data?.providers?.[0].streams?.length > 0) {
+        return getStreamUrl(mediaFilesRes?.data?.providers?.[0].streams?.[0].encoded_data, false, params);
       }
-      const firstStream = providersRes?.data?.providers?.[0]?.streams?.[0];
-      if (firstStream) {
-        return getStreamUrl(firstStream.encoded_data, false, params);
+      // prioritize media files, if not found, then fetch
+      // this does add a delay to fetching providers
+      const providersRes = await fetchProviders(
+        params.type === "movie" ? "movie" : "tv",
+        params.id,
+        params.season ? parseInt(params.season as string, 10) : undefined,
+        params.episode ? parseInt(params.episode as string, 10) : undefined
+      );
+      if (providersRes?.data?.providers?.[0].streams?.length > 0) {
+        return getStreamUrl(providersRes?.data?.providers?.[0].streams?.[0].encoded_data, false, params);
       }
     } catch (e) {
       console.error("Error fetching providers for direct play:", e);

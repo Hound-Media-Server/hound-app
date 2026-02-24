@@ -1,4 +1,4 @@
-import { Platform, View, ActivityIndicator } from "react-native";
+import { Platform, View, ActivityIndicator, Alert } from "react-native";
 import React, { useState, useMemo } from "react";
 import { useEffect } from "react";
 import * as ScreenOrientation from "expo-screen-orientation";
@@ -9,8 +9,8 @@ import { useKeepAwake } from "expo-keep-awake";
 import VideoScreen from "@/components/video/ExoplayerVideoScreen";
 import { getSetting } from "@/stores/settingsStore";
 import { useShowDetails } from "@/services/mediaDetailsService";
-import { fetchShowProviders } from "@/services/providerService";
-import { getSelectStreamUrl, getStreamUrl } from "@/utils/navigation";
+import { fetchMediaFiles, fetchProviders } from "@/services/providerService";
+import { getStreamUrl } from "@/utils/navigation";
 
 export default function Stream() {
   const router = useRouter();
@@ -70,14 +70,31 @@ export default function Stream() {
   const handleNextEpisode = async (nextSettings: any) => {
     if (!nextEpisodeInfo || !id) return;
     try {
-      const providersRes = await fetchShowProviders(
+      let firstStream = null;
+      const mediaFilesRes = await fetchMediaFiles(
+        "tv",
         id as string,
         nextEpisodeInfo.season,
         nextEpisodeInfo.episode,
       );
-      const mainStream = providersRes?.data?.providers?.[0]?.streams?.[0];
-      if (mainStream) {
-        const link = getStreamUrl(mainStream.encoded_data, false, {
+      if (mediaFilesRes?.data?.providers?.[0].streams?.length > 0) {
+        firstStream = mediaFilesRes?.data?.providers?.[0]?.streams?.[0];
+      }
+      // prioritize media files, if not found, then fetch
+      // this does add a delay to fetching providers
+      if (!firstStream) {
+        const providersRes = await fetchProviders(
+          "tv",
+          id as string,
+          nextEpisodeInfo.season,
+          nextEpisodeInfo.episode,
+        );
+        if (providersRes?.data?.providers?.[0].streams?.length > 0) {
+          firstStream = providersRes?.data?.providers?.[0]?.streams?.[0];
+        }
+      }
+      if (firstStream) {
+        const link = getStreamUrl(firstStream.encoded_data, false, {
           id: id as string,
           type: "tv",
           title: title as string,
@@ -95,22 +112,8 @@ export default function Stream() {
         setTimeout(() => {
           router.replace(link);
         }, 100);
-        /*
-        const selectStream = await getSelectStreamUrl({
-          id: id as string,
-          type: "tv",
-          title: title as string,
-          season: nextEpisodeInfo.season,
-          episode: nextEpisodeInfo.episode,
-          startTime: 0,
-          playerSettings: JSON.stringify({
-            ...nextSettings,
-            player: currentPlayer,
-          }),
-        });
-        router.replace(selectStream);
-        */
       } else {
+        Alert.alert("No streams found for the next episode.");
         console.log(
           "[NEXT_EPISODE] No main stream found in providers response",
         );

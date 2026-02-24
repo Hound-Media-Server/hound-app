@@ -1,6 +1,7 @@
 import { RelativePathString, useRouter } from "expo-router";
 import { ContextModal, ModalAction } from "./Modal";
 import { getSelectStreamUrl } from "@/utils/navigation";
+import { Platform } from "react-native";
 
 export default function PlayOptionsModal({
   mediaItem,
@@ -19,8 +20,10 @@ export default function PlayOptionsModal({
   if (!mediaItem) return null;
 
   async function handlePlay(forceSelect?: boolean) {
-    const mediaType =
-      mediaItem.media_type?.replace("tvshow", "tv") || mediaItem.type || "";
+    let mediaType = mediaItem.media_type || mediaItem.type || "";
+    if (mediaType === "tvshow") {
+      mediaType = "tv";
+    }
     const mediaSourceID = mediaItem.source_id
       ? mediaItem.media_source + "-" + mediaItem.source_id
       : mediaItem.id;
@@ -50,6 +53,14 @@ export default function PlayOptionsModal({
         ...params,
         season: mediaItem.season_number,
         episode: mediaItem.episode_number,
+        startTime: mediaItem.startTime,
+      };
+    } else if (mediaType === "tv") {
+      // first watch of a show, no watch progress, on main screen
+      params = {
+        ...params,
+        season: 1,
+        episode: 1,
         startTime: mediaItem.startTime,
       };
     }

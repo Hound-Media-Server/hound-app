@@ -21,11 +21,19 @@ import {
   TVFocusButtonText,
 } from "@/components/TVFocusButton";
 import { useModalStore } from "@/stores/modalStore";
+import { useUnifiedStreamsMutation } from "@/services/providerService";
 
 export default function MovieDetails() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams();
   const openModal = useModalStore((s) => s.open);
+  const streamsMutation = useUnifiedStreamsMutation();
+
+  const { data: details, isLoading, error } = useMovieDetails(id as string);
+  const { data: continueWatching, isLoading: isContinueLoading } =
+    useMovieContinueWatching(id as string);
+  const { data: movieWatchData, isLoading: isWatchDataLoading } =
+    useMovieWatchData(id as string);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -40,12 +48,6 @@ export default function MovieDetails() {
       });
     }, [id, queryClient]),
   );
-
-  const { data: details, isLoading, error } = useMovieDetails(id as string);
-  const { data: continueWatching, isLoading: isContinueLoading } =
-    useMovieContinueWatching(id as string);
-  const { data: movieWatchData, isLoading: isWatchDataLoading } =
-    useMovieWatchData(id as string);
 
   const watchAction = continueWatching;
 
@@ -76,9 +78,13 @@ export default function MovieDetails() {
 
     if (encodedData) {
       try {
-        const providersRes = await fetchMovieProviders(id as string);
-        const streams = providersRes?.data?.providers?.[0]?.streams || [];
-        const match = streams.find((s: any) => s.encoded_data === encodedData);
+        const res = await streamsMutation({
+          mediaType: "movie",
+          id: id as string,
+        });
+        const match = res?.data?.providers
+          ?.flatMap((p: any) => p.streams ?? [])
+          .find((s: any) => s.encoded_data === encodedData);
         if (match) {
           router.navigate(
             getStreamUrl(match.encoded_data, true, {
@@ -95,7 +101,6 @@ export default function MovieDetails() {
         console.error("Error matching stream:", e);
       }
     }
-
     router.navigate(
       await getSelectStreamUrl({
         id: id as string,

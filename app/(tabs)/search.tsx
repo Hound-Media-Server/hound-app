@@ -83,23 +83,37 @@ export default function Search() {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
           >
-            <HorizontalList
-              isLoading={isSearching}
-              itemData={data?.tv_results}
-              itemType="search"
-              header="TV Shows"
-              rowIndex={1}
-              showDescription
-            />
-            <View className="mb-5" />
-            <HorizontalList
-              isLoading={isSearching}
-              itemData={data?.movie_results}
-              itemType="search"
-              header="Movies"
-              rowIndex={2}
-              showDescription
-            />
+            {data?.tv_results?.length > 0 && (
+              <>
+                <HorizontalList
+                  isLoading={isSearching}
+                  itemData={data?.tv_results}
+                  itemType="search"
+                  header="TV Shows"
+                  rowIndex={1}
+                  showDescription
+                />
+                <View className="mb-5" />
+              </>
+            )}
+            {data?.movie_results?.length > 0 && (
+              <HorizontalList
+                isLoading={isSearching}
+                itemData={data?.movie_results}
+                itemType="search"
+                header="Movies"
+                rowIndex={2}
+                showDescription
+              />
+            )}
+            {!(data?.tv_results?.length > 0) &&
+              !(data?.movie_results?.length > 0) && (
+                <View className="flex-1 items-center justify-center mt-10">
+                  <ThemedText className="text-white text-lg">
+                    No results found.
+                  </ThemedText>
+                </View>
+              )}
             <View className="mb-[100px]" />
           </ScrollView>
         </View>

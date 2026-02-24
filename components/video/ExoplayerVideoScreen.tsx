@@ -84,8 +84,8 @@ export default function VideoScreen(props: {
   useEffect(() => {
     if (!isReady || paused) return;
     const interval = setInterval(() => {
-      // Don't set playback progress if below 5 minutes
-      if (currentTimeRef.current > 300) {
+      // Don't set playback progress if below 2 minutes
+      if (currentTimeRef.current > 120) {
         updatePlaybackProgress.mutate({
           id: props.id,
           mediaType: props.mediaType,

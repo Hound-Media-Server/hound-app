@@ -4,7 +4,7 @@ import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { useShowDetails } from "@/services/mediaDetailsService";
 import { ThemedText } from "@/components/ThemedText";
 import { useShowContinueWatching } from "@/services/watchDataService";
-import { fetchShowProviders } from "@/services/providerService";
+import { useUnifiedStreamsMutation } from "@/services/providerService";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getSelectStreamUrl,
@@ -24,6 +24,12 @@ export default function TVDetails() {
   const { id } = useLocalSearchParams();
   const openModal = useModalStore((s) => s.open);
 
+  // fetch show details
+  const { data: details, isLoading, error } = useShowDetails(id as string);
+  const { data: continueWatching, isLoading: isContinueLoading } =
+    useShowContinueWatching(id as string);
+  const { mutateAsync: streamsMutation } = useUnifiedStreamsMutation();
+
   useFocusEffect(
     React.useCallback(() => {
       queryClient.invalidateQueries({
@@ -37,11 +43,6 @@ export default function TVDetails() {
       });
     }, [id, queryClient]),
   );
-
-  // fetch show details
-  const { data: details, isLoading, error } = useShowDetails(id as string);
-  const { data: continueWatching, isLoading: isContinueLoading } =
-    useShowContinueWatching(id as string);
 
   const watchAction = continueWatching;
   const resumeStartTime =
@@ -111,15 +112,17 @@ export default function TVDetails() {
     if (targetSeason && targetEpisode) {
       if (encodedData) {
         try {
-          const providersRes = await fetchShowProviders(
-            id as string,
-            targetSeason,
-            targetEpisode,
-          );
-          const streams = providersRes?.data?.providers?.[0]?.streams || [];
-          const match = streams.find(
-            (s: any) => s.encoded_data === encodedData,
-          );
+          const res = await streamsMutation({
+            mediaType: "tv",
+            id: id as string,
+            season: targetSeason,
+            episode: targetEpisode,
+          });
+          // flatten providers array
+          const match = res?.data?.providers
+            ?.flatMap((p: any) => p.streams ?? [])
+            .find((s: any) => s.encoded_data === encodedData);
+
           if (match) {
             router.navigate(
               getStreamUrl(match.encoded_data, true, {
@@ -128,11 +131,10 @@ export default function TVDetails() {
                 title: details?.media_title,
                 season: targetSeason,
                 episode: targetEpisode,
-                startTime: startTime,
-                playerSettings: playerSettings,
+                startTime,
+                playerSettings,
               }),
             );
-            return;
           }
         } catch (e) {
           console.error("Error matching stream:", e);

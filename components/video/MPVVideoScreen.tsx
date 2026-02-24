@@ -69,7 +69,6 @@ export default function MPVVideoScreen(props: {
 
   useEffect(() => {
     if (!isReady || paused) return;
-
     const interval = setInterval(async () => {
       try {
         const position = await videoRef.current?.getCurrentPosition();
@@ -78,8 +77,8 @@ export default function MPVVideoScreen(props: {
         if (position !== undefined) setCurrentTime(position);
         if (dur !== undefined) setDuration(dur);
 
-        // don't set playback progress if below 5 minutes
-        if (position && position > 300) {
+        // don't set playback progress if below 2 minutes
+        if (position && position > 120) {
           updatePlaybackProgress.mutate({
             id: props.id,
             mediaType: props.mediaType,

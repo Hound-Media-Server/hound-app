@@ -15,7 +15,6 @@ import {
   useMovieContinueWatching,
   useMovieWatchData,
 } from "@/services/watchDataService";
-import { fetchMovieProviders } from "@/services/providerService";
 import { router, useFocusEffect } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -24,11 +23,19 @@ import {
   getAddToCollectionUrl,
 } from "@/utils/navigation";
 import { useModalStore } from "@/stores/modalStore";
+import { useUnifiedStreamsMutation } from "@/services/providerService";
 
 export default function MovieDetails() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams();
   const openModal = useModalStore((s) => s.open);
+
+  const { data: details, isLoading, error } = useMovieDetails(id as string);
+  const { data: continueWatching, isLoading: isContinueLoading } =
+    useMovieContinueWatching(id as string);
+  const { data: movieWatchData, isLoading: isWatchDataLoading } =
+    useMovieWatchData(id as string);
+  const { mutateAsync: streamsMutation } = useUnifiedStreamsMutation();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -43,12 +50,6 @@ export default function MovieDetails() {
       });
     }, [id, queryClient]),
   );
-
-  const { data: details, isLoading, error } = useMovieDetails(id as string);
-  const { data: continueWatching, isLoading: isContinueLoading } =
-    useMovieContinueWatching(id as string);
-  const { data: movieWatchData, isLoading: isWatchDataLoading } =
-    useMovieWatchData(id as string);
 
   const watchAction = continueWatching;
 
@@ -79,9 +80,14 @@ export default function MovieDetails() {
 
     if (encodedData) {
       try {
-        const providersRes = await fetchMovieProviders(id as string);
-        const streams = providersRes?.data?.providers?.[0]?.streams || [];
-        const match = streams.find((s: any) => s.encoded_data === encodedData);
+        const res = await streamsMutation({
+          mediaType: "movie",
+          id: id as string,
+        });
+        console.log("res", res);
+        const match = res?.data?.providers
+          ?.flatMap((p: any) => p.streams ?? [])
+          .find((s: any) => s.encoded_data === encodedData);
         if (match) {
           router.navigate(
             getStreamUrl(match.encoded_data, true, {
