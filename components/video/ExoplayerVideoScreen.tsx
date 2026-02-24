@@ -316,6 +316,12 @@ export default function VideoScreen(props: {
           ref={videoRef}
           source={{ uri: props.src }}
           style={{ width, height }}
+          controls
+        />
+        {/* <Video
+          ref={videoRef}
+          source={{ uri: props.src }}
+          style={{ width, height }}
           paused={paused}
           resizeMode={isZoomedToFill ? ResizeMode.COVER : ResizeMode.CONTAIN}
           onLoad={handleLoad}
@@ -383,8 +389,8 @@ export default function VideoScreen(props: {
             hasNextEpisode={props.hasNextEpisode}
             onNextEpisode={handleNextEpisode}
           />
-        )}
-        {!isReady && <LoadingOverlay />}
+        )} */}
+        {/* {!isReady && <LoadingOverlay />} */}
       </View>
     </>
   );
