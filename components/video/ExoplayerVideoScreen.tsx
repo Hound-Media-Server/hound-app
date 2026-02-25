@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
 import { StatusBar } from "expo-status-bar";
-import { useLayoutEffect, useRef, useState, useEffect, useMemo } from "react";
+import { useLayoutEffect, useRef, useState, useEffect } from "react";
 import {
   useUpdatePlaybackProgress,
   PlayerSettings,
@@ -145,6 +145,14 @@ export default function VideoScreen(props: {
     currentTimeRef.current = data.currentTime;
   };
 
+  /*
+    As of react-native-video ver. 6.19.0
+    selection by index doesn't seem to work properly,
+    text tracks that are in different groups can have the same
+    id.
+    I've had to patch it manually using patch-packages in the meantime
+    to make this work
+  */
   const handleTextTracks = (data: OnTextTracksData) => {
     // Convert react-native-video track format to MPV format for controls compatibility
     // 1-indexed to follow mpv
@@ -159,37 +167,37 @@ export default function VideoScreen(props: {
       subtitleInitialized.current = true;
 
       setSelectedTextTrack((prev) => {
-      const context = props.playerSettings;
-      let targetSub = prev;
-      if (context) {
-        const { subtitle_idx, subtitle_lang } = context;
-        // if streams match continue watching data, use subtitle_idx
-        if (
-          subtitle_idx !== undefined &&
-          subtitle_idx !== 0 &&
-          props.streamsMatch &&
-          tracks.find((t: any) => t.id === subtitle_idx)
-        ) {
-          targetSub = subtitle_idx;
-        }
-        // otherwise fallback to subtitle_lang
-        else {
-          const targetLang = subtitle_lang || appSettings?.subtitlesLanguage;
-          const matchByLang = tracks.find((t: any) => t.lang === targetLang);
+        const context = props.playerSettings;
+        let targetSub = prev;
+        if (context) {
+          const { subtitle_idx, subtitle_lang } = context;
+          // if streams match continue watching data, use subtitle_idx
+          if (
+            subtitle_idx !== undefined &&
+            subtitle_idx !== 0 &&
+            props.streamsMatch &&
+            tracks.find((t: any) => t.id === subtitle_idx)
+          ) {
+            targetSub = subtitle_idx;
+          }
+          // otherwise fallback to subtitle_lang
+          else {
+            const targetLang = subtitle_lang || appSettings?.subtitlesLanguage;
+            const matchByLang = tracks.find((t: any) => t.lang === targetLang);
+            if (matchByLang) {
+              targetSub = matchByLang.id;
+            }
+          }
+        } else if (appSettings?.subtitlesLanguage) {
+          // No player settings (new stream), use app defaults
+          const matchByLang = tracks.find(
+            (t: any) => t.lang === appSettings.subtitlesLanguage,
+          );
           if (matchByLang) {
             targetSub = matchByLang.id;
           }
         }
-      } else if (appSettings?.subtitlesLanguage) {
-        // No player settings (new stream), use app defaults
-        const matchByLang = tracks.find(
-          (t: any) => t.lang === appSettings.subtitlesLanguage,
-        );
-        if (matchByLang) {
-          targetSub = matchByLang.id;
-        }
-      }
-      return targetSub;
+        return targetSub;
       });
     }
     setTextTracks((prev) => {
@@ -322,54 +330,6 @@ export default function VideoScreen(props: {
     };
   }, []);
 
-  /*
-    I've had issues with setting text tracks with SelectedTrackType.INDEX and value - index number
-    Might be an upstream issue with react-native-video, where text-tracks are in separate groups
-    but the android implementation only searches the first group
-
-    For now, use the title or language as a fallback
-  */
-  const selectedTextTrackProp = useMemo(
-    () =>
-    selectedTextTrack === 0
-      ? { type: SelectedTrackType.DISABLED }
-      : (() => {
-          // exo-player is 0-indexed relative to mpv
-          return {
-            type: SelectedTrackType.INDEX,
-            value: selectedTextTrack - 1,
-          };
-
-          // const currentTrack = textTracks.find(
-          //   (track: any) => track.id === selectedTextTrack,
-          // );
-          // if (!currentTrack) {
-          //   return { type: SelectedTrackType.DISABLED };
-          // }
-          // // track title such as Track 1, Track 2 doesn't seem to work being set by SelectedTrackType.TITLE
-          // // This might be a placeholder, not an actual title, fallback to language
-          // if (
-          //   currentTrack.title &&
-          //   !currentTrack.title.toLowerCase().startsWith("track ")
-          // ) {
-          //   return {
-          //     type: SelectedTrackType.TITLE,
-          //     value: currentTrack.title,
-          //   };
-          // }
-          // if (currentTrack.lang) {
-          //   return {
-          //     type: SelectedTrackType.LANGUAGE,
-          //     value: currentTrack.lang,
-          //   };
-          // }
-          // Alert.alert("There was error setting this track");
-          // setSelectedTextTrack(0);
-          // return { type: SelectedTrackType.DISABLED };
-        })(),
-    [selectedTextTrack],
-  );
-
   return (
     <>
       <StatusBar hidden />
@@ -386,7 +346,11 @@ export default function VideoScreen(props: {
           onAudioTracks={handleAudioTracks}
           onError={handleError}
           progressUpdateInterval={1000}
-          selectedTextTrack={selectedTextTrackProp}
+          selectedTextTrack={
+            selectedTextTrack === 0
+              ? { type: SelectedTrackType.DISABLED }
+              : { type: SelectedTrackType.INDEX, value: selectedTextTrack - 1 }
+          }
           selectedAudioTrack={
             // exoplayer is zero-indexed, but we store one-indexed to fit mpv
             selectedAudioTrack >= 1
