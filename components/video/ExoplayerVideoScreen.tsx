@@ -324,7 +324,12 @@ export default function VideoScreen(props: {
           if (!currentTrack) {
             return { type: SelectedTrackType.DISABLED };
           }
-          if (currentTrack.title) {
+          // track title such as Track 1, Track 2 doesn't seem to work being set by SelectedTrackType.TITLE
+          // This might be a placeholder, not an actual title, fallback to language
+          if (
+            currentTrack.title &&
+            !currentTrack.title.toLowerCase().startsWith("track ")
+          ) {
             return {
               type: SelectedTrackType.TITLE,
               value: currentTrack.title,
