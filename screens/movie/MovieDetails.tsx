@@ -84,7 +84,6 @@ export default function MovieDetails() {
           mediaType: "movie",
           id: id as string,
         });
-        console.log("res", res);
         const match = res?.data?.providers
           ?.flatMap((p: any) => p.streams ?? [])
           .find((s: any) => s.encoded_data === encodedData);

@@ -30,6 +30,18 @@ export const fetchProviders = async (
   return apiClient(`/${mediaType}/${id}/providers${queryString}`);
 };
 
+export const useMediaFiles = (
+  mediaType: string,
+  id: string,
+  season?: number | null,
+  episode?: number | null
+) => {
+  return useQuery({
+    queryKey: ["media-files", mediaType, id, season, episode],
+    queryFn: () => fetchMediaFiles(mediaType, id, season, episode),
+  });
+};
+
 export const useUnifiedStreams = (
   mediaType: string,
   id: string,

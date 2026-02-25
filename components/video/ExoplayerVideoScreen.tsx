@@ -20,7 +20,6 @@ import Video, {
   OnAudioTracksData,
   ResizeMode,
   SelectedTrackType,
-  TextTrackType,
 } from "react-native-video";
 import VideoControls from "./VideoControls";
 import VideoControlsTV from "./VideoControls.tv";
@@ -308,6 +307,40 @@ export default function VideoScreen(props: {
     };
   }, []);
 
+  /*
+    I've had issues with setting text tracks with SelectedTrackType.INDEX and value - index number
+    Might be an upstream issue with react-native-video, where text-tracks are in separate groups
+    but the android implementation only searches the first group
+
+    For now, use the title or language as a fallback
+  */
+  const selectedTextTrackProp =
+    selectedTextTrack === 0
+      ? { type: SelectedTrackType.DISABLED }
+      : (() => {
+          const currentTrack = textTracks.find(
+            (track: any) => track.id === selectedTextTrack,
+          );
+          if (!currentTrack) {
+            return { type: SelectedTrackType.DISABLED };
+          }
+          if (currentTrack.title) {
+            return {
+              type: SelectedTrackType.TITLE,
+              value: currentTrack.title,
+            };
+          }
+          if (currentTrack.lang) {
+            return {
+              type: SelectedTrackType.LANGUAGE,
+              value: currentTrack.lang,
+            };
+          }
+          Alert.alert("There was error setting this track");
+          setSelectedTextTrack(0);
+          return { type: SelectedTrackType.DISABLED };
+        })();
+
   return (
     <>
       <StatusBar hidden />
@@ -324,7 +357,7 @@ export default function VideoScreen(props: {
           onAudioTracks={handleAudioTracks}
           onError={handleError}
           progressUpdateInterval={1000}
-          selectedTextTrack={{ type: SelectedTrackType.INDEX, value: 2 }}
+          selectedTextTrack={selectedTextTrackProp}
           selectedAudioTrack={
             // exoplayer is zero-indexed, but we store one-indexed to fit mpv
             selectedAudioTrack >= 1

@@ -337,7 +337,11 @@ function EpisodeCard({
             {episode.thumbnail_uri ? (
               <Image
                 className="md:w-[240px] md:h-[150px] sm:w-[160px] sm:h-[100px] rounded-md opacity-90"
-                source={`${episode.thumbnail_uri.replace("w500", "w300")}`}
+                source={
+                  Platform.isTV
+                    ? episode.thumbnail_uri
+                    : episode.thumbnail_uri.replace("w500", "w300")
+                }
                 contentFit="cover"
                 transition={1000}
               />

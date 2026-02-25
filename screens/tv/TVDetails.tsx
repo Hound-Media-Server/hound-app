@@ -21,7 +21,10 @@ import {
 } from "@/utils/navigation";
 import { ImageBackground } from "expo-image";
 import { useModalStore } from "@/stores/modalStore";
-import { useUnifiedStreamsMutation } from "@/services/providerService";
+import {
+  useMediaFiles,
+  useUnifiedStreamsMutation,
+} from "@/services/providerService";
 
 export default function TVDetails() {
   const queryClient = useQueryClient();
@@ -32,6 +35,7 @@ export default function TVDetails() {
   const { data: continueWatching, isLoading: isContinueLoading } =
     useShowContinueWatching(id as string);
   const { mutateAsync: streamsMutation } = useUnifiedStreamsMutation();
+  const { data: mediaFiles } = useMediaFiles("tv", id as string);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -53,6 +57,8 @@ export default function TVDetails() {
       ? watchAction.watch_progress?.current_progress_seconds
       : 0) || 0;
 
+  // this contains streams for every season and episode in hound
+  const streams = mediaFiles?.data?.providers?.[0]?.streams;
   let playLabel = "▶︎ Play";
   if (watchAction) {
     if (
@@ -210,12 +216,14 @@ export default function TVDetails() {
               </TouchableOpacity>
             </View>
             <View className="me-5">
-              <ThemedText className="text-white text-3xl leading-[36px]">
-                {details?.media_title}
-                <ThemedText className="text-gray-400 text-2xl leading-[32px]">
-                  {" (" + details?.release_date?.split("-")[0] + ")"}
+              <View className="flex-row items-center">
+                <ThemedText className="text-white text-3xl leading-[36px]">
+                  {details?.media_title}
+                  <ThemedText className="text-gray-400 text-2xl leading-[32px]">
+                    {" (" + details?.release_date?.split("-")[0] + ")"}
+                  </ThemedText>
                 </ThemedText>
-              </ThemedText>
+              </View>
               <ThemedText className="text-secondary mt-1 opacity-80 sm:text-lg">
                 {details?.genres?.map((item: any) => item.name).join(", ")}
               </ThemedText>
