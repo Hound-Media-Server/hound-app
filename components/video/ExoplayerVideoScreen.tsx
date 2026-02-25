@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
 import { StatusBar } from "expo-status-bar";
-import { useLayoutEffect, useRef, useState, useEffect } from "react";
+import { useLayoutEffect, useRef, useState, useEffect, useMemo } from "react";
 import {
   useUpdatePlaybackProgress,
   PlayerSettings,
@@ -155,10 +155,10 @@ export default function VideoScreen(props: {
       lang: track.language ? toAlpha2(track.language) : undefined,
       selected: track.index + 1 === selectedTextTrack,
     }));
-    setSelectedTextTrack((prev) => {
-      if (subtitleInitialized.current) return prev;
+    if (!subtitleInitialized.current) {
       subtitleInitialized.current = true;
 
+      setSelectedTextTrack((prev) => {
       const context = props.playerSettings;
       let targetSub = prev;
       if (context) {
@@ -190,8 +190,23 @@ export default function VideoScreen(props: {
         }
       }
       return targetSub;
+      });
+    }
+    setTextTracks((prev) => {
+      if (
+        prev.length === tracks.length &&
+        prev.every(
+          (track, idx) =>
+            track.id === tracks[idx].id &&
+            track.title === tracks[idx].title &&
+            track.lang === tracks[idx].lang &&
+            track.selected === tracks[idx].selected,
+        )
+      ) {
+        return prev;
+      }
+      return tracks;
     });
-    setTextTracks(tracks);
   };
 
   const handleAudioTracks = (data: OnAudioTracksData) => {
@@ -314,37 +329,46 @@ export default function VideoScreen(props: {
 
     For now, use the title or language as a fallback
   */
-  const selectedTextTrackProp =
+  const selectedTextTrackProp = useMemo(
+    () =>
     selectedTextTrack === 0
       ? { type: SelectedTrackType.DISABLED }
       : (() => {
-          const currentTrack = textTracks.find(
-            (track: any) => track.id === selectedTextTrack,
-          );
-          if (!currentTrack) {
-            return { type: SelectedTrackType.DISABLED };
-          }
-          // track title such as Track 1, Track 2 doesn't seem to work being set by SelectedTrackType.TITLE
-          // This might be a placeholder, not an actual title, fallback to language
-          if (
-            currentTrack.title &&
-            !currentTrack.title.toLowerCase().startsWith("track ")
-          ) {
-            return {
-              type: SelectedTrackType.TITLE,
-              value: currentTrack.title,
-            };
-          }
-          if (currentTrack.lang) {
-            return {
-              type: SelectedTrackType.LANGUAGE,
-              value: currentTrack.lang,
-            };
-          }
-          Alert.alert("There was error setting this track");
-          setSelectedTextTrack(0);
-          return { type: SelectedTrackType.DISABLED };
-        })();
+          // exo-player is 0-indexed relative to mpv
+          return {
+            type: SelectedTrackType.INDEX,
+            value: selectedTextTrack - 1,
+          };
+
+          // const currentTrack = textTracks.find(
+          //   (track: any) => track.id === selectedTextTrack,
+          // );
+          // if (!currentTrack) {
+          //   return { type: SelectedTrackType.DISABLED };
+          // }
+          // // track title such as Track 1, Track 2 doesn't seem to work being set by SelectedTrackType.TITLE
+          // // This might be a placeholder, not an actual title, fallback to language
+          // if (
+          //   currentTrack.title &&
+          //   !currentTrack.title.toLowerCase().startsWith("track ")
+          // ) {
+          //   return {
+          //     type: SelectedTrackType.TITLE,
+          //     value: currentTrack.title,
+          //   };
+          // }
+          // if (currentTrack.lang) {
+          //   return {
+          //     type: SelectedTrackType.LANGUAGE,
+          //     value: currentTrack.lang,
+          //   };
+          // }
+          // Alert.alert("There was error setting this track");
+          // setSelectedTextTrack(0);
+          // return { type: SelectedTrackType.DISABLED };
+        })(),
+    [selectedTextTrack],
+  );
 
   return (
     <>

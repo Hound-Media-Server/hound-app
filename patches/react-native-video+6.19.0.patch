@@ -1,0 +1,31 @@
+diff --git a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java
+index e16ac96..9f435f1 100644
+--- a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java
++++ b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java
+@@ -2146,6 +2146,8 @@ public class ReactExoplayerView extends FrameLayout implements
+                 if (textRendererIndex != C.INDEX_UNSET) {
+                     TrackGroupArray groups = info.getTrackGroups(textRendererIndex);
+                     boolean trackFound = false;
++                    int targetIndex = "index".equals(type) ? ReactBridgeUtils.safeParseInt(value, -1) : -1;
++                    int flatTextTrackIndex = 0;
+                     
+                     for (int groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+                         TrackGroup group = groups.get(groupIndex);
+@@ -2158,8 +2160,7 @@ public class ReactExoplayerView extends FrameLayout implements
+                             } else if ("title".equals(type) && format.label != null && format.label.equals(value)) {
+                                 isMatch = true;
+                             } else if ("index".equals(type)) {
+-                                int targetIndex = ReactBridgeUtils.safeParseInt(value, -1);
+-                                if (targetIndex == trackIndex) {
++                                if (targetIndex == flatTextTrackIndex) {
+                                     isMatch = true;
+                                 }
+                             }
+@@ -2171,6 +2172,7 @@ public class ReactExoplayerView extends FrameLayout implements
+                                 trackFound = true;
+                                 break;
+                             }
++                            flatTextTrackIndex++;
+                         }
+                         if (trackFound) break;
+                     }
