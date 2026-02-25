@@ -17,8 +17,8 @@ import VideoControls from "./VideoControls";
 import VideoControlsTV from "./VideoControls.tv";
 import { ThemedText } from "../ThemedText";
 import { router } from "expo-router";
-import { toAlpha2 } from "@cospired/i18n-iso-languages";
 import { getAllSettings, SettingsSchema } from "@/stores/settingsStore";
+import { get2LetterLangCode } from "@/utils/locale";
 
 export default function MPVVideoScreen(props: {
   src: string;
@@ -145,11 +145,11 @@ export default function MPVVideoScreen(props: {
       // convert iso 3-letter to 2-letter iso codes
       const convertedSubtitles = subtitles?.map((track) => ({
         ...track,
-        lang: track.lang ? toAlpha2(track.lang) : undefined,
+        lang: track.lang ? get2LetterLangCode(track.lang) : undefined,
       }));
       const convertedAudio = audio?.map((track) => ({
         ...track,
-        lang: track.lang ? toAlpha2(track.lang) : undefined,
+        lang: track.lang ? get2LetterLangCode(track.lang) : undefined,
       }));
 
       if (convertedSubtitles) setTextTracks(convertedSubtitles);

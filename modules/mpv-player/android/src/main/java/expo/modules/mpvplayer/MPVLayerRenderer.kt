@@ -178,6 +178,9 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
                 MPVLib.setOptionString("framedrop", "decoder+vo")
                 // TV-specific: Use larger video buffer for smoother playback
                 MPVLib.setOptionString("video-latency-hacks", "no")
+                // Fast profile for TV, probably want to add a switch for more performant devices
+                // In my testing, chromecast 4k needs this to avoid stutters >1080p
+                MPVLib.setOptionString("profile", "fast")
                 Log.i(TAG, "Android TV detected - using mediacodec direct rendering")
             } else {
                 MPVLib.setOptionString("hwdec", "mediacodec-copy")

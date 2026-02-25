@@ -24,9 +24,9 @@ import Video, {
 import VideoControls from "./VideoControls";
 import VideoControlsTV from "./VideoControls.tv";
 import { ThemedText } from "../ThemedText";
-import { toAlpha2 } from "@cospired/i18n-iso-languages";
 import { router } from "expo-router";
 import { getAllSettings, SettingsSchema } from "@/stores/settingsStore";
+import { get2LetterLangCode } from "@/utils/locale";
 
 export default function VideoScreen(props: {
   src: string;
@@ -160,7 +160,7 @@ export default function VideoScreen(props: {
     const tracks = data.textTracks.map((track) => ({
       id: track.index + 1,
       title: track.title,
-      lang: track.language ? toAlpha2(track.language) : undefined,
+      lang: track.language ? get2LetterLangCode(track.language) : undefined,
       selected: track.index + 1 === selectedTextTrack,
     }));
     if (!subtitleInitialized.current) {
@@ -224,7 +224,7 @@ export default function VideoScreen(props: {
     const tracks = data.audioTracks.map((track) => ({
       id: track.index + 1,
       title: track.title,
-      lang: track.language ? toAlpha2(track.language) : undefined,
+      lang: track.language ? get2LetterLangCode(track.language) : undefined,
       selected: track.index + 1 === selectedAudioTrack,
     }));
     setSelectedAudioTrack((prev) => {

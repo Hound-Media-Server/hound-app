@@ -12,7 +12,7 @@ export type SettingsSchema = {
 const DEFAULTS: SettingsSchema = {
   subtitlesLanguage: "en",
   audioLanguage: "en",
-  defaultPlayer: "exoplayer",
+  defaultPlayer: "mpv",
   playAction: "direct",
 };
 
