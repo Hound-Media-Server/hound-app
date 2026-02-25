@@ -1,141 +1,98 @@
-import { Ionicons } from "@expo/vector-icons";
+import { ThemedText } from "@/components/ThemedText";
 import { Tabs } from "expo-router";
-import { useState } from "react";
-import { Pressable, TouchableHighlight } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Animated, Pressable, TVFocusGuideView, View } from "react-native";
 
-function TVTabButton({ onPress, accessibilityState, iconName }: any) {
-  const selected = accessibilityState?.selected;
-  const [tvFocused, setTvFocused] = useState(false);
+function TVTabBar({
+  state,
+  descriptors,
+  navigation,
+}: {
+  state: any;
+  descriptors: any;
+  navigation: any;
+}) {
+  const tabRefs = useRef<any[]>([]);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const fadeAnimation = useRef(new Animated.Value(0.4)).current;
+  const selectedTabRef = tabRefs.current[state.index] ?? null;
+
+  useEffect(() => {
+    Animated.timing(fadeAnimation, {
+      toValue: focusedIndex === null ? 1 : 1,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
+  }, [focusedIndex, fadeAnimation]);
 
   return (
-    <TouchableHighlight
-      focusable
-      onPress={onPress}
-      onFocus={() => {
-        setTvFocused(true);
-      }}
-      onBlur={() => setTvFocused(false)}
-      hasTVPreferredFocus={selected}
-      className={
-        "flex items-center justify-center" +
-        (tvFocused ? " opacity-100" : "opacity-0")
-      }
-    >
-      <Ionicons
-        size={24}
-        name={selected ? iconName : `${iconName}-outline`}
-        color={tvFocused ? "#FFD60A" : selected ? "#FF3B30" : "#8E8E93"}
-      />
-    </TouchableHighlight>
+    <View className="absolute top-5 left-10 right-0 z-50">
+      <TVFocusGuideView
+        autoFocus
+        destinations={selectedTabRef ? [selectedTabRef] : undefined}
+      >
+        <Animated.View
+          className="self-start flex-row bg-black/50 rounded-full overflow-hidden p-2"
+          style={{ opacity: fadeAnimation, columnGap: 8 }}
+        >
+          {state.routes.map((route: any, index: number) => {
+            const isSelected = state.index === index;
+
+            const onPress = () => {
+              const event = navigation.emit({
+                type: "tabPress",
+                target: route.key,
+                canPreventDefault: true,
+              });
+              if (!isSelected && !event.defaultPrevented) {
+                navigation.navigate(route.name);
+              }
+            };
+
+            return (
+              <Pressable
+                className="group"
+                key={route.key}
+                ref={(ref) => {
+                  tabRefs.current[index] = ref;
+                }}
+                onPress={() => {
+                  setFocusedIndex(index);
+                  onPress();
+                }}
+                onFocus={() => {
+                  setFocusedIndex(index);
+                  onPress();
+                }}
+                onBlur={() => {
+                  if (focusedIndex === index) setFocusedIndex(null);
+                }}
+                hasTVPreferredFocus={isSelected}
+              >
+                <View className="rounded-full px-4 py-2 bg-white/10 group-focus:bg-white">
+                  <ThemedText className="text-white group-focus:text-black">
+                    {descriptors[route.key]?.options?.title}
+                  </ThemedText>
+                </View>
+              </Pressable>
+            );
+          })}
+        </Animated.View>
+      </TVFocusGuideView>
+    </View>
   );
 }
 
 export default function TabLayout() {
   return (
     <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: "#FF3B30",
-        tabBarInactiveTintColor: "#8E8E93",
-        tabBarItemStyle: {
-          justifyContent: "center",
-          alignItems: "center",
-          paddingTop: 4,
-        },
-        tabBarStyle: {
-          display: "flex",
-          position: "absolute",
-          overflow: "hidden",
-          opacity: 0.8,
-          top: 10,
-          marginHorizontal: 20,
-          marginBottom: 20,
-          elevation: 2,
-          backgroundColor: "#1C1C1E",
-          borderRadius: 40,
-          height: 64,
-          borderTopWidth: 0,
-          shadowColor: "#000",
-          shadowOffset: {
-            width: 0,
-            height: 4,
-          },
-          shadowOpacity: 0.15,
-          shadowRadius: 5,
-        },
-      }}
+      screenOptions={{ headerShown: false, tabBarPosition: "top" }}
+      tabBar={(props) => <TVTabBar {...props} />}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          headerShown: false,
-          tabBarIcon: ({ focused, color }) => (
-            <TVTabButton
-              onPress={() => {}}
-              accessibilityState={{ selected: focused }}
-              iconName="home"
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="library"
-        options={{
-          title: "Library",
-          headerShown: false,
-          tabBarIcon: ({ focused, color }) => (
-            <TVTabButton
-              onPress={() => {}}
-              accessibilityState={{ selected: focused }}
-              iconName="albums"
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: "Search",
-          headerShown: false,
-          tabBarIcon: ({ focused, color }) => (
-            <TVTabButton
-              onPress={() => {}}
-              accessibilityState={{ selected: focused }}
-              iconName="search"
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Settings",
-          headerShown: false,
-          tabBarIcon: ({ focused, color }) => (
-            <TVTabButton
-              onPress={() => {}}
-              accessibilityState={{ selected: focused }}
-              iconName="settings"
-            />
-          ),
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: "Home" }} />
+      <Tabs.Screen name="library" options={{ title: "Library" }} />
+      <Tabs.Screen name="search" options={{ title: "Search" }} />
+      <Tabs.Screen name="settings" options={{ title: "Settings" }} />
     </Tabs>
   );
-  // return (
-  //     <NativeTabs>
-  //         <NativeTabs.Trigger name="index">
-  //             <Label>Home</Label>
-  //             <Ionicons name="home-outline" size={22} />
-  //         </NativeTabs.Trigger>
-  //         <NativeTabs.Trigger name="explore">
-  //             <Label>Explore</Label>
-  //             <Icon sf="atom" />
-  //         </NativeTabs.Trigger>
-  //         <NativeTabs.Trigger name="library">
-  //             <Label>Library</Label>
-  //             <Icon sf="atom" />
-  //         </NativeTabs.Trigger>
-  //     </NativeTabs>
-  // );
 }
