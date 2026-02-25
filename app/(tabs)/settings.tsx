@@ -20,6 +20,12 @@ export default function Settings() {
   const [playAction, setPlayAction] = useState<"direct" | "select" | undefined>(
     undefined,
   );
+  const [defaultShowResizeMode, setDefaultShowResizeMode] = useState<
+    "cover" | "contain" | undefined
+  >(undefined);
+  const [defaultMovieResizeMode, setDefaultMovieResizeMode] = useState<
+    "cover" | "contain" | undefined
+  >(undefined);
 
   async function onFetchUpdateAsync() {
     try {
@@ -39,7 +45,9 @@ export default function Settings() {
   useEffect(() => {
     const val = getSetting("defaultPlayer");
     if (val) setPlayer(val);
-    setPlayAction(getSetting("playAction"));
+    setPlayAction(getSetting("defaultPlayAction"));
+    setDefaultShowResizeMode(getSetting("defaultShowResizeMode"));
+    setDefaultMovieResizeMode(getSetting("defaultMovieResizeMode"));
   }, []);
 
   const handleSetPlayer = (newPlayer: "mpv" | "exoplayer") => {
@@ -50,8 +58,23 @@ export default function Settings() {
   const handleTogglePlayAction = () => {
     if (!playAction) return;
     const newPlayAction = playAction === "direct" ? "select" : "direct";
-    setSetting("playAction", newPlayAction);
+    setSetting("defaultPlayAction", newPlayAction);
     setPlayAction(newPlayAction);
+  };
+
+  const handleToggleShowResizeMode = () => {
+    if (!defaultShowResizeMode) return;
+    const newResizeMode = defaultShowResizeMode === "cover" ? "contain" : "cover";
+    setSetting("defaultShowResizeMode", newResizeMode);
+    setDefaultShowResizeMode(newResizeMode);
+  };
+
+  const handleToggleMovieResizeMode = () => {
+    if (!defaultMovieResizeMode) return;
+    const newResizeMode =
+      defaultMovieResizeMode === "cover" ? "contain" : "cover";
+    setSetting("defaultMovieResizeMode", newResizeMode);
+    setDefaultMovieResizeMode(newResizeMode);
   };
 
   return (
@@ -66,6 +89,12 @@ export default function Settings() {
       <Text className="text-white">Platform: {Platform.OS}</Text>
       <Text className="text-white">Player: {player}</Text>
       <Text className="text-white">PlayAction: {playAction}</Text>
+      <Text className="text-white">
+        Default Show Resize: {defaultShowResizeMode}
+      </Text>
+      <Text className="text-white">
+        Default Movie Resize: {defaultMovieResizeMode}
+      </Text>
       <TouchableOpacity
         onPress={() => onFetchUpdateAsync()}
         hasTVPreferredFocus
@@ -90,6 +119,18 @@ export default function Settings() {
         className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
       >
         <Text className="text-white">toggle play action</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => handleToggleShowResizeMode()}
+        className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
+      >
+        <Text className="text-white">toggle show resize mode</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => handleToggleMovieResizeMode()}
+        className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
+      >
+        <Text className="text-white">toggle movie resize mode</Text>
       </TouchableOpacity>
       <TouchableOpacity
         className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}

@@ -127,17 +127,20 @@ export default function VideoScreen(props: {
     textTracks,
   ]);
 
-  const handleLoad = (data: OnLoadData) => {
-    setIsReady(true);
-    setDuration(data.duration);
-    durationRef.current = data.duration;
+  useEffect(() => {
+    setIsZoomedToFill(props.playerSettings?.resize_mode === "cover");
+  }, [props.playerSettings?.resize_mode]);
 
+  const handleLoad = (data: OnLoadData) => {
     // Seek to start time if provided
     if (props.startTime && !initialSeekDone.current) {
       videoRef.current?.seek(props.startTime);
       currentTimeRef.current = props.startTime;
       initialSeekDone.current = true;
     }
+    setIsReady(true);
+    setDuration(data.duration);
+    durationRef.current = data.duration;
   };
 
   const handleProgress = (data: OnProgressData) => {

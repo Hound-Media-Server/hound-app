@@ -6,14 +6,18 @@ export type SettingsSchema = {
   subtitlesLanguage?: string;
   audioLanguage?: string;
   defaultPlayer?: "exoplayer" | "mpv";
-  playAction?: "direct" | "select"; 
+  defaultPlayAction?: "direct" | "select";
+  defaultShowResizeMode?: "cover" | "contain";
+  defaultMovieResizeMode?: "cover" | "contain";
 };
 
 const DEFAULTS: SettingsSchema = {
   subtitlesLanguage: "en",
   audioLanguage: "en",
   defaultPlayer: "mpv",
-  playAction: "direct",
+  defaultPlayAction: "direct",
+  defaultShowResizeMode: "contain",
+  defaultMovieResizeMode: "contain",
 };
 
 const STORAGE_KEY = "@app_settings";

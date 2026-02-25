@@ -124,17 +124,24 @@ export default function MPVVideoScreen(props: {
     textTracks,
   ]);
 
+  useEffect(() => {
+    setIsZoomedToFill(props.playerSettings?.resize_mode === "cover");
+  }, [props.playerSettings?.resize_mode]);
+
+  useEffect(() => {
+    if (!isReady) return;
+    const applyResizeMode = async () => {
+      try {
+        await videoRef.current?.setZoomedToFill(isZoomedToFill);
+      } catch (error) {
+        console.error("Error applying resize mode:", error);
+      }
+    };
+    applyResizeMode();
+  }, [isReady, isZoomedToFill]);
+
   const handleLoad = async () => {
-    // seems like current implementation triggers onReady faster
-    // than expected, duration/etc. not available yet
-    try {
-      const dur = await videoRef.current?.getDuration();
-      setIsReady(true);
-      if (dur) setDuration(dur);
-    } catch (error) {
-      setIsReady(true);
-      console.error("Error getting duration:", error);
-    }
+    // don't seem to need this yet
   };
 
   const handleTracksReady = async () => {
@@ -259,12 +266,16 @@ export default function MPVVideoScreen(props: {
       setPaused(isPaused);
     }
 
-    // seek to start time
-    if (isReadyToSeek && props.startTime) {
-      try {
-        await videoRef.current?.seekTo(props.startTime);
-      } catch (error) {
-        console.error("Error seeking to start time:", error);
+    if (isReadyToSeek) {
+      setIsReady(true);
+
+      // seek to start time
+      if (props.startTime) {
+        try {
+          await videoRef.current?.seekTo(props.startTime);
+        } catch (error) {
+          console.error("Error seeking to start time:", error);
+        }
       }
     }
   };

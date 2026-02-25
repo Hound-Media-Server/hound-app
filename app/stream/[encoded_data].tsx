@@ -127,15 +127,23 @@ export default function Stream() {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
     // Load setting
     const val = getSetting("defaultPlayer");
+    const defaultResizeMode =
+      type === "movie"
+        ? getSetting("defaultMovieResizeMode")
+        : getSetting("defaultShowResizeMode");
     // Use player from context if available, otherwise fallback to settings
     const preferredPlayer =
       (parsedPlayerSettings?.player as string) || val || "exoplayer";
     setCurrentPlayer(preferredPlayer);
+    setCurrentSettings((prev: any) => ({
+      ...prev,
+      resize_mode: prev?.resize_mode || defaultResizeMode || "contain",
+    }));
 
     return () => {
       ScreenOrientation.unlockAsync();
     };
-  }, []);
+  }, [type]);
 
   const handlePlayerChange = async (
     newPlayer: "exoplayer" | "mpv",
