@@ -19,7 +19,7 @@ function TVTabBar({
 
   useEffect(() => {
     Animated.timing(fadeAnimation, {
-      toValue: focusedIndex === null ? 1 : 1,
+      toValue: focusedIndex === null ? 0.4 : 1,
       duration: 180,
       useNativeDriver: true,
     }).start();
