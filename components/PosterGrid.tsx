@@ -9,6 +9,7 @@ import React, { useRef } from "react";
 import MediaItemCard from "./MediaItemCard";
 import { ThemedText } from "./ThemedText";
 import { TVFocusGuideView } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface PosterGridProps {
   useQuery?: (limit?: number, offset?: number) => any;
@@ -20,6 +21,7 @@ interface PosterGridProps {
   onEndReached?: () => void;
   limit?: number;
   offset?: number;
+  renderHeader?: () => React.ReactNode;
 }
 
 export default function PosterGrid({
@@ -32,6 +34,7 @@ export default function PosterGrid({
   onEndReached,
   limit,
   offset,
+  renderHeader,
 }: PosterGridProps) {
   const flatListRef = useRef<FlatList<any> | null>(null);
 
@@ -59,76 +62,95 @@ export default function PosterGrid({
   }
 
   error = propError || error;
-  if (error) {
-    return (
-      <View className="flex-1 justify-center items-center p-5">
-        <ThemedText className="text-white text-center">
-          Error: {error.message}
-        </ThemedText>
-      </View>
-    );
-  }
-  if (isLoading && (!data || data.length === 0)) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <ActivityIndicator color="white" size="large" />
-      </View>
-    );
-  }
-  if (!data || data.length === 0) {
-    return (
-      <View className="flex-1 justify-center items-center p-5">
-        <ThemedText className="text-gray-400">No items found</ThemedText>
-      </View>
-    );
-  }
   const cardWidth = 120;
   const horizontalGap = 15;
   const totalGridWidth =
     numColumns * cardWidth + (numColumns - 1) * horizontalGap;
 
-  return wrapTVFocusGuideView(
-    <FlatList
-      ref={flatListRef}
-      data={data}
-      numColumns={numColumns}
-      showsHorizontalScrollIndicator={false}
-      showsVerticalScrollIndicator={false}
-      scrollEnabled={!Platform.isTV}
-      keyExtractor={(item: any) =>
-        item.media_type + "-" + item.media_source + "-" + item.source_id
-      }
-      contentContainerStyle={{
-        paddingBottom: 20,
-        alignSelf: "center",
-        width: totalGridWidth,
-      }}
-      columnWrapperStyle={{
-        justifyContent: "flex-start",
-        gap: horizontalGap,
-      }}
-      ItemSeparatorComponent={() => <View style={{ height: 20 }} />}
-      onEndReached={onEndReached}
-      onEndReachedThreshold={0.5}
-      renderItem={({ item, index }) => (
-        <View style={{ width: cardWidth }}>
-          <MediaItemCard
-            mediaItem={item}
-            title={getMediaTitle(item)}
-            showDescription={true}
-            onFocus={() => handleFocus(index)}
-            hasTVPreferredFocus={index === 0}
-          />
+  const renderEmptyComponent = () => {
+    if (isLoading) {
+      return (
+        <View className="flex-1 justify-center items-center py-20">
+          <ActivityIndicator color="white" size="large" />
         </View>
-      )}
-      ListHeaderComponent={
-        header ? (
-          <ThemedText className="text-white text-2xl mb-5 mt-5">
-            {header}
+      );
+    }
+    if (error) {
+      return (
+        <View className="flex-1 justify-center items-center p-5 py-20">
+          <ThemedText className="text-white text-center">
+            Error: {error.message}
           </ThemedText>
-        ) : null
-      }
-    />,
+        </View>
+      );
+    }
+    if (data && data.length === 0) {
+      return (
+        <View className="flex-1 justify-center items-center p-5 py-20">
+          <ThemedText className="text-gray-400">No items found</ThemedText>
+        </View>
+      );
+    }
+    return null;
+  };
+
+  return wrapTVFocusGuideView(
+    <View className="flex-1">
+      {(header || renderHeader) && (
+        <LinearGradient
+          colors={["#000000", "#000000", "transparent"]}
+          locations={[0, 0.83, 1]}
+          className="pt-5 pb-5"
+          style={{
+            width: totalGridWidth,
+            alignSelf: "center",
+            zIndex: 10,
+          }}
+        >
+          {header && (
+            <ThemedText className="text-white text-2xl mb-3">
+              {header}
+            </ThemedText>
+          )}
+          {renderHeader && renderHeader()}
+        </LinearGradient>
+      )}
+      <FlatList
+        style={{ marginTop: -40 }}
+        ref={flatListRef}
+        data={data}
+        numColumns={numColumns}
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        keyExtractor={(item: any) =>
+          item.media_type + "-" + item.media_source + "-" + item.source_id
+        }
+        contentContainerStyle={{
+          paddingBottom: 140,
+          alignSelf: "center",
+          width: totalGridWidth,
+        }}
+        columnWrapperStyle={{
+          justifyContent: "flex-start",
+          gap: horizontalGap,
+        }}
+        ItemSeparatorComponent={() => <View style={{ height: 20 }} />}
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.5}
+        ListHeaderComponent={<View className="mt-10" />}
+        ListEmptyComponent={renderEmptyComponent}
+        renderItem={({ item, index }) => (
+          <View style={{ width: cardWidth }}>
+            <MediaItemCard
+              mediaItem={item}
+              title={getMediaTitle(item)}
+              showDescription={true}
+              onFocus={() => handleFocus(index)}
+            />
+          </View>
+        )}
+      />
+    </View>,
   );
 }
 

@@ -15,6 +15,16 @@ export default function Index() {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
 
+  const trendingMoviesQuery = useTrendingMovies();
+  const trendingShowsQuery = useTrendingShows();
+  const continueWatchingQuery = useContinueWatching();
+
+  // hide splash screen after all queries done, this helps with focus handling as well
+  const isAllReady =
+    !trendingMoviesQuery.isLoading &&
+    !trendingShowsQuery.isLoading &&
+    !continueWatchingQuery.isLoading;
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([
@@ -40,16 +50,26 @@ export default function Index() {
     {
       key: "continueWatching",
       header: "Continue Watching",
-      query: useContinueWatching,
+      query: continueWatchingQuery,
       itemType: "episode",
     },
-    { key: "trendingShows", header: "Trending Shows", query: useTrendingShows },
+    {
+      key: "trendingShows",
+      header: "Trending Shows",
+      query: trendingShowsQuery,
+    },
     {
       key: "trendingMovies",
       header: "Trending Movies",
-      query: useTrendingMovies,
+      query: trendingMoviesQuery,
     },
   ];
+
+  // Find the first row that actually has data to give it initial focus
+  // eg. continue watching is typically at the top, but it might not have data
+  const preferredRowKey = rows.find(
+    (row) => row.query.data && row.query.data.length > 0,
+  )?.key;
 
   const verticalListRef = useRef<FlatList>(null);
   return (
@@ -70,9 +90,11 @@ export default function Index() {
             <HorizontalList
               key={item.key}
               header={item.header}
-              useQuery={item.query}
+              itemData={item.query.data}
+              isLoading={item.query.isLoading}
               itemType={item.itemType}
               rowIndex={index}
+              hasPreferredFocus={isAllReady && item.key === preferredRowKey}
               onRowFocus={(rowIndex: number) => {
                 if (!Platform.isTV) return;
                 verticalListRef.current?.scrollToIndex({

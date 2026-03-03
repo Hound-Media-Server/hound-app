@@ -92,6 +92,7 @@ export default function Search() {
                   header="TV Shows"
                   rowIndex={1}
                   showDescription
+                  hasPreferredFocus={!isSearching}
                 />
                 <View className="mb-5" />
               </>
@@ -104,6 +105,9 @@ export default function Search() {
                 header="Movies"
                 rowIndex={2}
                 showDescription
+                hasPreferredFocus={
+                  !isSearching && !(data?.tv_results?.length > 0)
+                }
               />
             )}
             {!(data?.tv_results?.length > 0) &&

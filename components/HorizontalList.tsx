@@ -21,6 +21,7 @@ interface HorizontalListProps {
   showDescription?: boolean;
   rowIndex?: number;
   onRowFocus?: (rowIndex: number) => void;
+  hasPreferredFocus?: boolean;
 }
 
 export default function HorizontalList({
@@ -32,6 +33,7 @@ export default function HorizontalList({
   showDescription,
   rowIndex,
   onRowFocus,
+  hasPreferredFocus,
 }: HorizontalListProps) {
   const flatListRef = useRef<FlatList<any> | null>(null);
   const setFocusedItem = useFocusStore((s) => s.setFocusedItem);
@@ -136,7 +138,7 @@ export default function HorizontalList({
                 <ContinueWatchingCard
                   item={item}
                   onFocus={() => handleFocus(index)}
-                  hasTVPreferredFocus={index === 0}
+                  hasTVPreferredFocus={hasPreferredFocus && index === 0}
                   rowIndex={rowIndex}
                 />
               );
@@ -162,7 +164,7 @@ export default function HorizontalList({
                   setFocusedItem(focusItem);
                   handleFocus(index);
                 }}
-                hasTVPreferredFocus={index === 0}
+                hasTVPreferredFocus={hasPreferredFocus && index === 0}
               />
             );
           }}

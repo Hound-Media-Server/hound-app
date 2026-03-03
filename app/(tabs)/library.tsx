@@ -1,5 +1,11 @@
-import { View, Platform, TouchableOpacity, Pressable } from "react-native";
-import React, { useState, useEffect } from "react";
+import {
+  View,
+  Platform,
+  Pressable,
+  Animated,
+  TVFocusGuideView,
+} from "react-native";
+import React, { useState, useEffect, useRef, forwardRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useHoundLibrary } from "@/services/collectionService";
 import PosterGrid from "@/components/PosterGrid";
@@ -8,12 +14,27 @@ import { ThemedText } from "@/components/ThemedText";
 export default function Library() {
   const [items, setItems] = useState<any[]>([]);
   const [offset, setOffset] = useState(0);
+  const [mediaType, setMediaType] = useState<"movie" | "tvshow" | undefined>(
+    undefined,
+  );
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const fadeAnim = useRef(new Animated.Value(Platform.isTV ? 0.4 : 1)).current;
+  const buttonRefs = useRef<any[]>([]);
+
+  useEffect(() => {
+    if (!Platform.isTV) return;
+    Animated.timing(fadeAnim, {
+      toValue: focusedIndex === null ? 0.5 : 1,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
+  }, [focusedIndex, fadeAnim]);
 
   const numColumns = Platform.isTV ? 6 : 3;
   const limit = numColumns * 5;
 
-  const { data, isLoading, error } = useHoundLibrary(
-    undefined,
+  const { data, isLoading, isFetching, error } = useHoundLibrary(
+    mediaType,
     undefined,
     limit,
     offset,
@@ -41,6 +62,7 @@ export default function Library() {
     }
   }, [data, offset]);
 
+  // trigger refetch
   const loadMore = () => {
     if (data && items.length < data.total_records && !isLoading) {
       setOffset((prev) => prev + limit);
@@ -48,17 +70,67 @@ export default function Library() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-black" edges={["top", "left", "right"]}>
+    <SafeAreaView
+      className="flex-1 bg-black"
+      edges={["top", "left", "right", "bottom"]}
+    >
       <View className="flex-1 mt-20">
-        <View className="flex-row gap-2 pb-3 ml-10">
-          <MediaTypeFilterButton type="all" />
-          <MediaTypeFilterButton type="movie" />
-          <MediaTypeFilterButton type="tvshow" />
-        </View>
         <PosterGrid
           header="In Hound"
+          renderHeader={() => {
+            const buttons = [
+              { type: "all" as const, active: mediaType === undefined },
+              { type: "movie" as const, active: mediaType === "movie" },
+              { type: "tvshow" as const, active: mediaType === "tvshow" },
+            ];
+
+            const activeIdx = buttons.findIndex((b) => b.active);
+            const selectedRef = buttonRefs.current[activeIdx] ?? null;
+
+            const children = (
+              <Animated.View
+                className="flex-row gap-2 pt-2 pb-2"
+                style={{ opacity: fadeAnim }}
+              >
+                {buttons.map((btn, idx) => (
+                  <MediaTypeFilterButton
+                    key={btn.type}
+                    ref={(ref) => {
+                      buttonRefs.current[idx] = ref;
+                    }}
+                    type={btn.type}
+                    isActive={btn.active}
+                    hasTVPreferredFocus={btn.active}
+                    onFocus={() => {
+                      setFocusedIndex(idx);
+                      if (btn.active) return;
+                      setMediaType(btn.type === "all" ? undefined : btn.type);
+                      setOffset(0);
+                      setItems([]);
+                    }}
+                    onBlur={() => {
+                      if (focusedIndex === idx) setFocusedIndex(null);
+                    }}
+                  />
+                ))}
+              </Animated.View>
+            );
+            // TVFocusGuideView will crash on mobile
+            if (Platform.isTV) {
+              return (
+                <TVFocusGuideView
+                  autoFocus
+                  destinations={selectedRef ? [selectedRef] : undefined}
+                >
+                  {children}
+                </TVFocusGuideView>
+              );
+            }
+            // mobile case
+            return children;
+          }}
           itemData={items}
-          isLoading={isLoading}
+          isLoading={isLoading || isFetching}
           error={error}
           onEndReached={loadMore}
           numColumns={numColumns}
@@ -68,14 +140,46 @@ export default function Library() {
   );
 }
 
-function MediaTypeFilterButton({ type }: { type: "all" | "movie" | "tvshow" }) {
-  return (
-    <Pressable className="group">
-      <View className="rounded-full px-4 py-2 bg-white/10 group-focus:bg-white">
-        <ThemedText className="text-white group-focus:text-black">
-          {type === "all" ? "All" : type === "movie" ? "Movies" : "TV Shows"}
-        </ThemedText>
-      </View>
-    </Pressable>
-  );
-}
+const MediaTypeFilterButton = forwardRef(
+  (
+    {
+      type,
+      isActive,
+      onFocus,
+      onBlur,
+      hasTVPreferredFocus,
+    }: {
+      type: "all" | "movie" | "tvshow";
+      isActive: boolean;
+      onFocus: () => void;
+      onBlur?: () => void;
+      hasTVPreferredFocus?: boolean;
+    },
+    ref: any,
+  ) => {
+    return (
+      <Pressable
+        className="group"
+        onFocus={onFocus}
+        onBlur={onBlur}
+        ref={ref}
+        hasTVPreferredFocus={hasTVPreferredFocus}
+      >
+        <View
+          className={
+            "rounded-full px-4 py-2 " +
+            (isActive ? "bg-white" : "bg-white/10 group-focus:bg-white")
+          }
+        >
+          <ThemedText
+            className={
+              isActive ? "text-black" : "text-white group-focus:text-black"
+            }
+          >
+            {type === "all" ? "All" : type === "movie" ? "Movies" : "TV Shows"}
+          </ThemedText>
+        </View>
+      </Pressable>
+    );
+  },
+);
