@@ -18,7 +18,7 @@ export default function HomeDetails() {
   const focusedItem = useFocusStore((s) => s.focusedItem);
   if (!focusedItem) return null;
   const releaseYear = focusedItem.release_date?.slice(0, 4);
-  const genres = focusedItem.genres?.map((g) => g.name).join(", ");
+  const genres = focusedItem.genres?.map((g) => g.genre).join(", ");
   // TODO: HACKY, we need a better way to support image sizes in hound
   const backdropUri = focusedItem?.backdrop_uri?.replace("w500", "w1280");
   return (

@@ -11,10 +11,12 @@ export default function ContinueWatchingCard({
   item,
   onFocus,
   hasTVPreferredFocus,
+  rowIndex,
 }: {
   item: any;
   onFocus: () => void;
   hasTVPreferredFocus?: boolean;
+  rowIndex?: number;
 }) {
   if (!item) return;
   const router = useRouter();

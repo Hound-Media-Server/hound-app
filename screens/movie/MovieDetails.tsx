@@ -183,7 +183,7 @@ export default function MovieDetails() {
                 </ThemedText>
               )}
               <ThemedText className="text-secondary mt-1 opacity-80 sm:text-lg">
-                {details?.genres?.map((item: any) => item.name).join(", ")}
+                {details?.genres?.map((item: any) => item.genre).join(", ")}
               </ThemedText>
               {info.length > 0 && (
                 <ThemedText className="text-gray-300 mt-1 sm:text-lg">
@@ -193,6 +193,16 @@ export default function MovieDetails() {
               <ThemedText className="text-gray-400 text-md sm:text-lg mt-1">
                 {details?.overview}
               </ThemedText>
+              {details?.cast?.length > 0 && (
+                <ThemedText className="italic text-gray-200 text-sm mt-1">
+                  Starring{" "}
+                  {details.cast
+                    .slice(0, 3)
+                    .map((item: any) => item.name)
+                    .join(", ")}
+                  {details.cast.length > 3 && ", and more..."}
+                </ThemedText>
+              )}
             </View>
             <View className="flex-row gap-3">
               <TouchableOpacity

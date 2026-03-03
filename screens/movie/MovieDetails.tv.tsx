@@ -158,7 +158,7 @@ export default function MovieDetails() {
               </ThemedText>
             )}
             <ThemedText className="text-secondary mt-1 opacity-80 sm:text-lg">
-              {details?.genres?.map((item: any) => item.name).join(", ")}
+              {details?.genres?.map((item: any) => item.genre).join(", ")}
             </ThemedText>
             {info.length > 0 && (
               <ThemedText className="text-gray-300 mt-1 sm:text-lg">

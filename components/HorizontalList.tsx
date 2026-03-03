@@ -83,6 +83,10 @@ export default function HorizontalList({
       </View>
     );
   }
+
+  if (!data || data.length === 0) {
+    return null;
+  }
   // only wrap tv focus guide view if platform is tv
   // prevents errors on other platforms (web)
   return wrapTVFocusGuideView(
@@ -132,7 +136,8 @@ export default function HorizontalList({
                 <ContinueWatchingCard
                   item={item}
                   onFocus={() => handleFocus(index)}
-                  hasTVPreferredFocus={rowIndex === 0 && index === 0}
+                  hasTVPreferredFocus={index === 0}
+                  rowIndex={rowIndex}
                 />
               );
             }
@@ -157,10 +162,11 @@ export default function HorizontalList({
                   setFocusedItem(focusItem);
                   handleFocus(index);
                 }}
-                hasTVPreferredFocus={rowIndex === 0 && index === 0}
+                hasTVPreferredFocus={index === 0}
               />
             );
           }}
+          ListEmptyComponent={<></>}
         />
       </View>
     </View>,

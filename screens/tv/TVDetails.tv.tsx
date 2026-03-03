@@ -189,7 +189,7 @@ export default function TVDetails() {
                 </ThemedText>
               </ThemedText>
               <ThemedText className="text-secondary mt-1 opacity-80 sm:text-lg">
-                {details?.genres?.map((item: any) => item.name).join(", ")}
+                {details?.genres?.map((item: any) => item.genre).join(", ")}
               </ThemedText>
               {/* {creators && (
               <ThemedText className="text-gray-300 mt-1 sm:text-lg">

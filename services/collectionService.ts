@@ -13,14 +13,73 @@ interface CollectionMeta {
   updated_at: string;
 }
 
+interface Genre {
+  genre_id: number;
+  genre: string;
+  media_type: string;
+  media_source: string;
+  source_id: number;
+}
+
+interface CollectionRecord {
+  media_type: string;
+  media_source: string;
+  source_id: string;
+  media_title: string;
+  original_title: string;
+  status: string;
+  overview: string;
+  duration: number;
+  release_date: string;
+  last_air_date: string;
+  next_air_date: string;
+  thumbnail_uri: string;
+  backdrop_uri: string;
+  logo_uri: string;
+  genres: Genre[];
+  original_language: string;
+  origin_country: string[];
+}
+
+interface CollectionResponseData {
+  records: CollectionRecord[];
+  collection: CollectionMeta;
+  total_records: number;
+  limit: number;
+  offset: number;
+}
+
+interface CollectionContentsResponse {
+  data: CollectionResponseData;
+  status: string;
+}
+
 interface AddToCollectionPayload {
   media_type: string;
   media_source: string;
   source_id: string;
 }
 
-const fetchCollections = (): Promise<any> => {
+const fetchAllCollections = (): Promise<any> => {
   return apiClient("/collection/all");
+};
+
+const fetchCollectionContents = (
+  collectionID: number | string,
+  media_type?: "movie" | "tvshow",
+  genre_id?: number,
+  limit?: number,
+  offset?: number
+): Promise<CollectionContentsResponse> => {
+  const params = new URLSearchParams();
+  if (media_type) params.append("media_type", media_type);
+  if (genre_id) params.append("genre_id", genre_id.toString());
+  if (limit !== undefined) params.append("limit", limit.toString());
+  if (offset !== undefined) params.append("offset", offset.toString());
+
+  const queryString = params.toString();
+  const url = `/collection/${collectionID}${queryString ? `?${queryString}` : ""}`;
+  return apiClient(url);
 };
 
 const addToCollection = ({
@@ -36,12 +95,37 @@ const addToCollection = ({
   });
 };
 
-export const useCollections = () => {
+export const useAllCollections = () => {
   return useQuery({
     queryKey: ["collections"],
-    queryFn: fetchCollections,
+    queryFn: fetchAllCollections,
     staleTime: 1000 * 60 * 5,
     select: (data: any) => data.data as CollectionMeta[],
+  });
+};
+
+export const useCollectionContents = (
+  collectionID: number | string,
+  limit?: number,
+  offset?: number
+) => {
+  return useQuery({
+    queryKey: ["collection-contents", collectionID, limit, offset],
+    queryFn: () => fetchCollectionContents(collectionID, undefined, undefined, limit, offset),
+    select: (data) => data.data,
+  });
+};
+
+export const useHoundLibrary = (
+  media_type?: "movie" | "tvshow",
+  genre_id?: number,
+  limit?: number,
+  offset?: number
+) => {
+  return useQuery({
+    queryKey: ["collection-contents", "hound-library", media_type, genre_id, limit, offset],
+    queryFn: () => fetchCollectionContents("hound-library", media_type, genre_id, limit, offset),
+    select: (data) => data.data,
   });
 };
 

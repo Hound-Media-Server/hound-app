@@ -1,8 +1,5 @@
 import { ThemedText } from "@/components/ThemedText";
-import {
-  useCollections,
-  useAddToCollection,
-} from "@/services/collectionService";
+import { use, useAddToCollection } from "@/services/collectionService";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { Toast } from "toastify-react-native";
@@ -15,7 +12,7 @@ import {
 } from "react-native";
 
 export default function AddToCollectionScreen() {
-  const { data, isLoading, error } = useCollections();
+  const { data, isLoading, error } = use();
   const { mutate, isPending } = useAddToCollection();
   const { media_type, media_source, source_id } = useLocalSearchParams<{
     media_type: string;
