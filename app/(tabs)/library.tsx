@@ -102,6 +102,7 @@ export default function Library() {
                     isActive={btn.active}
                     hasTVPreferredFocus={btn.active}
                     onFocus={() => {
+                      if (!Platform.isTV) return;
                       setFocusedIndex(idx);
                       if (btn.active) return;
                       setMediaType(btn.type === "all" ? undefined : btn.type);
@@ -109,7 +110,15 @@ export default function Library() {
                       setItems([]);
                     }}
                     onBlur={() => {
+                      if (!Platform.isTV) return;
                       if (focusedIndex === idx) setFocusedIndex(null);
+                    }}
+                    onPress={() => {
+                      if (Platform.isTV) return;
+                      if (btn.active) return;
+                      setMediaType(btn.type === "all" ? undefined : btn.type);
+                      setOffset(0);
+                      setItems([]);
                     }}
                   />
                 ))}
@@ -147,12 +156,14 @@ const MediaTypeFilterButton = forwardRef(
       isActive,
       onFocus,
       onBlur,
+      onPress,
       hasTVPreferredFocus,
     }: {
       type: "all" | "movie" | "tvshow";
       isActive: boolean;
       onFocus: () => void;
       onBlur?: () => void;
+      onPress?: () => void;
       hasTVPreferredFocus?: boolean;
     },
     ref: any,
@@ -162,6 +173,7 @@ const MediaTypeFilterButton = forwardRef(
         className="group"
         onFocus={onFocus}
         onBlur={onBlur}
+        onPress={onPress}
         ref={ref}
         hasTVPreferredFocus={hasTVPreferredFocus}
       >
