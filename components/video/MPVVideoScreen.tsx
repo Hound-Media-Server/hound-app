@@ -19,12 +19,13 @@ import { ThemedText } from "../ThemedText";
 import { router } from "expo-router";
 import { getAllSettings, SettingsSchema } from "@/stores/settingsStore";
 import { get2LetterLangCode } from "@/utils/locale";
+import { MediaType } from "@/constants/MediaTypes";
 
 export default function MPVVideoScreen(props: {
   src: string;
   startTime?: number;
   id: string;
-  mediaType: "movie" | "tv";
+  mediaType: MediaType;
   seasonNumber?: number;
   episodeNumber?: number;
   encodedData: string;

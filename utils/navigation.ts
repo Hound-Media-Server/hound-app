@@ -1,5 +1,6 @@
 import { getSetting } from "@/stores/settingsStore";
 import { fetchMediaFiles, fetchProviders } from "@/services/providerService";
+import { MediaTypeMovie, MediaTypeTVShow, MediaType } from "@/constants/MediaTypes";
 
 export interface StreamUrlParams {
   id: string;
@@ -27,11 +28,11 @@ export function getStreamUrl(encodedData: string, streamsMatch: boolean, params:
 
 // direct play or select stream based on user preferences
 export async function getSelectStreamUrl(params: StreamUrlParams, forceSelect?: boolean) {
-  const playAction = getSetting("playAction");
+  const playAction = getSetting("defaultPlayAction");
   if (playAction === "direct" && !forceSelect) {
     try {
       const mediaFilesRes = await fetchMediaFiles(
-        params.type === "movie" ? "movie" : "tv",
+        params.type,
         params.id,
         params.season ? parseInt(params.season as string, 10) : undefined,
         params.episode ? parseInt(params.episode as string, 10) : undefined
@@ -42,7 +43,7 @@ export async function getSelectStreamUrl(params: StreamUrlParams, forceSelect?: 
       // prioritize media files, if not found, then fetch
       // this does add a delay to fetching providers
       const providersRes = await fetchProviders(
-        params.type === "movie" ? "movie" : "tv",
+        params.type,
         params.id,
         params.season ? parseInt(params.season as string, 10) : undefined,
         params.episode ? parseInt(params.episode as string, 10) : undefined
@@ -69,14 +70,14 @@ export async function getSelectStreamUrl(params: StreamUrlParams, forceSelect?: 
 
 export function getMediaPageUrl(media_type: string, media_source: string, source_id: string): string {
   if (!media_type) return "";
-  media_type = media_type === "tvshow" ? "tv" : media_type;
-  return `/${media_type === "movie" ? "movie" : "tv"}/${media_source + "-" + source_id}`;
+  const type = media_type === MediaTypeMovie ? "movie" : "tv";
+  return `/${type}/${media_source + "-" + source_id}`;
 }
 
 export function getAddToCollectionUrl(media_type: string, media_source: string, source_id: string) {
-  media_type = media_type === "tvshow" ? "tv" : media_type;
+  const type = media_type === MediaTypeTVShow || media_type === "tv" ? MediaTypeTVShow : MediaTypeMovie;
   const queryParts = [];
-  queryParts.push(`media_type=${media_type}`);
+  queryParts.push(`media_type=${type}`);
   queryParts.push(`media_source=${media_source}`);
   queryParts.push(`source_id=${source_id}`);
 

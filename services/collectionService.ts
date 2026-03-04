@@ -1,5 +1,6 @@
 import { apiClient } from "./apiClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { MediaTypeMovie, MediaTypeTVShow, MediaType } from "../constants/MediaTypes";
 
 interface CollectionMeta {
   collection_id: number;
@@ -22,7 +23,7 @@ interface Genre {
 }
 
 interface CollectionRecord {
-  media_type: string;
+  media_type: MediaType;
   media_source: string;
   source_id: string;
   media_title: string;
@@ -55,7 +56,7 @@ interface CollectionContentsResponse {
 }
 
 interface AddToCollectionPayload {
-  media_type: string;
+  media_type: MediaType;
   media_source: string;
   source_id: string;
 }
@@ -66,7 +67,7 @@ const fetchAllCollections = (): Promise<any> => {
 
 const fetchCollectionContents = (
   collectionID: number | string,
-  media_type?: "movie" | "tvshow",
+  media_type?: MediaType,
   genre_id?: number,
   limit?: number,
   offset?: number
@@ -117,7 +118,7 @@ export const useCollectionContents = (
 };
 
 export const useHoundLibrary = (
-  media_type?: "movie" | "tvshow",
+  media_type?: MediaType,
   genre_id?: number,
   limit?: number,
   offset?: number

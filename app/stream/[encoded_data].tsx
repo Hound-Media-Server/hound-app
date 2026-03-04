@@ -11,6 +11,11 @@ import { getSetting } from "@/stores/settingsStore";
 import { useShowDetails } from "@/services/mediaDetailsService";
 import { fetchMediaFiles, fetchProviders } from "@/services/providerService";
 import { getStreamUrl } from "@/utils/navigation";
+import {
+  MediaTypeMovie,
+  MediaTypeTVShow,
+  MediaType,
+} from "@/constants/MediaTypes";
 
 export default function Stream() {
   const router = useRouter();
@@ -40,10 +45,14 @@ export default function Stream() {
   );
 
   // Fetch show details if it is a tv show to handle next episode
-  const { data: showDetails } = useShowDetails(id as string, type === "tv");
+  const { data: showDetails } = useShowDetails(
+    id as string,
+    type === MediaTypeTVShow,
+  );
 
   const nextEpisodeInfo = useMemo(() => {
-    if (type !== "tv" || !showDetails || !season || !episode) return null;
+    if (type !== MediaTypeTVShow || !showDetails || !season || !episode)
+      return null;
 
     const sNum = parseInt(season as string, 10);
     const epNum = parseInt(episode as string, 10);
@@ -72,7 +81,7 @@ export default function Stream() {
     try {
       let firstStream = null;
       const mediaFilesRes = await fetchMediaFiles(
-        "tv",
+        MediaTypeTVShow,
         id as string,
         nextEpisodeInfo.season,
         nextEpisodeInfo.episode,
@@ -84,7 +93,7 @@ export default function Stream() {
       // this does add a delay to fetching providers
       if (!firstStream) {
         const providersRes = await fetchProviders(
-          "tv",
+          MediaTypeTVShow,
           id as string,
           nextEpisodeInfo.season,
           nextEpisodeInfo.episode,
@@ -96,7 +105,7 @@ export default function Stream() {
       if (firstStream) {
         const link = getStreamUrl(firstStream.encoded_data, false, {
           id: id as string,
-          type: "tv",
+          type: MediaTypeTVShow,
           title: title as string,
           season: nextEpisodeInfo.season,
           episode: nextEpisodeInfo.episode,
@@ -128,7 +137,7 @@ export default function Stream() {
     // Load setting
     const val = getSetting("defaultPlayer");
     const defaultResizeMode =
-      type === "movie"
+      type === MediaTypeMovie
         ? getSetting("defaultMovieResizeMode")
         : getSetting("defaultShowResizeMode");
     // Use player from context if available, otherwise fallback to settings
@@ -182,7 +191,7 @@ export default function Stream() {
           src={url}
           startTime={currentProgress}
           id={id as string}
-          mediaType={type as "movie" | "tv"}
+          mediaType={type as MediaType}
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
           encodedData={encoded_data as string}
@@ -199,7 +208,7 @@ export default function Stream() {
           src={url}
           startTime={currentProgress}
           id={id as string}
-          mediaType={type as "movie" | "tv"}
+          mediaType={type as MediaType}
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
           encodedData={encoded_data as string}

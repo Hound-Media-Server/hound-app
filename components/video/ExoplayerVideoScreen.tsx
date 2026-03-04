@@ -12,14 +12,13 @@ import {
   useUpdatePlaybackProgress,
   PlayerSettings,
 } from "@/services/watchDataService";
-import Video, {
+import Video, { ResizeMode, SelectedTrackType } from "react-native-video";
+import type {
   VideoRef,
   OnLoadData,
   OnProgressData,
   OnTextTracksData,
   OnAudioTracksData,
-  ResizeMode,
-  SelectedTrackType,
 } from "react-native-video";
 import VideoControls from "./VideoControls";
 import VideoControlsTV from "./VideoControls.tv";
@@ -27,12 +26,13 @@ import { ThemedText } from "../ThemedText";
 import { router } from "expo-router";
 import { getAllSettings, SettingsSchema } from "@/stores/settingsStore";
 import { get2LetterLangCode } from "@/utils/locale";
+import { MediaType } from "@/constants/MediaTypes";
 
-export default function VideoScreen(props: {
+export default function ExoplayerVideoScreen(props: {
   src: string;
   startTime?: number;
   id: string;
-  mediaType: "movie" | "tv";
+  mediaType: MediaType;
   seasonNumber?: number;
   episodeNumber?: number;
   encodedData: string;

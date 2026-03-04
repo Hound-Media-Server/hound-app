@@ -8,15 +8,18 @@ import {
 import React, { useState, useEffect, useRef, forwardRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useHoundLibrary } from "@/services/collectionService";
+import {
+  MediaTypeMovie,
+  MediaTypeTVShow,
+  MediaType,
+} from "@/constants/MediaTypes";
 import PosterGrid from "@/components/PosterGrid";
 import { ThemedText } from "@/components/ThemedText";
 
 export default function Library() {
   const [items, setItems] = useState<any[]>([]);
   const [offset, setOffset] = useState(0);
-  const [mediaType, setMediaType] = useState<"movie" | "tvshow" | undefined>(
-    undefined,
-  );
+  const [mediaType, setMediaType] = useState<MediaType | undefined>(undefined);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const fadeAnim = useRef(new Animated.Value(Platform.isTV ? 0.4 : 1)).current;
   const buttonRefs = useRef<any[]>([]);
@@ -78,10 +81,13 @@ export default function Library() {
         <PosterGrid
           header="In Hound"
           renderHeader={() => {
-            const buttons = [
-              { type: "all" as const, active: mediaType === undefined },
-              { type: "movie" as const, active: mediaType === "movie" },
-              { type: "tvshow" as const, active: mediaType === "tvshow" },
+            const buttons: { type: "all" | MediaType; active: boolean }[] = [
+              { type: "all", active: mediaType === undefined },
+              {
+                type: MediaTypeMovie,
+                active: mediaType === MediaTypeMovie,
+              },
+              { type: MediaTypeTVShow, active: mediaType === MediaTypeTVShow },
             ];
 
             const activeIdx = buttons.findIndex((b) => b.active);
@@ -105,7 +111,11 @@ export default function Library() {
                       if (!Platform.isTV) return;
                       setFocusedIndex(idx);
                       if (btn.active) return;
-                      setMediaType(btn.type === "all" ? undefined : btn.type);
+                      setMediaType(
+                        btn.type === "all"
+                          ? undefined
+                          : (btn.type as MediaType),
+                      );
                       setOffset(0);
                       setItems([]);
                     }}
@@ -116,7 +126,11 @@ export default function Library() {
                     onPress={() => {
                       if (Platform.isTV) return;
                       if (btn.active) return;
-                      setMediaType(btn.type === "all" ? undefined : btn.type);
+                      setMediaType(
+                        btn.type === "all"
+                          ? undefined
+                          : (btn.type as MediaType),
+                      );
                       setOffset(0);
                       setItems([]);
                     }}
@@ -159,7 +173,7 @@ const MediaTypeFilterButton = forwardRef(
       onPress,
       hasTVPreferredFocus,
     }: {
-      type: "all" | "movie" | "tvshow";
+      type: "all" | MediaType;
       isActive: boolean;
       onFocus: () => void;
       onBlur?: () => void;
@@ -188,7 +202,11 @@ const MediaTypeFilterButton = forwardRef(
               isActive ? "text-black" : "text-white group-focus:text-black"
             }
           >
-            {type === "all" ? "All" : type === "movie" ? "Movies" : "TV Shows"}
+            {type === "all"
+              ? "All"
+              : type === MediaTypeMovie
+                ? "Movies"
+                : "TV Shows"}
           </ThemedText>
         </View>
       </Pressable>

@@ -18,6 +18,7 @@ import {
   TVFocusButtonMore,
 } from "@/components/TVFocusButton";
 import { useModalStore } from "@/stores/modalStore";
+import { MediaTypeTVShow } from "@/constants/MediaTypes";
 
 export default function TVDetails() {
   const queryClient = useQueryClient();
@@ -113,7 +114,7 @@ export default function TVDetails() {
       if (encodedData) {
         try {
           const res = await streamsMutation({
-            mediaType: "tv",
+            mediaType: MediaTypeTVShow,
             id: id as string,
             season: targetSeason,
             episode: targetEpisode,
@@ -127,7 +128,7 @@ export default function TVDetails() {
             router.navigate(
               getStreamUrl(match.encoded_data, true, {
                 id: id as string,
-                type: "tv",
+                type: MediaTypeTVShow,
                 title: details?.media_title,
                 season: targetSeason,
                 episode: targetEpisode,
@@ -144,7 +145,7 @@ export default function TVDetails() {
       router.navigate(
         await getSelectStreamUrl({
           id: id as string,
-          type: "tv",
+          type: MediaTypeTVShow,
           season: targetSeason,
           episode: targetEpisode,
           startTime: resumeStartTime,
@@ -237,7 +238,7 @@ export default function TVDetails() {
                   onPress={() =>
                     router.push(
                       getAddToCollectionUrl(
-                        "tv",
+                        MediaTypeTVShow,
                         details?.media_source,
                         details?.source_id,
                       ),

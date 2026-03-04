@@ -35,7 +35,9 @@ export async function apiClient<T>(
     throw error;
   }
 
-  const url = `${host}/api/v1${endpoint}`;
+  // Convert /tvshow/ to /tv/ for API endpoints, easier to do
+  const finalEndpoint = endpoint.replace("/tvshow/", "/tv/");
+  const url = `${host}/api/v1${finalEndpoint}`;
   const response = await fetch(url, {
     ...options,
     headers: {

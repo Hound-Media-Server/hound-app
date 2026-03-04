@@ -24,6 +24,7 @@ import {
 } from "@/utils/navigation";
 import { useModalStore } from "@/stores/modalStore";
 import { useUnifiedStreamsMutation } from "@/services/providerService";
+import { MediaTypeMovie } from "@/constants/MediaTypes";
 
 export default function MovieDetails() {
   const queryClient = useQueryClient();
@@ -81,7 +82,7 @@ export default function MovieDetails() {
     if (encodedData) {
       try {
         const res = await streamsMutation({
-          mediaType: "movie",
+          mediaType: MediaTypeMovie,
           id: id as string,
         });
         const match = res?.data?.providers
@@ -91,7 +92,7 @@ export default function MovieDetails() {
           router.navigate(
             getStreamUrl(match.encoded_data, true, {
               id: id as string,
-              type: "movie",
+              type: MediaTypeMovie,
               title: details?.media_title,
               startTime: startTime,
               playerSettings: playerSettings,
@@ -107,7 +108,7 @@ export default function MovieDetails() {
     router.navigate(
       await getSelectStreamUrl({
         id: id as string,
-        type: "movie",
+        type: MediaTypeMovie,
         startTime: watchAction?.watch_progress?.current_progress_seconds || 0,
         title: details?.media_title,
         playerSettings: playerSettings,
@@ -209,7 +210,7 @@ export default function MovieDetails() {
                 onPress={() =>
                   router.push(
                     getAddToCollectionUrl(
-                      "movie",
+                      MediaTypeMovie,
                       details?.media_source,
                       details?.source_id,
                     ),

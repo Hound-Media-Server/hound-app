@@ -1,6 +1,7 @@
 import { RelativePathString, useRouter } from "expo-router";
 import { ContextModal, ModalAction } from "./Modal";
 import { getAddToCollectionUrl, getMediaPageUrl } from "@/utils/navigation";
+import { MediaTypeMovie } from "@/constants/MediaTypes";
 
 export default function MediaPosterModal({
   mediaItem,
@@ -26,7 +27,7 @@ export default function MediaPosterModal({
     >
       <ModalAction
         label={`Open ${
-          mediaItem.media_type === "movie" ? "Movie" : "Show"
+          mediaItem.media_type === MediaTypeMovie ? "Movie" : "Show"
         } Page`}
         hasTVPreferredFocus
         onPress={() => {

@@ -3,6 +3,7 @@ import { ContextModal, ModalAction } from "./Modal";
 import { getSelectStreamUrl } from "@/utils/navigation";
 import { useAddWatchHistory } from "@/services/watchDataService";
 import { Toast } from "toastify-react-native";
+import { MediaTypeMovie, MediaTypeTVShow } from "@/constants/MediaTypes";
 
 export default function PlayOptionsModal({
   mediaItem,
@@ -34,17 +35,14 @@ export default function PlayOptionsModal({
     1;
 
   async function handleMarkAsWatched() {
-    let mediaType = mediaItem.media_type || "";
-    if (mediaType === "tvshow") {
-      mediaType = "tv";
-    }
+    const mediaType = mediaItem.media_type || "";
 
     const mediaSourceID = mediaItem.media_source + "-" + mediaItem.source_id;
     const payload: any = {
       action_type: "watch",
     };
 
-    if (mediaType === "tv") {
+    if (mediaType === MediaTypeTVShow) {
       payload.season_number = targetSeason;
       payload.episode_number = targetEpisode;
     }
@@ -52,7 +50,7 @@ export default function PlayOptionsModal({
     addHistory(
       {
         id: mediaSourceID,
-        mediaType: mediaType as "movie" | "tv",
+        mediaType: mediaType as any,
         data: payload,
       },
       {
@@ -68,10 +66,7 @@ export default function PlayOptionsModal({
   }
 
   async function handlePlay(forceSelect?: boolean) {
-    let mediaType = mediaItem.media_type || mediaItem.type || "";
-    if (mediaType === "tvshow") {
-      mediaType = "tv";
-    }
+    const mediaType = mediaItem.media_type || mediaItem.type || "";
     const mediaSourceID = mediaItem.source_id
       ? mediaItem.media_source + "-" + mediaItem.source_id
       : mediaItem.id;
@@ -83,7 +78,7 @@ export default function PlayOptionsModal({
       startTime: 0,
     };
 
-    if (mediaType === "tv") {
+    if (mediaType === MediaTypeTVShow) {
       params.season = targetSeason;
       params.episode = targetEpisode;
     }
@@ -93,7 +88,10 @@ export default function PlayOptionsModal({
     if (wp) {
       params.startTime = wp.current_progress_seconds;
       params.playerSettings = JSON.stringify(wp.player_settings);
-    } else if (mediaType === "tv" && (!params.season || !params.episode)) {
+    } else if (
+      mediaType === MediaTypeTVShow &&
+      (!params.season || !params.episode)
+    ) {
       // first watch of a show, no watch progress, on main screen
       params.season = 1;
       params.episode = 1;
@@ -109,8 +107,10 @@ export default function PlayOptionsModal({
       visible={visible}
       onClose={onClose}
       modalTitle={
-        targetSeason && targetEpisode
-          ? `S${targetSeason}E${targetEpisode} - ` + modalTitle
+        mediaItem.media_type === MediaTypeTVShow &&
+        targetSeason &&
+        targetEpisode
+          ? `S${targetSeason}E${targetEpisode} | ` + modalTitle
           : modalTitle
       }
       autoFocus={autoFocus}

@@ -20,6 +20,7 @@ import { router } from "expo-router";
 import { getSelectStreamUrl } from "@/utils/navigation";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useModalStore } from "@/stores/modalStore";
+import { MediaTypeTVShow } from "@/constants/MediaTypes";
 
 const isTV = Platform.isTV;
 
@@ -309,7 +310,7 @@ function EpisodeCard({
               router.navigate(
                 await getSelectStreamUrl({
                   id: sourceID,
-                  type: "tv",
+                  type: MediaTypeTVShow,
                   season: episode.season_number,
                   episode: episode.episode_number,
                   startTime: watchProgress?.current_progress_seconds,
@@ -323,7 +324,7 @@ function EpisodeCard({
                 props: {
                   mediaItem: {
                     ...episode,
-                    media_type: "tv",
+                    media_type: MediaTypeTVShow,
                     media_source: sourceID.split("-")[0],
                     source_id: sourceID.split("-")[1],
                     watch_progress: watchProgress,

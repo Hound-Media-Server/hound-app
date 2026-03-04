@@ -63,11 +63,23 @@ export default function MediaItemCard({
           {imgSource ? (
             <Image
               source={imgSource}
-              className="w-[120px] h-[180px] rounded-lg group-focus:border-white border-2 border-transparent"
+              className={
+                "w-[120px] h-[180px] rounded-lg " +
+                (Platform.isTV
+                  ? " group-focus:border-white border-2 border-transparent"
+                  : "")
+              }
               contentFit="cover"
             />
           ) : (
-            <View className="w-[120px] h-[180px] rounded-lg p-2 bg-gray-300 flex items-center justify-center group-focus:border-white border-2 border-transparent">
+            <View
+              className={
+                "w-[120px] h-[180px] rounded-lg p-2 bg-gray-300 flex items-center justify-center " +
+                (Platform.isTV
+                  ? " group-focus:border-white border-2 border-transparent"
+                  : "")
+              }
+            >
               <ThemedText className="text-black mt-2 text-base text-start">
                 {imgAlt}
               </ThemedText>

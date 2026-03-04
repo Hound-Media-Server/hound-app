@@ -1,6 +1,11 @@
 import { RelativePathString, useRouter } from "expo-router";
 import { ContextModal, ModalAction } from "./Modal";
 import { getMediaPageUrl, getSelectStreamUrl } from "@/utils/navigation";
+import {
+  MediaTypeMovie,
+  MediaTypeTVShow,
+  MediaType,
+} from "@/constants/MediaTypes";
 
 export default function ContinueWatchingModal({
   mediaItem,
@@ -19,7 +24,7 @@ export default function ContinueWatchingModal({
   if (!mediaItem) return null;
 
   async function handlePlay(forceSelect?: boolean) {
-    const mediaType = mediaItem.media_type?.replace("tvshow", "tv") || "";
+    const mediaType = mediaItem.media_type || "";
     const mediaSourceID = mediaItem.media_source + "-" + mediaItem.source_id;
 
     let params: any = {
@@ -78,7 +83,7 @@ export default function ContinueWatchingModal({
       />
       <ModalAction
         label={`Open ${
-          mediaItem.media_type === "movie" ? "Movie" : "Show"
+          mediaItem.media_type === MediaTypeMovie ? "Movie" : "Show"
         } Page`}
         onPress={() => {
           const mediaPageUrl = getMediaPageUrl(

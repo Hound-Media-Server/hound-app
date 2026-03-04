@@ -25,6 +25,7 @@ import {
   useMediaFiles,
   useUnifiedStreamsMutation,
 } from "@/services/providerService";
+import { MediaTypeTVShow } from "@/constants/MediaTypes";
 
 export default function TVDetails() {
   const queryClient = useQueryClient();
@@ -35,7 +36,7 @@ export default function TVDetails() {
   const { data: continueWatching, isLoading: isContinueLoading } =
     useShowContinueWatching(id as string);
   const { mutateAsync: streamsMutation } = useUnifiedStreamsMutation();
-  const { data: mediaFiles } = useMediaFiles("tv", id as string);
+  const { data: mediaFiles } = useMediaFiles(MediaTypeTVShow, id as string);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -122,7 +123,7 @@ export default function TVDetails() {
       if (encodedData) {
         try {
           const res = await streamsMutation({
-            mediaType: "tv",
+            mediaType: MediaTypeTVShow,
             id: id as string,
             season: targetSeason,
             episode: targetEpisode,
@@ -136,7 +137,7 @@ export default function TVDetails() {
             router.navigate(
               getStreamUrl(match.encoded_data, true, {
                 id: id as string,
-                type: "tv",
+                type: MediaTypeTVShow,
                 title: details?.media_title,
                 season: targetSeason,
                 episode: targetEpisode,
@@ -153,7 +154,7 @@ export default function TVDetails() {
       router.navigate(
         await getSelectStreamUrl({
           id: id as string,
-          type: "tv",
+          type: MediaTypeTVShow,
           season: targetSeason,
           episode: targetEpisode,
           startTime: resumeStartTime,
@@ -241,7 +242,7 @@ export default function TVDetails() {
                 onPress={() =>
                   router.push(
                     getAddToCollectionUrl(
-                      "tvshow",
+                      MediaTypeTVShow,
                       details?.media_source,
                       details?.source_id,
                     ),

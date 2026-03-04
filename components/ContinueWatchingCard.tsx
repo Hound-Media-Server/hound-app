@@ -6,6 +6,7 @@ import { ThemedText } from "./ThemedText";
 import { getSelectStreamUrl, getStreamUrl } from "@/utils/navigation";
 import { FocusItem, useFocusStore } from "@/stores/focusStore";
 import { useModalStore } from "@/stores/modalStore";
+import { MediaTypeMovie, MediaTypeTVShow } from "@/constants/MediaTypes";
 
 export default function ContinueWatchingCard({
   item,
@@ -28,7 +29,7 @@ export default function ContinueWatchingCard({
   let subtitle = "";
   let imgSource = "";
   const itemID = item.media_source + "-" + item.source_id;
-  const mediaType = item.media_type.replace("tvshow", "tv");
+  const mediaType = item.media_type;
   // resume case
   if (item.watch_action_type == "resume") {
     const wp = item.watch_progress;
@@ -44,19 +45,25 @@ export default function ContinueWatchingCard({
       playerSettings: JSON.stringify(wp.player_settings),
     });
     title = wp?.media_title;
-    if (mediaType === "tv") {
+    if (mediaType === MediaTypeTVShow || mediaType === "tv") {
       title = `S${wp.season_number}E${wp.episode_number} | ${wp?.media_title}`;
     }
-    subtitle = mediaType === "tv" ? wp.episode_title : "";
+    subtitle =
+      mediaType === MediaTypeTVShow || mediaType === "tv"
+        ? wp.episode_title
+        : "";
     imgSource = wp?.thumbnail_uri;
   } else if (item.watch_action_type == "next_episode") {
     const nextEp = item.next_episode;
     // for next episode, show select-stream modal
     title = nextEp?.media_title;
-    if (mediaType === "tv") {
+    if (mediaType === MediaTypeTVShow || mediaType === "tv") {
       title = `S${nextEp.season_number}E${nextEp.episode_number} | ${nextEp?.media_title}`;
     }
-    subtitle = mediaType === "tv" ? nextEp.episode_title : "";
+    subtitle =
+      mediaType === MediaTypeTVShow || mediaType === "tv"
+        ? nextEp.episode_title
+        : "";
     imgSource = nextEp?.thumbnail_uri;
   } else {
     return <></>;
@@ -125,13 +132,21 @@ export default function ContinueWatchingCard({
           <View className="rounded-lg">
             {imgSource ? (
               <Image
-                className="group-focus:border-white border-2 w-[200px] h-[112px] rounded-lg bg-gray-300"
+                className={
+                  "border-2 w-[200px] h-[112px] rounded-lg bg-gray-300" +
+                  (Platform.isTV ? " group-focus:border-white" : "")
+                }
                 source={imgSource}
                 contentFit="cover"
                 transition={1000}
               />
             ) : (
-              <View className="group-focus:border-white border-zinc-700 border-2 w-[200px] h-[112px] rounded-lg bg-zinc-800 items-center justify-center">
+              <View
+                className={
+                  "border-zinc-700 border-2 w-[200px] h-[112px] rounded-lg bg-zinc-800 items-center justify-center" +
+                  (Platform.isTV ? " group-focus:border-white" : "")
+                }
+              >
                 <ThemedText className="text-gray-500">No Image</ThemedText>
               </View>
             )}

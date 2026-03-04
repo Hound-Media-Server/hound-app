@@ -1,6 +1,7 @@
 import { apiClient } from "./apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatRelativeTime } from "../utils/dateUtils";
+import { MediaTypeMovie, MediaTypeTVShow, MediaType } from "../constants/MediaTypes";
 
 /*
     For fetching watched media and resume progress
@@ -33,7 +34,7 @@ export interface NextEpisode {
 }
 
 export interface WatchAction {
-  media_type: "tvshow" | "movie";
+  media_type: typeof MediaTypeTVShow | typeof MediaTypeMovie;
   media_source: "tmdb";
   source_id: string;
   watch_action_type: "resume" | "next_episode";
@@ -76,11 +77,11 @@ const fetchShowContinueWatching = (id: string) => {
 
 export const updatePlaybackProgress = async (
   id: string,
-  mediaType: "movie" | "tv",
+  mediaType: MediaType,
   data: PlaybackPayload,
 ) => {
   const endpoint =
-    mediaType === "movie" ? `/movie/${id}/playback` : `/tv/${id}/playback`;
+    mediaType === MediaTypeMovie ? `/movie/${id}/playback` : `/tv/${id}/playback`;
   return apiClient(endpoint, {
     method: "POST",
     body: JSON.stringify(data),
@@ -89,11 +90,11 @@ export const updatePlaybackProgress = async (
 
 export const addWatchHistory = async (
   id: string,
-  mediaType: "movie" | "tv",
+  mediaType: MediaType,
   data: HistoryPayload,
 ) => {
   const endpoint =
-    mediaType === "movie" ? `/movie/${id}/history` : `/tv/${id}/history`;
+    mediaType === MediaTypeMovie ? `/movie/${id}/history` : `/tv/${id}/history`;
   return apiClient(endpoint, {
     method: "POST",
     body: JSON.stringify(data),
@@ -225,11 +226,11 @@ export const useUpdatePlaybackProgress = () => {
       data,
     }: {
       id: string;
-      mediaType: "movie" | "tv";
+      mediaType: MediaType;
       data: PlaybackPayload;
     }) => updatePlaybackProgress(id, mediaType, data),
     onSuccess: (data, variables) => {
-      if (variables.mediaType === "movie") {
+      if (variables.mediaType === MediaTypeMovie) {
         queryClient.invalidateQueries({
           queryKey: ["movie-watch-progress", variables.id],
         });
@@ -266,11 +267,11 @@ export const useAddWatchHistory = () => {
       data,
     }: {
       id: string;
-      mediaType: "movie" | "tv";
+      mediaType: MediaType;
       data: HistoryPayload;
     }) => addWatchHistory(id, mediaType, data),
     onSuccess: (data, variables) => {
-      if (variables.mediaType === "movie") {
+      if (variables.mediaType === MediaTypeMovie) {
         queryClient.invalidateQueries({
           queryKey: ["movie-watch-data", variables.id],
         });

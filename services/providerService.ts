@@ -1,8 +1,9 @@
 import { apiClient } from "./apiClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { MediaTypeMovie, MediaTypeTVShow, MediaType } from "../constants/MediaTypes";
 
 export const fetchMediaFiles = async (
-  mediaType: string,
+  mediaType: MediaType | string,
   id: string,
   season?: number | null,
   episode?: number | null
@@ -15,14 +16,11 @@ export const fetchMediaFiles = async (
 };
 
 export const fetchProviders = async (
-  mediaType: string,
+  mediaType: MediaType | string,
   id: string,
   season?: number,
   episode?: number
 ): Promise<any> => {
-  if (mediaType === "tvshow") {
-    mediaType = "tv";
-  }
   const queryParams = new URLSearchParams();
   if (season) queryParams.append("season", season.toString());
   if (season && episode) queryParams.append("episode", episode.toString());
@@ -31,7 +29,7 @@ export const fetchProviders = async (
 };
 
 export const useMediaFiles = (
-  mediaType: string,
+  mediaType: MediaType | string,
   id: string,
   season?: number | null,
   episode?: number | null
@@ -43,7 +41,7 @@ export const useMediaFiles = (
 };
 
 export const useUnifiedStreams = (
-  mediaType: string,
+  mediaType: MediaType | string,
   id: string,
   season?: number,
   episode?: number,
@@ -82,7 +80,7 @@ export const useUnifiedStreamsMutation = () => {
       season,
       episode,
     }: {
-      mediaType: string;
+      mediaType: MediaType | string;
       id: string;
       season?: number;
       episode?: number;

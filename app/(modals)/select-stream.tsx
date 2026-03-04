@@ -13,6 +13,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import { Ionicons } from "@expo/vector-icons";
 import { getStreamUrl } from "@/utils/navigation";
+import { MediaTypeMovie, MediaTypeTVShow } from "@/constants/MediaTypes";
 
 export default function SelectStreamScreen() {
   const { id, type, season, episode, startTime, title } = useLocalSearchParams<{
@@ -41,7 +42,7 @@ export default function SelectStreamScreen() {
     episodeNumber,
   );
 
-  if (type !== "movie" && type !== "tv") {
+  if (type !== MediaTypeMovie && type !== MediaTypeTVShow) {
     return (
       <View className="flex-1 bg-primary justify-center items-center">
         <ThemedText className="text-white">Invalid media type</ThemedText>
