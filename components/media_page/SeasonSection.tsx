@@ -193,7 +193,7 @@ function EpisodeSection({
   // pagination since it's not good UX to have to scroll through too many episodes anyway
   return (
     <View focusable className={isTV ? "opacity-50 focus:opacity-100" : ""}>
-      {seasonDetails?.episodes.length <= 50 ? (
+      {seasonDetails?.episodes.length <= 999 ? (
         <FlatList
           ref={flatlistRef}
           data={seasonDetails?.episodes}
@@ -212,8 +212,8 @@ function EpisodeSection({
               focusedEpisode={focusedEpisode}
               setFocusedEpisode={setFocusedEpisode}
               setFocusedWatchedAt={setFocusedWatchedAt}
-              episodeListRef={flatlistRef}
-              animateScroll={false}
+              episodeListRef={flashlistRef}
+              animateScroll={true}
             />
           )}
           keyExtractor={(item) => item.source_id}
