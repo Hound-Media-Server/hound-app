@@ -124,7 +124,6 @@ export default function Library() {
                       if (focusedIndex === idx) setFocusedIndex(null);
                     }}
                     onPress={() => {
-                      if (Platform.isTV) return;
                       if (btn.active) return;
                       setMediaType(
                         btn.type === "all"

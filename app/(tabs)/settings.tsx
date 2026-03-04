@@ -64,7 +64,8 @@ export default function Settings() {
 
   const handleToggleShowResizeMode = () => {
     if (!defaultShowResizeMode) return;
-    const newResizeMode = defaultShowResizeMode === "cover" ? "contain" : "cover";
+    const newResizeMode =
+      defaultShowResizeMode === "cover" ? "contain" : "cover";
     setSetting("defaultShowResizeMode", newResizeMode);
     setDefaultShowResizeMode(newResizeMode);
   };
@@ -97,7 +98,6 @@ export default function Settings() {
       </Text>
       <TouchableOpacity
         onPress={() => onFetchUpdateAsync()}
-        hasTVPreferredFocus
         className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
       >
         <Text className="text-white">Fetch Updates</Text>

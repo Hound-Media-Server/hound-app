@@ -13,23 +13,29 @@ function TVTabBar({
   navigation: any;
 }) {
   const tabRefs = useRef<any[]>([]);
-  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const [tabBarFocused, setTabBarFocused] = useState<boolean>(false);
   const fadeAnimation = useRef(new Animated.Value(0.4)).current;
   const selectedTabRef = tabRefs.current[state.index] ?? null;
 
   useEffect(() => {
     Animated.timing(fadeAnimation, {
-      toValue: focusedIndex === null ? 0.4 : 1,
+      toValue: tabBarFocused ? 1 : 0.4,
       duration: 180,
       useNativeDriver: true,
     }).start();
-  }, [focusedIndex, fadeAnimation]);
+  }, [tabBarFocused, fadeAnimation]);
 
   return (
     <View className="absolute top-5 left-10 right-0 z-50">
       <TVFocusGuideView
         autoFocus
         destinations={selectedTabRef ? [selectedTabRef] : undefined}
+        onFocus={() => {
+          setTabBarFocused(true);
+        }}
+        onBlur={() => {
+          setTabBarFocused(false);
+        }}
       >
         <Animated.View
           className="self-start flex-row bg-black/50 rounded-full overflow-hidden p-2"
@@ -57,19 +63,11 @@ function TVTabBar({
                   tabRefs.current[index] = ref;
                 }}
                 onPress={() => {
-                  if (focusedIndex === index) return;
-                  setFocusedIndex(index);
                   onPress();
                 }}
                 onFocus={() => {
-                  if (focusedIndex === index) return;
-                  setFocusedIndex(index);
                   onPress();
                 }}
-                onBlur={() => {
-                  if (focusedIndex === index) setFocusedIndex(null);
-                }}
-                hasTVPreferredFocus={isSelected}
               >
                 <View className="rounded-full px-4 py-2 bg-white/10 group-focus:bg-white">
                   <ThemedText className="text-white group-focus:text-black">
