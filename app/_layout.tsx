@@ -113,9 +113,9 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <StatusBar style="light" translucent backgroundColor="transparent" />
         <RootLayoutNav />
+        <GlobalModalHost />
       </QueryClientProvider>
       <ToastManager theme="dark" showProgressBar={false} useModal={false} />
-      <GlobalModalHost />
     </SessionProvider>
   );
 }

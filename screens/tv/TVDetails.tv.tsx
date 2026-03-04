@@ -169,10 +169,8 @@ export default function TVDetails() {
   if (error) {
     return <Text>Error: {error.message}</Text>;
   }
-
   const creators = details?.creators?.map((item: any) => item.name).join(", ");
   // if first season is specials, move it to the end
-
   return (
     <View className="flex-1">
       <View className="flex-1">
@@ -218,6 +216,7 @@ export default function TVDetails() {
                         mediaItem: {
                           ...details,
                           watch_progress: continueWatching?.watch_progress,
+                          next_episode: continueWatching?.next_episode,
                         },
                         modalTitle: details?.media_title,
                         autoFocus: true,

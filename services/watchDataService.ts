@@ -87,6 +87,19 @@ export const updatePlaybackProgress = async (
   });
 };
 
+export const addWatchHistory = async (
+  id: string,
+  mediaType: "movie" | "tv",
+  data: HistoryPayload,
+) => {
+  const endpoint =
+    mediaType === "movie" ? `/movie/${id}/history` : `/tv/${id}/history`;
+  return apiClient(endpoint, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+
 export const useMovieWatchData = (id: string) => {
   return useQuery({
     queryKey: ["movie-watch-data", id],
@@ -197,6 +210,12 @@ export interface PlaybackPayload {
   player_settings?: PlayerSettings;
 }
 
+export interface HistoryPayload {
+  action_type: "watch";
+  season?: number;
+  episode?: number;
+}
+
 export const useUpdatePlaybackProgress = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -234,6 +253,47 @@ export const useUpdatePlaybackProgress = () => {
     },
     onError: (error, variables) => {
       console.error("Failed to update playback progress:", variables, error);
+    },
+  });
+};
+
+export const useAddWatchHistory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      mediaType,
+      data,
+    }: {
+      id: string;
+      mediaType: "movie" | "tv";
+      data: HistoryPayload;
+    }) => addWatchHistory(id, mediaType, data),
+    onSuccess: (data, variables) => {
+      if (variables.mediaType === "movie") {
+        queryClient.invalidateQueries({
+          queryKey: ["movie-watch-data", variables.id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["movie-watch-progress", variables.id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["movie-continue-watching", variables.id],
+        });
+      } else {
+        queryClient.invalidateQueries({
+          queryKey: ["show-watch-data", variables.id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["show-watch-progress", variables.id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["show-continue-watching", variables.id],
+        });
+      }
+    },
+    onError: (error, variables) => {
+      console.error("Failed to add watch history:", variables, error);
     },
   });
 };

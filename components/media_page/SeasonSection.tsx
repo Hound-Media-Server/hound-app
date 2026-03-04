@@ -329,7 +329,7 @@ function EpisodeCard({
                     watch_progress: watchProgress,
                     startTime: watchProgress?.current_progress_seconds,
                   },
-                  modalTitle: mediaTitle + " - " + episode.media_title,
+                  modalTitle: episode.media_title,
                 },
               });
             }}

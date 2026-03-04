@@ -262,6 +262,7 @@ export default function TVDetails() {
                       mediaItem: {
                         ...details,
                         watch_progress: continueWatching?.watch_progress,
+                        next_episode: continueWatching?.next_episode,
                       },
                       modalTitle: details?.media_title,
                       autoFocus: true,
