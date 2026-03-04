@@ -106,7 +106,6 @@ export default function Library() {
                     }}
                     type={btn.type}
                     isActive={btn.active}
-                    hasTVPreferredFocus={btn.active}
                     onFocus={() => {
                       if (!Platform.isTV) return;
                       setFocusedIndex(idx);
@@ -170,14 +169,12 @@ const MediaTypeFilterButton = forwardRef(
       onFocus,
       onBlur,
       onPress,
-      hasTVPreferredFocus,
     }: {
       type: "all" | MediaType;
       isActive: boolean;
       onFocus: () => void;
       onBlur?: () => void;
       onPress?: () => void;
-      hasTVPreferredFocus?: boolean;
     },
     ref: any,
   ) => {
@@ -188,7 +185,6 @@ const MediaTypeFilterButton = forwardRef(
         onBlur={onBlur}
         onPress={onPress}
         ref={ref}
-        hasTVPreferredFocus={hasTVPreferredFocus}
       >
         <View
           className={
