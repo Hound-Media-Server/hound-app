@@ -212,7 +212,7 @@ function EpisodeSection({
               focusedEpisode={focusedEpisode}
               setFocusedEpisode={setFocusedEpisode}
               setFocusedWatchedAt={setFocusedWatchedAt}
-              episodeListRef={flashlistRef}
+              episodeListRef={flatlistRef}
               animateScroll={true}
             />
           )}
@@ -238,7 +238,7 @@ function EpisodeSection({
               setFocusedEpisode={setFocusedEpisode}
               setFocusedWatchedAt={setFocusedWatchedAt}
               episodeListRef={flashlistRef}
-              animateScroll={true}
+              animateScroll={false}
             />
           )}
           keyExtractor={(item) => item.source_id}

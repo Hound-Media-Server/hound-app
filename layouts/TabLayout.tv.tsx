@@ -57,10 +57,12 @@ function TVTabBar({
                   tabRefs.current[index] = ref;
                 }}
                 onPress={() => {
+                  if (focusedIndex === index) return;
                   setFocusedIndex(index);
                   onPress();
                 }}
                 onFocus={() => {
+                  if (focusedIndex === index) return;
                   setFocusedIndex(index);
                   onPress();
                 }}
