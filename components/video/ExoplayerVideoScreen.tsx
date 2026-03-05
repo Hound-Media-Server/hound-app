@@ -349,6 +349,9 @@ export default function ExoplayerVideoScreen(props: {
           onAudioTracks={handleAudioTracks}
           onError={handleError}
           progressUpdateInterval={1000}
+          subtitleStyle={{
+            fontSize: appSettings?.subtitleSize || 24,
+          }}
           selectedTextTrack={
             selectedTextTrack === 0
               ? { type: SelectedTrackType.DISABLED }

@@ -9,6 +9,7 @@ export type SettingsSchema = {
   defaultPlayAction?: "direct" | "select";
   defaultShowResizeMode?: "cover" | "contain";
   defaultMovieResizeMode?: "cover" | "contain";
+  subtitleSize?: number;
 };
 
 const DEFAULTS: SettingsSchema = {
@@ -18,6 +19,7 @@ const DEFAULTS: SettingsSchema = {
   defaultPlayAction: "direct",
   defaultShowResizeMode: "contain",
   defaultMovieResizeMode: "contain",
+  subtitleSize: 24,
 };
 
 const STORAGE_KEY = "@app_settings";

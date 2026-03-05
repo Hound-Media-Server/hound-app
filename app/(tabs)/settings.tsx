@@ -26,6 +26,7 @@ export default function Settings() {
   const [defaultMovieResizeMode, setDefaultMovieResizeMode] = useState<
     "cover" | "contain" | undefined
   >(undefined);
+  const [subtitleSize, setSubtitleSize] = useState<number>(24);
 
   async function onFetchUpdateAsync() {
     try {
@@ -48,6 +49,7 @@ export default function Settings() {
     setPlayAction(getSetting("defaultPlayAction"));
     setDefaultShowResizeMode(getSetting("defaultShowResizeMode"));
     setDefaultMovieResizeMode(getSetting("defaultMovieResizeMode"));
+    setSubtitleSize(getSetting("subtitleSize") || 24);
   }, []);
 
   const handleSetPlayer = (newPlayer: "mpv" | "exoplayer") => {
@@ -78,6 +80,13 @@ export default function Settings() {
     setDefaultMovieResizeMode(newResizeMode);
   };
 
+  const handleAdjustSubtitleSize = (adjustment: number) => {
+    const newSize = subtitleSize + adjustment;
+    if (newSize < 10 || newSize > 64) return;
+    setSetting("subtitleSize", newSize);
+    setSubtitleSize(newSize);
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-black items-center justify-center">
       <Text className="text-blue-500 font-bold text-3xl">Settings!</Text>
@@ -96,6 +105,7 @@ export default function Settings() {
       <Text className="text-white">
         Default Movie Resize: {defaultMovieResizeMode}
       </Text>
+      <Text className="text-white">Subtitle Size: {subtitleSize}</Text>
       <TouchableOpacity
         onPress={() => onFetchUpdateAsync()}
         className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
@@ -132,6 +142,20 @@ export default function Settings() {
       >
         <Text className="text-white">toggle movie resize mode</Text>
       </TouchableOpacity>
+      <View className="flex-row mt-3">
+        <TouchableOpacity
+          onPress={() => handleAdjustSubtitleSize(-2)}
+          className={`p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white mr-2`}
+        >
+          <Text className="text-white">Sub Size -</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => handleAdjustSubtitleSize(2)}
+          className={`p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
+        >
+          <Text className="text-white">Sub Size +</Text>
+        </TouchableOpacity>
+      </View>
       <TouchableOpacity
         className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
         onPress={signOut}
