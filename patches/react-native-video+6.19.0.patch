@@ -100,7 +100,7 @@ index 0000000..1675490
 +connection.project.dir=../../../android
 +eclipse.preferences.version=1
 diff --git a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ExoPlayerView.kt b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ExoPlayerView.kt
-index bb945fe..9b96796 100644
+index bb945fe..eea9c93 100644
 --- a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ExoPlayerView.kt
 +++ b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ExoPlayerView.kt
 @@ -2,6 +2,7 @@ package com.brentvatne.exoplayer
@@ -119,7 +119,7 @@ index bb945fe..9b96796 100644
  import androidx.media3.ui.DefaultTimeBar
  import androidx.media3.ui.PlayerView
  import com.brentvatne.common.api.ResizeMode
-@@ -109,13 +111,27 @@ class ExoPlayerView @JvmOverloads constructor(context: Context, attrs: Attribute
+@@ -109,13 +111,28 @@ class ExoPlayerView @JvmOverloads constructor(context: Context, attrs: Attribute
  
      fun setSubtitleStyle(style: SubtitleStyle) {
          playerView.subtitleView?.let { subtitleView ->
@@ -143,6 +143,7 @@ index bb945fe..9b96796 100644
 +                typeface
 +            )
 +            subtitleView.setStyle(captionStyle)
++            subtitleView.setBottomPaddingFraction(0.05f)
  
 -            // Apply custom styling
 +            // Use DIP so MPV and Exoplayer size is relatively similar

@@ -148,7 +148,7 @@ export default function MPVVideoScreen(props: {
       try {
         // different font scale for mpv, this seems to work best for now
         const size = appSettings?.subtitleSize || 24;
-        const scale = (720 / windowHeight) * 1.2;
+        const scale = (720 / windowHeight) * 1.25;
         await videoRef.current?.setSubtitleFontSize(Math.round(size * scale));
       } catch (error) {
         console.error("Error applying subtitle size:", error);
