@@ -32,13 +32,10 @@
       "expo-font",
       "expo-web-browser",
       "expo-secure-store",
-      "react-native-video"
+      "react-native-video",
+      "expo-image"
     ],
     "android": {
-      "edgeToEdgeEnabled": true,
-      "splash": {
-        "image": "./assets/images/splash.png"
-      },
       "package": "com.anonymous.houndapp",
       "permissions": []
     },
@@ -54,9 +51,9 @@
       "output": "static"
     },
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "reactCompiler": true
     },
-    "newArchEnabled": true,
     "name": "hound-app",
     "slug": "hound-app",
     "extra": {
