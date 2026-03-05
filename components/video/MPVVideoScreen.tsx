@@ -2,6 +2,7 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  PixelRatio,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -39,7 +40,7 @@ export default function MPVVideoScreen(props: {
   hasNextEpisode?: boolean;
   onNextEpisode?: (settings: any) => void;
 }) {
-  const { width, height } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const videoRef = useRef<MpvPlayerViewRef>(null);
   const updatePlaybackProgress = useUpdatePlaybackProgress();
   const [paused, setPaused] = useState(false);
@@ -140,6 +141,21 @@ export default function MPVVideoScreen(props: {
     };
     applyResizeMode();
   }, [isReady, isZoomedToFill]);
+
+  useEffect(() => {
+    if (!isReady) return;
+    const applySubtitleSize = async () => {
+      try {
+        // different font scale for mpv, this seems to work best for now
+        const size = appSettings?.subtitleSize || 24;
+        const scale = (720 / windowHeight) * 1.2;
+        await videoRef.current?.setSubtitleFontSize(Math.round(size * scale));
+      } catch (error) {
+        console.error("Error applying subtitle size:", error);
+      }
+    };
+    applySubtitleSize();
+  }, [isReady, appSettings?.subtitleSize]);
 
   const handleLoad = async () => {
     // don't seem to need this yet
@@ -390,7 +406,13 @@ export default function MPVVideoScreen(props: {
   return (
     <>
       <StatusBar hidden />
-      <View style={{ width, height, backgroundColor: "black" }}>
+      <View
+        style={{
+          width: windowWidth,
+          height: windowHeight,
+          backgroundColor: "black",
+        }}
+      >
         <MpvPlayerView
           ref={videoRef}
           source={{
@@ -399,7 +421,7 @@ export default function MPVVideoScreen(props: {
             startPosition: props.startTime,
             autoplay: true,
           }}
-          style={{ width, height }}
+          style={{ width: windowWidth, height: windowHeight }}
           onLoad={handleLoad}
           onPlaybackStateChange={handlePlaybackStateChange}
           onProgress={handleProgress}

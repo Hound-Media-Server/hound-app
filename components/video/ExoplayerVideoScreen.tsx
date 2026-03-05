@@ -351,6 +351,7 @@ export default function ExoplayerVideoScreen(props: {
           progressUpdateInterval={1000}
           subtitleStyle={{
             fontSize: appSettings?.subtitleSize || 24,
+            paddingBottom: 0,
           }}
           selectedTextTrack={
             selectedTextTrack === 0

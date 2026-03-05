@@ -4,6 +4,7 @@ dist/
 /ios
 /android
 /modules/mpv-player/android/build
+/modules/mpv-player/android/.gradle
 /modules/mpv-player/ios/build
 npm-debug.*
 *.jks
