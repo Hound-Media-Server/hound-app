@@ -128,7 +128,7 @@ export default function TVDetails() {
             router.navigate(
               getStreamUrl(match.encoded_data, true, {
                 id: id as string,
-                type: MediaTypeTVShow,
+                mediaType: MediaTypeTVShow,
                 title: details?.media_title,
                 season: targetSeason,
                 episode: targetEpisode,
@@ -145,11 +145,10 @@ export default function TVDetails() {
       router.navigate(
         await getSelectStreamUrl({
           id: id as string,
-          type: MediaTypeTVShow,
+          mediaType: MediaTypeTVShow,
           season: targetSeason,
           episode: targetEpisode,
           startTime: resumeStartTime,
-          title: details?.media_title,
           playerSettings: playerSettings,
         }),
       );

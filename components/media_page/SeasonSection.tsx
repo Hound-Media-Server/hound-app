@@ -311,11 +311,10 @@ function EpisodeCard({
               router.navigate(
                 await getSelectStreamUrl({
                   id: sourceID,
-                  type: MediaTypeTVShow,
+                  mediaType: MediaTypeTVShow,
                   season: episode.season_number,
                   episode: episode.episode_number,
                   startTime: watchProgress?.current_progress_seconds,
-                  title: mediaTitle,
                 }),
               );
             }}

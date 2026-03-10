@@ -4,8 +4,7 @@ import { MediaTypeMovie, MediaTypeTVShow, MediaType } from "@/constants/MediaTyp
 
 export interface StreamUrlParams {
   id: string;
-  type: string;
-  title?: string;
+  mediaType: string;
   season?: number | string;
   episode?: number | string;
   startTime?: number | string;
@@ -15,9 +14,8 @@ export interface StreamUrlParams {
 export function getStreamUrl(encodedData: string, streamsMatch: boolean, params: StreamUrlParams) {
   const queryParts = [];
   queryParts.push(`id=${params.id}`);
-  queryParts.push(`type=${params.type}`);
+  queryParts.push(`mediaType=${params.mediaType}`);
   queryParts.push(`streamsMatch=${streamsMatch ? "true" : "false"}`);
-  if (params.title) queryParts.push(`title=${encodeURIComponent(params.title)}`);
   if (params.season) queryParts.push(`season=${params.season}`);
   if (params.episode) queryParts.push(`episode=${params.episode}`);
   if (params.startTime) queryParts.push(`startTime=${params.startTime}`);
@@ -29,10 +27,11 @@ export function getStreamUrl(encodedData: string, streamsMatch: boolean, params:
 // direct play or select stream based on user preferences
 export async function getSelectStreamUrl(params: StreamUrlParams, forceSelect?: boolean) {
   const playAction = getSetting("defaultPlayAction");
+  // if file is in hound, and type is direct, play without fetching other providers
   if (playAction === "direct" && !forceSelect) {
     try {
       const mediaFilesRes = await fetchMediaFiles(
-        params.type,
+        params.mediaType,
         params.id,
         params.season ? parseInt(params.season as string, 10) : undefined,
         params.episode ? parseInt(params.episode as string, 10) : undefined
@@ -43,7 +42,7 @@ export async function getSelectStreamUrl(params: StreamUrlParams, forceSelect?: 
       // prioritize media files, if not found, then fetch
       // this does add a delay to fetching providers
       const providersRes = await fetchProviders(
-        params.type,
+        params.mediaType,
         params.id,
         params.season ? parseInt(params.season as string, 10) : undefined,
         params.episode ? parseInt(params.episode as string, 10) : undefined
@@ -58,8 +57,7 @@ export async function getSelectStreamUrl(params: StreamUrlParams, forceSelect?: 
   // show select stream modal case
   const queryParts = [];
   queryParts.push(`id=${params.id}`);
-  queryParts.push(`type=${params.type}`);
-  if (params.title) queryParts.push(`title=${encodeURIComponent(params.title)}`);
+  queryParts.push(`mediaType=${params.mediaType}`);
   if (params.season) queryParts.push(`season=${params.season}`);
   if (params.episode) queryParts.push(`episode=${params.episode}`);
   if (params.startTime) queryParts.push(`startTime=${params.startTime}`);
@@ -75,7 +73,7 @@ export function getMediaPageUrl(media_type: string, media_source: string, source
 }
 
 export function getAddToCollectionUrl(media_type: string, media_source: string, source_id: string) {
-  const type = media_type === MediaTypeTVShow || media_type === "tv" ? MediaTypeTVShow : MediaTypeMovie;
+  const type = media_type === MediaTypeTVShow ? MediaTypeTVShow : MediaTypeMovie;
   const queryParts = [];
   queryParts.push(`media_type=${type}`);
   queryParts.push(`media_source=${media_source}`);

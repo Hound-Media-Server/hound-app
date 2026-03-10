@@ -23,10 +23,9 @@ export default function Stream() {
     encoded_data,
     startTime,
     id,
-    type,
+    mediaType,
     season,
     episode,
-    title,
     streamsMatch,
     playerSettings,
   } = useLocalSearchParams();
@@ -47,11 +46,11 @@ export default function Stream() {
   // Fetch show details if it is a tv show to handle next episode
   const { data: showDetails } = useShowDetails(
     id as string,
-    type === MediaTypeTVShow,
+    mediaType === MediaTypeTVShow,
   );
 
   const nextEpisodeInfo = useMemo(() => {
-    if (type !== MediaTypeTVShow || !showDetails || !season || !episode)
+    if (mediaType !== MediaTypeTVShow || !showDetails || !season || !episode)
       return null;
 
     const sNum = parseInt(season as string, 10);
@@ -74,7 +73,7 @@ export default function Stream() {
       return { season: nextSeason.season_number, episode: 1 };
     }
     return null;
-  }, [showDetails, type, season, episode]);
+  }, [showDetails, mediaType, season, episode]);
 
   const handleNextEpisode = async (nextSettings: any) => {
     if (!nextEpisodeInfo || !id) return;
@@ -105,8 +104,7 @@ export default function Stream() {
       if (firstStream) {
         const link = getStreamUrl(firstStream.encoded_data, false, {
           id: id as string,
-          type: MediaTypeTVShow,
-          title: title as string,
+          mediaType: MediaTypeTVShow,
           season: nextEpisodeInfo.season,
           episode: nextEpisodeInfo.episode,
           startTime: 0,
@@ -137,7 +135,7 @@ export default function Stream() {
     // Load setting
     const val = getSetting("defaultPlayer");
     const defaultResizeMode =
-      type === MediaTypeMovie
+      mediaType === MediaTypeMovie
         ? getSetting("defaultMovieResizeMode")
         : getSetting("defaultShowResizeMode");
     // Use player from context if available, otherwise fallback to settings
@@ -152,7 +150,7 @@ export default function Stream() {
     return () => {
       ScreenOrientation.unlockAsync();
     };
-  }, [type]);
+  }, [mediaType]);
 
   const handlePlayerChange = async (
     newPlayer: "exoplayer" | "mpv",
@@ -191,7 +189,7 @@ export default function Stream() {
           src={url}
           startTime={currentProgress}
           id={id as string}
-          mediaType={type as MediaType}
+          mediaType={mediaType as MediaType}
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
           encodedData={encoded_data as string}
@@ -208,7 +206,7 @@ export default function Stream() {
           src={url}
           startTime={currentProgress}
           id={id as string}
-          mediaType={type as MediaType}
+          mediaType={mediaType as MediaType}
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
           encodedData={encoded_data as string}

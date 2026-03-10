@@ -16,14 +16,15 @@ import { getStreamUrl } from "@/utils/navigation";
 import { MediaTypeMovie, MediaTypeTVShow } from "@/constants/MediaTypes";
 
 export default function SelectStreamScreen() {
-  const { id, type, season, episode, startTime, title } = useLocalSearchParams<{
-    id: string;
-    type: string;
-    season?: string;
-    episode?: string;
-    startTime?: string;
-    title?: string;
-  }>();
+  const { id, mediaType, season, episode, startTime, title } =
+    useLocalSearchParams<{
+      id: string;
+      mediaType: string;
+      season?: string;
+      episode?: string;
+      startTime?: string;
+      title?: string;
+    }>();
 
   const flatListRef = useRef<FlatList>(null);
 
@@ -36,13 +37,13 @@ export default function SelectStreamScreen() {
     isLoading,
     error,
   } = useUnifiedStreams(
-    type as string,
+    mediaType as string,
     id as string,
     seasonNumber,
     episodeNumber,
   );
 
-  if (type !== MediaTypeMovie && type !== MediaTypeTVShow) {
+  if (mediaType !== MediaTypeMovie && mediaType !== MediaTypeTVShow) {
     return (
       <View className="flex-1 bg-primary justify-center items-center">
         <ThemedText className="text-white">Invalid media type</ThemedText>
@@ -75,11 +76,10 @@ export default function SelectStreamScreen() {
           router.replace(
             getStreamUrl(item.encoded_data, false, {
               id: id as string,
-              type: type as string,
+              mediaType: mediaType as string,
               season: seasonNumber,
               episode: episodeNumber,
               startTime: startTimeNum,
-              title: title,
             }),
           );
         }}

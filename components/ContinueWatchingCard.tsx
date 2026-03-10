@@ -6,7 +6,7 @@ import { ThemedText } from "./ThemedText";
 import { getSelectStreamUrl, getStreamUrl } from "@/utils/navigation";
 import { FocusItem, useFocusStore } from "@/stores/focusStore";
 import { useModalStore } from "@/stores/modalStore";
-import { MediaTypeMovie, MediaTypeTVShow } from "@/constants/MediaTypes";
+import { MediaTypeTVShow } from "@/constants/MediaTypes";
 
 export default function ContinueWatchingCard({
   item,
@@ -37,7 +37,7 @@ export default function ContinueWatchingCard({
     // TODO: allow fallback to select stream if failure
     route = getStreamUrl(wp.encoded_data, true, {
       id: itemID,
-      type: mediaType,
+      mediaType: mediaType,
       title: wp.media_title,
       season: wp.season_number,
       episode: wp.episode_number,
@@ -45,25 +45,19 @@ export default function ContinueWatchingCard({
       playerSettings: JSON.stringify(wp.player_settings),
     });
     title = wp?.media_title;
-    if (mediaType === MediaTypeTVShow || mediaType === "tv") {
+    if (mediaType === MediaTypeTVShow) {
       title = `S${wp.season_number}E${wp.episode_number} | ${wp?.media_title}`;
     }
-    subtitle =
-      mediaType === MediaTypeTVShow || mediaType === "tv"
-        ? wp.episode_title
-        : "";
+    subtitle = mediaType === MediaTypeTVShow ? wp.episode_title : "";
     imgSource = wp?.thumbnail_uri;
   } else if (item.watch_action_type == "next_episode") {
     const nextEp = item.next_episode;
     // for next episode, show select-stream modal
     title = nextEp?.media_title;
-    if (mediaType === MediaTypeTVShow || mediaType === "tv") {
+    if (mediaType === MediaTypeTVShow) {
       title = `S${nextEp.season_number}E${nextEp.episode_number} | ${nextEp?.media_title}`;
     }
-    subtitle =
-      mediaType === MediaTypeTVShow || mediaType === "tv"
-        ? nextEp.episode_title
-        : "";
+    subtitle = mediaType === MediaTypeTVShow ? nextEp.episode_title : "";
     imgSource = nextEp?.thumbnail_uri;
   } else {
     return <></>;
@@ -110,8 +104,7 @@ export default function ContinueWatchingCard({
             const nextEp = item.next_episode;
             finalRoute = await getSelectStreamUrl({
               id: itemID,
-              type: mediaType,
-              title: nextEp.media_title,
+              mediaType: mediaType,
               season: nextEp.season_number,
               episode: nextEp.episode_number,
             });

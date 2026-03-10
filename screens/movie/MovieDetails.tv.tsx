@@ -90,7 +90,7 @@ export default function MovieDetails() {
           router.navigate(
             getStreamUrl(match.encoded_data, true, {
               id: id as string,
-              type: MediaTypeMovie,
+              mediaType: MediaTypeMovie,
               title: details?.media_title,
               startTime: startTime,
               playerSettings: playerSettings,
@@ -105,9 +105,8 @@ export default function MovieDetails() {
     router.navigate(
       await getSelectStreamUrl({
         id: id as string,
-        type: MediaTypeMovie,
+        mediaType: MediaTypeMovie,
         startTime: watchAction?.watch_progress?.current_progress_seconds || 0,
-        title: details?.media_title,
         playerSettings: playerSettings,
       }),
     );
