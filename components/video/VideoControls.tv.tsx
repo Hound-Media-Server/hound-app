@@ -474,6 +474,7 @@ export default function VideoControlsTV({
                 <TouchableOpacity
                   style={styles.modalItem}
                   focusable
+                  hasTVPreferredFocus={showSettingsModal}
                   onPress={() => {
                     const otherPlayer = player === "mpv" ? "exoplayer" : "mpv";
                     onChangePlayer(otherPlayer, currentTime, {
