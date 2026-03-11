@@ -47,6 +47,8 @@ export default function ExoplayerVideoScreen(props: {
   ) => void;
   hasNextEpisode?: boolean;
   onNextEpisode?: (settings: any) => void;
+  autoplayEnabled?: boolean;
+  onProgress?: (time: number, duration: number) => void;
 }) {
   const { width, height } = useWindowDimensions();
   const videoRef = useRef<VideoRef>(null);
@@ -156,6 +158,9 @@ export default function ExoplayerVideoScreen(props: {
   const handleProgress = (data: OnProgressData) => {
     setCurrentTime(data.currentTime);
     currentTimeRef.current = data.currentTime;
+    if (props.onProgress) {
+      props.onProgress(data.currentTime, duration);
+    }
   };
 
   /*
@@ -396,6 +401,7 @@ export default function ExoplayerVideoScreen(props: {
             onChangePlayer={props.onChangePlayer}
             hasNextEpisode={props.hasNextEpisode}
             onNextEpisode={handleNextEpisode}
+            autoplayEnabled={props.autoplayEnabled}
           />
         ) : (
           <VideoControls
@@ -419,6 +425,7 @@ export default function ExoplayerVideoScreen(props: {
             onChangePlayer={props.onChangePlayer}
             hasNextEpisode={props.hasNextEpisode}
             onNextEpisode={handleNextEpisode}
+            autoplayEnabled={props.autoplayEnabled}
           />
         )}
         {!isReady && <LoadingOverlay />}

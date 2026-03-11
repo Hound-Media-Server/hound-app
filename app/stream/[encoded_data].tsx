@@ -1,5 +1,5 @@
 import { Platform, View, ActivityIndicator, Alert } from "react-native";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useCallback } from "react";
 import { useEffect } from "react";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -19,7 +19,6 @@ import {
   MediaTypeTVShow,
   MediaType,
 } from "@/constants/MediaTypes";
-import { Toast } from "toastify-react-native";
 
 export type DisplayInfo = {
   original_language: string;
@@ -55,6 +54,18 @@ export default function Stream() {
   const [displayInfo, setDisplayInfo] = useState<DisplayInfo | undefined>(
     undefined,
   );
+
+  // Autoplay next episode
+  const autoplayEnabled = useMemo(
+    () => getSetting("autoplayNextEpisode") !== false,
+    [],
+  );
+  const [playbackProgress, setPlaybackProgress] = useState<{
+    time: number;
+    duration: number;
+  }>({ time: 0, duration: 0 });
+  const cachedNextEpisodeData = useRef<any>(null);
+  const cacheWarmStarted = useRef(false);
 
   // Fetch show details if it is a tv show to handle next episode
   const { data: showDetails } = useShowDetails(
@@ -110,33 +121,53 @@ export default function Stream() {
     return null;
   }, [showDetails, mediaType, season, episode]);
 
-  const handleNextEpisode = async (nextSettings: any) => {
+  // Progress callback from video screens
+  const handleProgress = useCallback((time: number, dur: number) => {
+    setPlaybackProgress({ time, duration: dur });
+  }, []);
+
+  // Determine if near end (>80% or <5 min remaining)
+  const isNearEnd = useMemo(() => {
+    const { time, duration: dur } = playbackProgress;
+    if (dur <= 0 || time <= 0) return false;
+    const remaining = dur - time;
+    return remaining < 300 || time / dur > 0.8;
+  }, [playbackProgress]);
+
+  // Next episode logic, if prefetch is true, warm cache without navigating
+  const handleNextEpisode = async (nextSettings: any, prefetch = false) => {
     if (!nextEpisodeInfo || !id) return;
     try {
-      let firstStream = null;
-      const mediaFilesRes = await fetchMediaFiles(
-        MediaTypeTVShow,
-        id as string,
-        nextEpisodeInfo.season,
-        nextEpisodeInfo.episode,
-      );
-      if (mediaFilesRes?.data?.providers?.[0].streams?.length > 0) {
-        firstStream = mediaFilesRes?.data?.providers?.[0]?.streams?.[0];
-      }
-      // prioritize media files, if not found, then fetch
-      // this does add a delay to fetching providers
+      let firstStream = cachedNextEpisodeData.current;
       if (!firstStream) {
-        const providersRes = await fetchProviders(
+        const mediaFilesRes = await fetchMediaFiles(
           MediaTypeTVShow,
           id as string,
           nextEpisodeInfo.season,
           nextEpisodeInfo.episode,
         );
-        if (providersRes?.data?.providers?.[0].streams?.length > 0) {
-          firstStream = providersRes?.data?.providers?.[0]?.streams?.[0];
+        if (mediaFilesRes?.data?.providers?.[0].streams?.length > 0) {
+          firstStream = mediaFilesRes?.data?.providers?.[0]?.streams?.[0];
+        }
+        // prioritize media files, if not found, then fetch
+        // this does add a delay to fetching providers
+        if (!firstStream) {
+          const providersRes = await fetchProviders(
+            MediaTypeTVShow,
+            id as string,
+            nextEpisodeInfo.season,
+            nextEpisodeInfo.episode,
+          );
+          if (providersRes?.data?.providers?.[0].streams?.length > 0) {
+            firstStream = providersRes?.data?.providers?.[0]?.streams?.[0];
+          }
         }
       }
       if (firstStream) {
+        if (prefetch) {
+          cachedNextEpisodeData.current = firstStream;
+          return;
+        }
         const link = getStreamUrl(firstStream.encoded_data, false, {
           id: id as string,
           mediaType: MediaTypeTVShow,
@@ -155,15 +186,31 @@ export default function Stream() {
           router.replace(link);
         }, 100);
       } else {
-        Alert.alert("No streams found for the next episode.");
-        console.log(
-          "[NEXT_EPISODE] No main stream found in providers response",
-        );
+        if (!prefetch) {
+          Alert.alert("No streams found for the next episode.");
+          console.log(
+            "[NEXT_EPISODE] No main stream found in providers response",
+          );
+        }
       }
     } catch (error) {
       console.error("Error fetching next episode providers:", error);
     }
   };
+
+  // pre-fetch next episode data when near end
+  useEffect(() => {
+    if (
+      !isNearEnd ||
+      !nextEpisodeInfo ||
+      !id ||
+      cacheWarmStarted.current ||
+      !autoplayEnabled
+    )
+      return;
+    cacheWarmStarted.current = true;
+    handleNextEpisode(currentSettings, true);
+  }, [isNearEnd, nextEpisodeInfo, id, autoplayEnabled, currentSettings]);
 
   useEffect(() => {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
@@ -235,7 +282,9 @@ export default function Stream() {
           playerSettings={{ ...currentSettings, player: "mpv" }}
           onChangePlayer={handlePlayerChange}
           hasNextEpisode={!!nextEpisodeInfo}
-          onNextEpisode={handleNextEpisode}
+          onNextEpisode={(settings: any) => handleNextEpisode(settings, false)}
+          autoplayEnabled={autoplayEnabled && !!nextEpisodeInfo}
+          onProgress={handleProgress}
         />
       ) : (
         <VideoScreen
@@ -253,7 +302,9 @@ export default function Stream() {
           playerSettings={{ ...currentSettings, player: "exoplayer" }}
           onChangePlayer={handlePlayerChange}
           hasNextEpisode={!!nextEpisodeInfo}
-          onNextEpisode={handleNextEpisode}
+          onNextEpisode={(settings: any) => handleNextEpisode(settings, false)}
+          autoplayEnabled={autoplayEnabled && !!nextEpisodeInfo}
+          onProgress={handleProgress}
         />
       )}
     </View>

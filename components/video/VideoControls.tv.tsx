@@ -21,6 +21,7 @@ import {
   SubtitleTrack,
   AudioTrack,
 } from "@/modules/mpv-player";
+import { ThemedText } from "../ThemedText";
 
 interface VideoControlsProps {
   videoRef: React.RefObject<MpvPlayerViewRef | null>;
@@ -47,6 +48,7 @@ interface VideoControlsProps {
   ) => void;
   hasNextEpisode?: boolean;
   onNextEpisode?: () => void;
+  autoplayEnabled?: boolean;
 }
 
 export default function VideoControlsTV({
@@ -70,6 +72,7 @@ export default function VideoControlsTV({
   onChangePlayer,
   hasNextEpisode,
   onNextEpisode,
+  autoplayEnabled,
 }: VideoControlsProps) {
   const [controlsVisible, setControlsVisible] = useState(true);
   const [showSubtitlesModal, setShowSubtitlesModal] = useState(false);
@@ -77,6 +80,7 @@ export default function VideoControlsTV({
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [sliderFocused, setSliderFocused] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
+  const [autoplayCanceled, setAutoplayCanceled] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const hideControlsTimeoutRef = useRef<any>(null);
@@ -85,10 +89,12 @@ export default function VideoControlsTV({
     if (hideControlsTimeoutRef.current) {
       clearTimeout(hideControlsTimeoutRef.current);
     }
-    hideControlsTimeoutRef.current = setTimeout(() => {
-      setControlsVisible(false);
-    }, 3500);
-  }, []);
+    if (!paused) {
+      hideControlsTimeoutRef.current = setTimeout(() => {
+        setControlsVisible(false);
+      }, 3500);
+    }
+  }, [paused]);
 
   useEffect(() => {
     controlsOpenTimer();
@@ -149,10 +155,25 @@ export default function VideoControlsTV({
 
   useTVEventHandler(myTVEventHandler);
 
+  // Autoplay
+  const remainingTime = Math.floor(duration - currentTime);
+  const showAutoplay =
+    autoplayEnabled &&
+    hasNextEpisode &&
+    !autoplayCanceled &&
+    remainingTime <= 5 &&
+    remainingTime > 0;
+
+  useEffect(() => {
+    if (showAutoplay && remainingTime <= 1) {
+      onNextEpisode?.();
+    }
+  }, [showAutoplay, remainingTime, onNextEpisode]);
+
   const formatTime = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
+    const secs = Math.round(seconds % 60);
 
     if (hrs > 0) {
       return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
@@ -298,6 +319,25 @@ export default function VideoControlsTV({
           </TVFocusGuideView>
         </View>
       </Animated.View>
+
+      {/* Autoplay Overlay */}
+      {showAutoplay && (
+        <View className="absolute top-[15px] right-[15px] bg-black/40 py-3 px-4 rounded-full">
+          <View className="flex-row items-center justify-between">
+            <Ionicons name="play-skip-forward" size={16} color="white" />
+            <ThemedText className="text-white ml-3">
+              Next Episode in {Math.ceil(remainingTime)}s
+            </ThemedText>
+            {/* <FocusablePressable
+              focusable
+              onPress={() => setAutoplayCanceled(true)}
+              className="bg-white/20 rounded-full"
+            >
+              <Ionicons name="close" size={20} color="white" />
+            </FocusablePressable> */}
+          </View>
+        </View>
+      )}
 
       {/* Subtitles Modal */}
       <Modal

@@ -30,6 +30,7 @@ export default function Settings() {
   const [defaultAudioLanguage, setDefaultAudioLanguage] = useState<
     string | undefined
   >(undefined);
+  const [autoplayNextEpisode, setAutoplayNextEpisode] = useState<boolean>(true);
 
   async function onFetchUpdateAsync() {
     try {
@@ -54,6 +55,8 @@ export default function Settings() {
     setDefaultMovieResizeMode(getSetting("defaultMovieResizeMode"));
     setSubtitleSize(getSetting("subtitleSize") || 24);
     setDefaultAudioLanguage(getSetting("audioLanguage"));
+    const autoplay = getSetting("autoplayNextEpisode");
+    setAutoplayNextEpisode(autoplay !== undefined ? autoplay : true);
   }, []);
 
   const handleSetPlayer = (newPlayer: "mpv" | "exoplayer") => {
@@ -93,6 +96,12 @@ export default function Settings() {
 
   const handleAudioLanguage = () => {
     setDefaultAudioLanguage(defaultAudioLanguage === "en" ? "original" : "en");
+  };
+
+  const handleToggleAutoplay = () => {
+    const newValue = !autoplayNextEpisode;
+    setSetting("autoplayNextEpisode", newValue);
+    setAutoplayNextEpisode(newValue);
   };
 
   return (
@@ -170,6 +179,14 @@ export default function Settings() {
           <Text className="text-white">Sub Size +</Text>
         </TouchableOpacity>
       </View>
+      <TouchableOpacity
+        onPress={() => handleToggleAutoplay()}
+        className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
+      >
+        <Text className="text-white">
+          Autoplay Next Episode: {autoplayNextEpisode ? "On" : "Off"}
+        </Text>
+      </TouchableOpacity>
       <TouchableOpacity
         className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
         onPress={signOut}

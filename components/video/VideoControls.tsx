@@ -45,6 +45,7 @@ interface VideoControlsProps {
   ) => void;
   hasNextEpisode?: boolean;
   onNextEpisode?: () => void;
+  autoplayEnabled?: boolean;
 }
 
 export default function VideoControls({
@@ -68,12 +69,14 @@ export default function VideoControls({
   onChangePlayer,
   hasNextEpisode,
   onNextEpisode,
+  autoplayEnabled,
 }: VideoControlsProps) {
   const [showControls, setShowControls] = useState(true);
   const [showSubtitlesModal, setShowSubtitlesModal] = useState(false);
   const [showAudioModal, setShowAudioModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
+  const [autoplayCanceled, setAutoplayCanceled] = useState(false);
   const router = useRouter();
   const hideControlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -92,6 +95,21 @@ export default function VideoControls({
       }
     };
   }, [showControls, paused, isSeeking]);
+
+  // Autoplay
+  const remainingTime = Math.floor(duration - currentTime);
+  const showAutoplay =
+    autoplayEnabled &&
+    hasNextEpisode &&
+    !autoplayCanceled &&
+    remainingTime <= 5 &&
+    remainingTime > 0;
+
+  useEffect(() => {
+    if (showAutoplay && remainingTime <= 1) {
+      onNextEpisode?.();
+    }
+  }, [showAutoplay, remainingTime, onNextEpisode]);
 
   const handleScreenPress = () => {
     setShowControls(!showControls);
@@ -249,6 +267,24 @@ export default function VideoControls({
           </View>
         )}
       </Pressable>
+
+      {/* Autoplay Overlay */}
+      {showAutoplay && (
+        <View className="absolute top-[15px] right-[15px] bg-black/40 py-3 px-4 rounded-full">
+          <View className="flex-row items-center justify-between">
+            <Ionicons name="play-skip-forward" size={16} color="white" />
+            <ThemedText className="text-white ml-3">
+              Next Episode in {Math.ceil(remainingTime)}s
+            </ThemedText>
+            <Pressable
+              onPress={() => setAutoplayCanceled(true)}
+              className="bg-white/20 rounded-full"
+            >
+              <Ionicons name="close" size={20} color="white" />
+            </Pressable>
+          </View>
+        </View>
+      )}
 
       {/* Subtitles Modal */}
       <Modal

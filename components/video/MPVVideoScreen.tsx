@@ -41,6 +41,8 @@ export default function MPVVideoScreen(props: {
   ) => void;
   hasNextEpisode?: boolean;
   onNextEpisode?: (settings: any) => void;
+  autoplayEnabled?: boolean;
+  onProgress?: (time: number, duration: number) => void;
 }) {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const videoRef = useRef<MpvPlayerViewRef>(null);
@@ -315,6 +317,9 @@ export default function MPVVideoScreen(props: {
     const { position, duration: dur } = event.nativeEvent;
     setCurrentTime(position);
     if (dur) setDuration(dur);
+    if (props.onProgress) {
+      props.onProgress(position, dur || duration);
+    }
   };
 
   const handleError = (error: any) => {
@@ -464,6 +469,7 @@ export default function MPVVideoScreen(props: {
             onChangePlayer={props.onChangePlayer}
             hasNextEpisode={props.hasNextEpisode}
             onNextEpisode={handleNextEpisode}
+            autoplayEnabled={props.autoplayEnabled}
           />
         ) : (
           <VideoControls
@@ -487,6 +493,7 @@ export default function MPVVideoScreen(props: {
             onChangePlayer={props.onChangePlayer}
             hasNextEpisode={props.hasNextEpisode}
             onNextEpisode={handleNextEpisode}
+            autoplayEnabled={props.autoplayEnabled}
           />
         )}
         {!isReady && <LoadingOverlay />}
