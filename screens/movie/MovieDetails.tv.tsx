@@ -91,7 +91,6 @@ export default function MovieDetails() {
             getStreamUrl(match.encoded_data, true, {
               id: id as string,
               mediaType: MediaTypeMovie,
-              title: details?.media_title,
               startTime: startTime,
               playerSettings: playerSettings,
             }),

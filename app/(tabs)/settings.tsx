@@ -27,6 +27,9 @@ export default function Settings() {
     "cover" | "contain" | undefined
   >(undefined);
   const [subtitleSize, setSubtitleSize] = useState<number>(24);
+  const [defaultAudioLanguage, setDefaultAudioLanguage] = useState<
+    string | undefined
+  >(undefined);
 
   async function onFetchUpdateAsync() {
     try {
@@ -50,6 +53,7 @@ export default function Settings() {
     setDefaultShowResizeMode(getSetting("defaultShowResizeMode"));
     setDefaultMovieResizeMode(getSetting("defaultMovieResizeMode"));
     setSubtitleSize(getSetting("subtitleSize") || 24);
+    setDefaultAudioLanguage(getSetting("audioLanguage"));
   }, []);
 
   const handleSetPlayer = (newPlayer: "mpv" | "exoplayer") => {
@@ -87,6 +91,10 @@ export default function Settings() {
     setSubtitleSize(newSize);
   };
 
+  const handleAudioLanguage = () => {
+    setDefaultAudioLanguage(defaultAudioLanguage === "en" ? "original" : "en");
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-black items-center justify-center">
       <Text className="text-blue-500 font-bold text-3xl">Settings!</Text>
@@ -111,6 +119,12 @@ export default function Settings() {
         className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
       >
         <Text className="text-white">Fetch Updates</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => handleAudioLanguage()}
+        className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
+      >
+        <Text className="text-white">Audio Lang: {defaultAudioLanguage}</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => handleSetPlayer("mpv")}

@@ -5,6 +5,7 @@ import { MediaTypeMovie, MediaTypeTVShow, MediaType } from "@/constants/MediaTyp
 export interface StreamUrlParams {
   id: string;
   mediaType: string;
+  modalTitle?: string;
   season?: number | string;
   episode?: number | string;
   startTime?: number | string;
@@ -58,6 +59,7 @@ export async function getSelectStreamUrl(params: StreamUrlParams, forceSelect?: 
   const queryParts = [];
   queryParts.push(`id=${params.id}`);
   queryParts.push(`mediaType=${params.mediaType}`);
+  if (params.modalTitle) queryParts.push(`modalTitle=${encodeURIComponent(params.modalTitle)}`);
   if (params.season) queryParts.push(`season=${params.season}`);
   if (params.episode) queryParts.push(`episode=${params.episode}`);
   if (params.startTime) queryParts.push(`startTime=${params.startTime}`);

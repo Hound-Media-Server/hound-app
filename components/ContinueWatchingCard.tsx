@@ -38,7 +38,7 @@ export default function ContinueWatchingCard({
     route = getStreamUrl(wp.encoded_data, true, {
       id: itemID,
       mediaType: mediaType,
-      title: wp.media_title,
+      modalTitle: wp.media_title,
       season: wp.season_number,
       episode: wp.episode_number,
       startTime: wp.current_progress_seconds,

@@ -8,7 +8,10 @@ import MPVVideoScreen from "@/components/video/MPVVideoScreen";
 import { useKeepAwake } from "expo-keep-awake";
 import VideoScreen from "@/components/video/ExoplayerVideoScreen";
 import { getSetting } from "@/stores/settingsStore";
-import { useShowDetails } from "@/services/mediaDetailsService";
+import {
+  useMovieDetails,
+  useShowDetails,
+} from "@/services/mediaDetailsService";
 import { fetchMediaFiles, fetchProviders } from "@/services/providerService";
 import { getStreamUrl } from "@/utils/navigation";
 import {
@@ -16,6 +19,13 @@ import {
   MediaTypeTVShow,
   MediaType,
 } from "@/constants/MediaTypes";
+import { Toast } from "toastify-react-native";
+
+export type DisplayInfo = {
+  original_language: string;
+  media_title: string;
+  episode_title: string;
+};
 
 export default function Stream() {
   const router = useRouter();
@@ -42,12 +52,37 @@ export default function Stream() {
   const [currentSettings, setCurrentSettings] = useState<any>(
     parsedPlayerSettings || {},
   );
+  const [displayInfo, setDisplayInfo] = useState<DisplayInfo | undefined>(
+    undefined,
+  );
 
   // Fetch show details if it is a tv show to handle next episode
   const { data: showDetails } = useShowDetails(
     id as string,
     mediaType === MediaTypeTVShow,
   );
+
+  const { data: movieDetails } = useMovieDetails(
+    id as string,
+    mediaType === MediaTypeMovie,
+  );
+
+  // get default audio language, etc.
+  useEffect(() => {
+    if (mediaType === MediaTypeMovie && movieDetails) {
+      setDisplayInfo({
+        original_language: movieDetails.original_language || "",
+        media_title: movieDetails.media_title || "",
+        episode_title: "",
+      });
+    } else if (mediaType === MediaTypeTVShow && showDetails) {
+      setDisplayInfo({
+        original_language: showDetails.original_language || "",
+        media_title: showDetails.media_title || "",
+        episode_title: "",
+      });
+    }
+  }, [mediaType, movieDetails, showDetails]);
 
   const nextEpisodeInfo = useMemo(() => {
     if (mediaType !== MediaTypeTVShow || !showDetails || !season || !episode)
@@ -180,7 +215,7 @@ export default function Stream() {
 
   return (
     <View className="flex-1 bg-black justify-center items-center">
-      {isNavigating ? (
+      {isNavigating || (!movieDetails && !showDetails) ? (
         <View className="flex-1 bg-black items-center justify-center">
           <ActivityIndicator size="large" color="white" />
         </View>
@@ -196,6 +231,7 @@ export default function Stream() {
           streamsMatch={
             streamsMatch === "true" || playerHasChanged
           } /* if we're just changing players, we want to preserve settings */
+          displayInfo={displayInfo}
           playerSettings={{ ...currentSettings, player: "mpv" }}
           onChangePlayer={handlePlayerChange}
           hasNextEpisode={!!nextEpisodeInfo}
@@ -213,6 +249,7 @@ export default function Stream() {
           streamsMatch={
             streamsMatch === "true" || playerHasChanged
           } /* if we're just changing players, we want to preserve settings */
+          displayInfo={displayInfo}
           playerSettings={{ ...currentSettings, player: "exoplayer" }}
           onChangePlayer={handlePlayerChange}
           hasNextEpisode={!!nextEpisodeInfo}

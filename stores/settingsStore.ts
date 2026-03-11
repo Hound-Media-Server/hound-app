@@ -14,7 +14,7 @@ export type SettingsSchema = {
 
 const DEFAULTS: SettingsSchema = {
   subtitlesLanguage: "en",
-  audioLanguage: "en",
+  audioLanguage: "original",
   defaultPlayer: "mpv",
   defaultPlayAction: "direct",
   defaultShowResizeMode: "contain",

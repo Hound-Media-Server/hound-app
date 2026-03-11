@@ -129,7 +129,6 @@ export default function TVDetails() {
               getStreamUrl(match.encoded_data, true, {
                 id: id as string,
                 mediaType: MediaTypeTVShow,
-                title: details?.media_title,
                 season: targetSeason,
                 episode: targetEpisode,
                 startTime,

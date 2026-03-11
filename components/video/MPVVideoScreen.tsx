@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
 import { StatusBar } from "expo-status-bar";
-import { useLayoutEffect, useRef, useState, useEffect } from "react";
+import { useLayoutEffect, useRef, useState, useEffect, useMemo } from "react";
 import {
   useUpdatePlaybackProgress,
   PlayerSettings,
@@ -21,6 +21,7 @@ import { router } from "expo-router";
 import { getAllSettings, SettingsSchema } from "@/stores/settingsStore";
 import { get2LetterLangCode } from "@/utils/locale";
 import { MediaType } from "@/constants/MediaTypes";
+import { DisplayInfo } from "@/app/stream/[encoded_data]";
 
 export default function MPVVideoScreen(props: {
   src: string;
@@ -31,6 +32,7 @@ export default function MPVVideoScreen(props: {
   episodeNumber?: number;
   encodedData: string;
   streamsMatch: boolean;
+  displayInfo?: DisplayInfo;
   playerSettings?: PlayerSettings | null;
   onChangePlayer?: (
     player: "exoplayer" | "mpv",
@@ -56,6 +58,14 @@ export default function MPVVideoScreen(props: {
   const [isReady, setIsReady] = useState(false);
   const tracksInitialized = useRef(false);
   const [appSettings] = useState<SettingsSchema>(getAllSettings());
+
+  const defaultAudioLang = useMemo(() => {
+    appSettings.audioLanguage === "original"
+      ? props.displayInfo?.original_language
+        ? get2LetterLangCode(props.displayInfo.original_language)
+        : undefined
+      : appSettings.audioLanguage;
+  }, [props.displayInfo]);
 
   const handleNextEpisode = () => {
     if (props.onNextEpisode) {
@@ -187,6 +197,8 @@ export default function MPVVideoScreen(props: {
       if (tracksInitialized.current) return;
       tracksInitialized.current = true;
 
+      // player settings exist, this is an existing watch, load previously selected
+      // settings by the user
       if (props.playerSettings) {
         const { player, subtitle_idx, subtitle_lang, audio_idx, audio_lang } =
           props.playerSettings;
@@ -226,7 +238,7 @@ export default function MPVVideoScreen(props: {
           }
           // otherwise fallback to audio_lang
           else {
-            const targetLang = audio_lang || appSettings?.audioLanguage;
+            const targetLang = audio_lang || defaultAudioLang;
             const matchByLang = convertedAudio.find(
               (t: any) => t.lang === targetLang,
             );
@@ -246,8 +258,10 @@ export default function MPVVideoScreen(props: {
           }
         }
         if (appSettings?.audioLanguage) {
+          // if user prefers audio language as the tmdb original_language,
+          // attempt to apply it
           const matchByLang = convertedAudio?.find(
-            (t: any) => t.lang === appSettings.audioLanguage,
+            (t: any) => t.lang === defaultAudioLang,
           );
           if (matchByLang) {
             targetAudio = matchByLang.id;

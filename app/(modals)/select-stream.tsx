@@ -13,17 +13,21 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import { Ionicons } from "@expo/vector-icons";
 import { getStreamUrl } from "@/utils/navigation";
-import { MediaTypeMovie, MediaTypeTVShow } from "@/constants/MediaTypes";
+import {
+  MediaTypeEpisode,
+  MediaTypeMovie,
+  MediaTypeTVShow,
+} from "@/constants/MediaTypes";
 
 export default function SelectStreamScreen() {
-  const { id, mediaType, season, episode, startTime, title } =
+  const { id, mediaType, season, episode, startTime, modalTitle } =
     useLocalSearchParams<{
       id: string;
       mediaType: string;
       season?: string;
       episode?: string;
       startTime?: string;
-      title?: string;
+      modalTitle?: string;
     }>();
 
   const flatListRef = useRef<FlatList>(null);
@@ -51,7 +55,7 @@ export default function SelectStreamScreen() {
     );
   }
 
-  let displayTitle = title;
+  let displayTitle = modalTitle;
   if (seasonNumber && episodeNumber) {
     displayTitle += ` S${seasonNumber}E${episodeNumber}`;
   }

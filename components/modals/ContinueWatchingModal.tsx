@@ -1,6 +1,10 @@
 import { RelativePathString, useRouter } from "expo-router";
 import { ContextModal, ModalAction } from "./Modal";
-import { getMediaPageUrl, getSelectStreamUrl } from "@/utils/navigation";
+import {
+  getMediaPageUrl,
+  getSelectStreamUrl,
+  StreamUrlParams,
+} from "@/utils/navigation";
 import {
   MediaTypeMovie,
   MediaTypeTVShow,
@@ -27,10 +31,10 @@ export default function ContinueWatchingModal({
     const mediaType = mediaItem.media_type || "";
     const mediaSourceID = mediaItem.media_source + "-" + mediaItem.source_id;
 
-    let params: any = {
-      type: mediaType,
+    let params: StreamUrlParams = {
+      mediaType: mediaType,
       id: mediaSourceID,
-      title: modalTitle,
+      modalTitle: modalTitle,
     };
 
     if (mediaItem.watch_action_type === "resume") {

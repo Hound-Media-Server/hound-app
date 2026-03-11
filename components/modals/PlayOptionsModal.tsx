@@ -1,6 +1,6 @@
 import { RelativePathString, useRouter } from "expo-router";
 import { ContextModal, ModalAction } from "./Modal";
-import { getSelectStreamUrl } from "@/utils/navigation";
+import { getSelectStreamUrl, StreamUrlParams } from "@/utils/navigation";
 import { useAddWatchHistory } from "@/services/watchDataService";
 import { Toast } from "toastify-react-native";
 import { MediaTypeMovie, MediaTypeTVShow } from "@/constants/MediaTypes";
@@ -71,10 +71,10 @@ export default function PlayOptionsModal({
       ? mediaItem.media_source + "-" + mediaItem.source_id
       : mediaItem.id;
 
-    let params: any = {
-      type: mediaType,
+    let params: StreamUrlParams = {
+      mediaType: mediaType,
       id: mediaSourceID,
-      title: modalTitle,
+      modalTitle: modalTitle,
       startTime: 0,
     };
 
@@ -129,7 +129,7 @@ export default function PlayOptionsModal({
         }}
       />
       <ModalAction
-        label={isAddingHistory ? "Marking..." : "Mark as Watched"}
+        label={"Mark as Watched"}
         onPress={() => {
           if (!isAddingHistory) {
             handleMarkAsWatched();

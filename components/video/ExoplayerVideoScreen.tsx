@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
 import { StatusBar } from "expo-status-bar";
-import { useLayoutEffect, useRef, useState, useEffect } from "react";
+import { useLayoutEffect, useRef, useState, useEffect, useMemo } from "react";
 import {
   useUpdatePlaybackProgress,
   PlayerSettings,
@@ -27,6 +27,7 @@ import { router } from "expo-router";
 import { getAllSettings, SettingsSchema } from "@/stores/settingsStore";
 import { get2LetterLangCode } from "@/utils/locale";
 import { MediaType } from "@/constants/MediaTypes";
+import { DisplayInfo } from "@/app/stream/[encoded_data]";
 
 export default function ExoplayerVideoScreen(props: {
   src: string;
@@ -37,6 +38,7 @@ export default function ExoplayerVideoScreen(props: {
   episodeNumber?: number;
   encodedData: string;
   streamsMatch?: boolean;
+  displayInfo?: DisplayInfo;
   playerSettings?: PlayerSettings | null;
   onChangePlayer?: (
     player: "exoplayer" | "mpv",
@@ -66,6 +68,14 @@ export default function ExoplayerVideoScreen(props: {
   const audioInitialized = useRef(false);
   const subtitleInitialized = useRef(false);
   const [appSettings] = useState<SettingsSchema>(getAllSettings());
+
+  const defaultAudioLang = useMemo(() => {
+    appSettings.audioLanguage === "original"
+      ? props.displayInfo?.original_language
+        ? get2LetterLangCode(props.displayInfo.original_language)
+        : undefined
+      : appSettings.audioLanguage;
+  }, [props.displayInfo]);
 
   const handleNextEpisode = () => {
     if (props.onNextEpisode) {
@@ -234,10 +244,9 @@ export default function ExoplayerVideoScreen(props: {
       if (audioInitialized.current) return prev;
       audioInitialized.current = true;
 
-      const context = props.playerSettings;
       let targetAudio = prev;
-      if (context) {
-        const { audio_idx, audio_lang } = context;
+      if (props.playerSettings) {
+        const { audio_idx, audio_lang } = props.playerSettings;
         // if streams match continue watching data, use audio_idx
         if (
           audio_idx !== undefined &&
@@ -249,7 +258,7 @@ export default function ExoplayerVideoScreen(props: {
         }
         // otherwise fallback to audio_lang
         else {
-          const targetLang = audio_lang || appSettings?.audioLanguage;
+          const targetLang = audio_lang || defaultAudioLang;
           const matchByLang = tracks.find((t: any) => t.lang === targetLang);
           if (matchByLang) {
             targetAudio = matchByLang.id;
@@ -258,7 +267,7 @@ export default function ExoplayerVideoScreen(props: {
       } else if (appSettings?.audioLanguage) {
         // No player settings (new stream), use app defaults
         const matchByLang = tracks.find(
-          (t: any) => t.lang === appSettings.audioLanguage,
+          (t: any) => t.lang === defaultAudioLang,
         );
         if (matchByLang) {
           targetAudio = matchByLang.id;

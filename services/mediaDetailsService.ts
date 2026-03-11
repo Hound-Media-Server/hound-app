@@ -17,11 +17,12 @@ const fetchSeasonDetails = (id: string, seasonNum: number): Promise<any> => {
   return apiClient(`/tv/${id}/season/${seasonNum}`);
 };
 
-export const useMovieDetails = (id: string) => {
+export const useMovieDetails = (id: string, enabled: boolean = true) => {
   return useQuery({
     queryKey: ['movie-details', id],
     queryFn: () => fetchMovieDetails(id),
     staleTime: 1000 * 60 * 5,
+    enabled: enabled && !!id,
     select: (data: any) => data.data
   });
 };
