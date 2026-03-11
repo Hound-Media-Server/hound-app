@@ -234,6 +234,16 @@ export default function VideoControls({
                     <Ionicons name="volume-high" size={24} color="white" />
                   </TouchableOpacity>
                 )}
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={onChangeResizeMode}
+                >
+                  <Ionicons
+                    name={isZoomedToFill ? "contract" : "expand"}
+                    size={24}
+                    color="white"
+                  />
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -359,31 +369,6 @@ export default function VideoControls({
             <Text style={styles.modalTitle}>Settings</Text>
             <Text style={styles.modalItemText}>Player: {player}</Text>
             <ScrollView>
-              <TouchableOpacity
-                style={styles.modalItem}
-                onPress={() => {
-                  if (isZoomedToFill) onChangeResizeMode();
-                  setShowSettingsModal(false);
-                }}
-              >
-                <Text style={styles.modalItemText}>Fit to Screen</Text>
-                {!isZoomedToFill && (
-                  <Ionicons name="checkmark" size={24} color="#FF6B6B" />
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalItem}
-                onPress={() => {
-                  if (!isZoomedToFill) onChangeResizeMode();
-                  setShowSettingsModal(false);
-                }}
-              >
-                <Text style={styles.modalItemText}>Fill Screen</Text>
-                {isZoomedToFill && (
-                  <Ionicons name="checkmark" size={24} color="#FF6B6B" />
-                )}
-              </TouchableOpacity>
-
               {onChangePlayer && (
                 <TouchableOpacity
                   style={styles.modalItem}

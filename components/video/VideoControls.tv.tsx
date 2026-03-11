@@ -278,6 +278,18 @@ export default function VideoControlsTV({
               <FocusablePressable
                 focusable
                 style={styles.iconButton}
+                onPress={onChangeResizeMode}
+              >
+                <Ionicons
+                  name={isZoomedToFill ? "contract" : "expand"}
+                  size={24}
+                  color="white"
+                />
+              </FocusablePressable>
+
+              <FocusablePressable
+                focusable
+                style={styles.iconButton}
                 onPress={() => setShowSettingsModal(true)}
               >
                 <Ionicons name="settings-outline" size={24} color="white" />
@@ -418,35 +430,6 @@ export default function VideoControlsTV({
             <Text style={styles.modalTitle}>Settings</Text>
             <Text style={styles.modalItemText}>Player: {player}</Text>
             <ScrollView>
-              <TouchableOpacity
-                style={styles.modalItem}
-                focusable
-                hasTVPreferredFocus={showSettingsModal && !isZoomedToFill}
-                onPress={() => {
-                  if (isZoomedToFill) onChangeResizeMode();
-                  setShowSettingsModal(false);
-                }}
-              >
-                <Text style={styles.modalItemText}>Fit to Screen</Text>
-                {!isZoomedToFill && (
-                  <Ionicons name="checkmark" size={24} color="#FF6B6B" />
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalItem}
-                focusable
-                hasTVPreferredFocus={showSettingsModal && isZoomedToFill}
-                onPress={() => {
-                  if (!isZoomedToFill) onChangeResizeMode();
-                  setShowSettingsModal(false);
-                }}
-              >
-                <Text style={styles.modalItemText}>Fill Screen</Text>
-                {isZoomedToFill && (
-                  <Ionicons name="checkmark" size={24} color="#FF6B6B" />
-                )}
-              </TouchableOpacity>
-
               {onChangePlayer && (
                 <TouchableOpacity
                   style={styles.modalItem}
