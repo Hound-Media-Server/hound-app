@@ -4,6 +4,7 @@ import {
   Pressable,
   Animated,
   TVFocusGuideView,
+  useWindowDimensions,
 } from "react-native";
 import React, { useState, useEffect, useRef, forwardRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -33,7 +34,14 @@ export default function Library() {
     }).start();
   }, [focusedIndex, fadeAnim]);
 
-  const numColumns = Platform.isTV ? 6 : 3;
+  const { width } = useWindowDimensions();
+
+  const cardWidth = 120;
+  const horizontalGap = 15;
+  const calculatedColumns = Math.floor(
+    (width - 40) / (cardWidth + horizontalGap),
+  );
+  const numColumns = Math.min(6, Math.max(2, calculatedColumns));
   const limit = numColumns * 5;
 
   const { data, isLoading, isFetching, error } = useHoundLibrary(
@@ -77,7 +85,7 @@ export default function Library() {
       className="flex-1 bg-black"
       edges={["top", "left", "right", "bottom"]}
     >
-      <View className="flex-1 mt-20">
+      <View className={"flex-1 " + (Platform.isTV ? "mt-20" : "")}>
         <PosterGrid
           header="In Hound"
           renderHeader={() => {

@@ -101,6 +101,12 @@ export const addWatchHistory = async (
   });
 };
 
+export const createRewatch = async (id: string) => {
+  return apiClient(`/tv/${id}/history/rewatch`, {
+    method: "POST",
+  });
+};
+
 export const useMovieWatchData = (id: string) => {
   return useQuery({
     queryKey: ["movie-watch-data", id],
@@ -295,6 +301,27 @@ export const useAddWatchHistory = () => {
     },
     onError: (error, variables) => {
       console.error("Failed to add watch history:", variables, error);
+    },
+  });
+};
+
+export const useCreateRewatch = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: string }) => createRewatch(id),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["show-watch-data", variables.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["show-watch-progress", variables.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["show-continue-watching", variables.id],
+      });
+    },
+    onError: (error, variables) => {
+      console.error("Failed to create rewatch history:", variables, error);
     },
   });
 };

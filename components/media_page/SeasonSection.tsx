@@ -312,6 +312,7 @@ function EpisodeCard({
                 await getSelectStreamUrl({
                   id: sourceID,
                   mediaType: MediaTypeTVShow,
+                  modalTitle: mediaTitle,
                   season: episode.season_number,
                   episode: episode.episode_number,
                   startTime: watchProgress?.current_progress_seconds,

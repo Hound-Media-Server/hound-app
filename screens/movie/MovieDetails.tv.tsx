@@ -105,6 +105,7 @@ export default function MovieDetails() {
       await getSelectStreamUrl({
         id: id as string,
         mediaType: MediaTypeMovie,
+        modalTitle: details?.media_title,
         startTime: watchAction?.watch_progress?.current_progress_seconds || 0,
         playerSettings: playerSettings,
       }),

@@ -3,7 +3,8 @@ import React from "react";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { useShowDetails } from "@/services/mediaDetailsService";
 import { ThemedText } from "@/components/ThemedText";
-import { useShowContinueWatching } from "@/services/watchDataService";
+import { useShowContinueWatching, useCreateRewatch } from "@/services/watchDataService";
+import { Toast } from "toastify-react-native";
 import { useUnifiedStreamsMutation } from "@/services/providerService";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -30,6 +31,7 @@ export default function TVDetails() {
   const { data: continueWatching, isLoading: isContinueLoading } =
     useShowContinueWatching(id as string);
   const { mutateAsync: streamsMutation } = useUnifiedStreamsMutation();
+  const { mutateAsync: rewatchMutation } = useCreateRewatch();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -145,6 +147,7 @@ export default function TVDetails() {
         await getSelectStreamUrl({
           id: id as string,
           mediaType: MediaTypeTVShow,
+          modalTitle: details?.media_title,
           season: targetSeason,
           episode: targetEpisode,
           startTime: resumeStartTime,
@@ -155,6 +158,19 @@ export default function TVDetails() {
       Alert.alert(
         "Invalid Season or Episode. Please report this issue on Github",
       );
+    }
+  };
+
+  const handleRewatch = async () => {
+    try {
+      await rewatchMutation({ id: id as string });
+      Toast.success("New Rewatch Started");
+    } catch (e: any) {
+      if (e?.status === 400) {
+        Toast.error("Your current rewatch is already empty!");
+      } else {
+        Toast.error("Error creating rewatch");
+      }
     }
   };
 
@@ -243,6 +259,21 @@ export default function TVDetails() {
                     )
                   }
                   label="Add to Collection"
+                />
+                <TVFocusButtonText
+                  onPress={() =>
+                    openModal({
+                      type: "confirm",
+                      props: {
+                        modalTitle: "Rewatch Show",
+                        message:
+                          "Are you sure you want to rewatch this show? This will archive your current progress.",
+                        autoFocus: true,
+                        onPress: handleRewatch,
+                      },
+                    })
+                  }
+                  label="Rewatch Show"
                 />
               </View>
             </View>

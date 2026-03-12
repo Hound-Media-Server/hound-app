@@ -105,6 +105,7 @@ export default function ContinueWatchingCard({
             finalRoute = await getSelectStreamUrl({
               id: itemID,
               mediaType: mediaType,
+              modalTitle: item.media_title,
               season: nextEp.season_number,
               episode: nextEp.episode_number,
             });

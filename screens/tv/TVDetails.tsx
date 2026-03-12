@@ -154,6 +154,7 @@ export default function TVDetails() {
         await getSelectStreamUrl({
           id: id as string,
           mediaType: MediaTypeTVShow,
+          modalTitle: details?.media_title,
           season: targetSeason,
           episode: targetEpisode,
           startTime: resumeStartTime,

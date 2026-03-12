@@ -25,6 +25,27 @@ export function TVFocusButtonText({
   );
 }
 
+export function TVFocusButtonIcon({
+  onPress,
+  icon,
+  hasTVPreferredFocus,
+}: {
+  onPress: () => void;
+  icon: string;
+  hasTVPreferredFocus?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={() => onPress()}
+      hasTVPreferredFocus={hasTVPreferredFocus}
+      focusable
+      className="py-2 px-4 bg-gray-600 focus:bg-secondary/85 rounded-full items-center"
+    >
+      <Ionicons name={icon as any} size={24} color="primary" />
+    </Pressable>
+  );
+}
+
 export function TVFocusButtonMore({
   onPress,
   hasTVPreferredFocus,

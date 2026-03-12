@@ -120,6 +120,7 @@ export default function PosterGrid({
         ref={flatListRef}
         data={data}
         numColumns={numColumns}
+        key={numColumns} // needed to force re-render on orientation change
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
         keyExtractor={(item: any) =>

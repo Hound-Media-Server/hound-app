@@ -1,4 +1,5 @@
 import { ThemedText } from "@/components/ThemedText";
+import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Pressable, TVFocusGuideView, View } from "react-native";
@@ -71,7 +72,15 @@ function TVTabBar({
               >
                 <View className="rounded-full px-4 py-2 bg-white/10 group-focus:bg-white">
                   <ThemedText className="text-white group-focus:text-black">
-                    {descriptors[route.key]?.options?.title}
+                    {descriptors[route.key]?.options?.title === "Search" ? (
+                      <Ionicons
+                        name="search-outline"
+                        size={20}
+                        color="group-focus:text-black"
+                      />
+                    ) : (
+                      descriptors[route.key]?.options?.title
+                    )}
                   </ThemedText>
                 </View>
               </Pressable>
@@ -89,9 +98,9 @@ export default function TabLayout() {
       screenOptions={{ headerShown: false, tabBarPosition: "top" }}
       tabBar={(props) => <TVTabBar {...props} />}
     >
+      <Tabs.Screen name="search" options={{ title: "Search" }} />
       <Tabs.Screen name="index" options={{ title: "Home" }} />
       <Tabs.Screen name="library" options={{ title: "Library" }} />
-      <Tabs.Screen name="search" options={{ title: "Search" }} />
       <Tabs.Screen name="settings" options={{ title: "Settings" }} />
     </Tabs>
   );
