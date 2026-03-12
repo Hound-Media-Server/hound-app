@@ -53,8 +53,20 @@ function RootLayoutNav() {
       <Stack.Screen name="movie/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="tv/[id]" options={{ headerShown: false }} />
       <Stack.Screen
+        name="collection/[id]"
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          animation: "fade",
+        }}
+      />
+      <Stack.Screen
         name="stream/[encoded_data]"
-        options={{ headerShown: false }}
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          animation: "fade",
+        }}
       />
       <Stack.Screen name="sign-in" options={{ headerShown: false }} />
       <Stack.Screen
