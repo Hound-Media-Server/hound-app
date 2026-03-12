@@ -1,5 +1,5 @@
 import { apiClient } from "./apiClient";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { MediaTypeMovie, MediaTypeTVShow, MediaType } from "../constants/MediaTypes";
 
 interface CollectionMeta {
@@ -100,7 +100,7 @@ export const useAllCollections = () => {
   return useQuery({
     queryKey: ["collections"],
     queryFn: fetchAllCollections,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 1,
     select: (data: any) => data.data as CollectionMeta[],
   });
 };
@@ -113,6 +113,7 @@ export const useCollectionContents = (
   return useQuery({
     queryKey: ["collection-contents", collectionID, limit, offset],
     queryFn: () => fetchCollectionContents(collectionID, undefined, undefined, limit, offset),
+    staleTime: 1000 * 60 * 1,
     select: (data) => data.data,
   });
 };
@@ -131,7 +132,14 @@ export const useHoundLibrary = (
 };
 
 export const useAddToCollection = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: addToCollection,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["collections"] });
+      queryClient.invalidateQueries({
+        queryKey: ["collection-contents", variables.collectionId],
+      });
+    },
   });
 };

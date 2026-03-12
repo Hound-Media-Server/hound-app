@@ -91,8 +91,13 @@ export default function CollectionView({
   return (
     <View className={"flex-1 " + (Platform.isTV ? "mt-20" : "")}>
       <PosterGrid
-        header={header}
+        header={
+          header
+            ? header
+            : "Collections  >  " + data?.collection?.collection_title
+        }
         renderHeader={() => {
+          if (!header) return null;
           const buttons: { type: "all" | MediaType; active: boolean }[] = [
             { type: "all", active: mediaType === undefined },
             {

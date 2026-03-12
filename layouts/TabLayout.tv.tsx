@@ -46,12 +46,14 @@ function TVTabBar({
             const isSelected = state.index === index;
 
             const onPress = () => {
+              if (isSelected) return;
+
               const event = navigation.emit({
                 type: "tabPress",
                 target: route.key,
                 canPreventDefault: true,
               });
-              if (!isSelected && !event.defaultPrevented) {
+              if (!event.defaultPrevented) {
                 navigation.navigate(route.name);
               }
             };
