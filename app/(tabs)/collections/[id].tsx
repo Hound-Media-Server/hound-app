@@ -29,7 +29,7 @@ export default function Collection() {
       className="flex-1 bg-black"
       edges={["top", "left", "right", "bottom"]}
     >
-      <CollectionView useCollection={useCollection} header="" />
+      <CollectionView useCollection={useCollection} header="" autoFocus />
     </SafeAreaView>
   );
 }

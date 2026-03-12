@@ -21,6 +21,7 @@ interface PosterGridProps {
   onEndReached?: () => void;
   limit?: number;
   offset?: number;
+  autoFocus?: boolean;
   renderHeader?: () => React.ReactNode;
 }
 
@@ -34,6 +35,7 @@ export default function PosterGrid({
   onEndReached,
   limit,
   offset,
+  autoFocus = false,
   renderHeader,
 }: PosterGridProps) {
   const flatListRef = useRef<FlatList<any> | null>(null);
@@ -147,6 +149,7 @@ export default function PosterGrid({
               title={getMediaTitle(item)}
               showDescription={true}
               onFocus={() => handleFocus(index)}
+              hasTVPreferredFocus={autoFocus && index === 0}
             />
           </View>
         )}

@@ -22,11 +22,13 @@ interface CollectionViewProps {
     offset?: number,
   ) => any;
   header?: string;
+  autoFocus?: boolean;
 }
 
 export default function CollectionView({
   useCollection,
   header,
+  autoFocus = false,
 }: CollectionViewProps) {
   const [items, setItems] = useState<any[]>([]);
   const [offset, setOffset] = useState(0);
@@ -94,7 +96,9 @@ export default function CollectionView({
         header={
           header
             ? header
-            : "Collections  >  " + data?.collection?.collection_title
+            : data?.collection?.collection_title
+              ? "Collections  >  " + data?.collection?.collection_title
+              : ""
         }
         renderHeader={() => {
           if (!header) return null;
@@ -166,6 +170,7 @@ export default function CollectionView({
         error={error}
         onEndReached={loadMore}
         numColumns={numColumns}
+        autoFocus={autoFocus}
       />
     </View>
   );
