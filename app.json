@@ -19,12 +19,24 @@
           }
         }
       ],
+      ["./plugins/with-runtime-framework-headers.js"],
+      [
+        "./plugins/withGitPod.js",
+        {
+          "podName": "MPVKit-GPL",
+          "podspecUrl": "https://raw.githubusercontent.com/streamyfin/MPVKit/0.40.0-av/MPVKit-GPL.podspec"
+        }
+      ],
       [
         "expo-build-properties",
         {
           "android": {
             "usesCleartextTraffic": true,
             "minSdkVersion": 26
+          },
+          "ios": {
+            "deploymentTarget": "15.6",
+            "useFrameworks": "static"
           }
         }
       ],
