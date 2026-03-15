@@ -72,12 +72,12 @@ export default function ExoplayerVideoScreen(props: {
   const [appSettings] = useState<SettingsSchema>(getAllSettings());
 
   const defaultAudioLang = useMemo(() => {
-    appSettings.audioLanguage === "original"
+    return appSettings.audioLanguage === "original"
       ? props.displayInfo?.original_language
         ? get2LetterLangCode(props.displayInfo.original_language)
         : undefined
       : appSettings.audioLanguage;
-  }, [props.displayInfo]);
+  }, [props.displayInfo, appSettings.audioLanguage]);
 
   const handleNextEpisode = () => {
     if (props.onNextEpisode) {

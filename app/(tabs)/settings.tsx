@@ -95,7 +95,9 @@ export default function Settings() {
   };
 
   const handleAudioLanguage = () => {
-    setDefaultAudioLanguage(defaultAudioLanguage === "en" ? "original" : "en");
+    const newVal = defaultAudioLanguage === "en" ? "original" : "en";
+    setSetting("audioLanguage", newVal);
+    setDefaultAudioLanguage(newVal);
   };
 
   const handleToggleAutoplay = () => {
