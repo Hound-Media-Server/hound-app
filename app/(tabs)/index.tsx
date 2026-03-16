@@ -10,6 +10,7 @@ import {
 import HorizontalList from "@/components/HorizontalList";
 import HomeDetails from "@/components/home/HomeDetails";
 import { useFocusEffect } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 
 export default function Index() {
   const queryClient = useQueryClient();
@@ -24,6 +25,12 @@ export default function Index() {
     !trendingMoviesQuery.isLoading &&
     !trendingShowsQuery.isLoading &&
     !continueWatchingQuery.isLoading;
+
+  React.useEffect(() => {
+    if (isAllReady) {
+      SplashScreen.hide();
+    }
+  }, [isAllReady]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

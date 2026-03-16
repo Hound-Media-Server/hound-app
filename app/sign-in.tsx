@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,8 +9,13 @@ import {
 } from "react-native";
 import { useSession } from "../services/ctx";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as SplashScreen from "expo-splash-screen";
 
 export default function SignIn() {
+  useEffect(() => {
+    SplashScreen.hide();
+  }, []);
+
   const { signIn } = useSession();
   const [host, setHost] = useState("");
   const [username, setUsername] = useState("");

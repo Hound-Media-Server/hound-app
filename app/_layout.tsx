@@ -18,6 +18,14 @@ import { cssInterop } from "nativewind";
 import { Image, ImageBackground } from "expo-image";
 import { registerLocale } from "@cospired/i18n-iso-languages";
 import { GlobalModalHost } from "@/components/modals/GlobalModalHost";
+import * as SplashScreen from "expo-splash-screen";
+
+SplashScreen.setOptions({
+  duration: 1000,
+  fade: true,
+});
+
+SplashScreen.preventAutoHideAsync();
 
 // enable styling expo image with nativewind classes
 cssInterop(Image, { className: "style" });

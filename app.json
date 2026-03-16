@@ -3,7 +3,20 @@
     "scheme": "routertv",
     "backgroundColor": "#000000",
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/icons/icon-1024.png",
     "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#180B6F",
+          "image": "./assets/icons/icon-1024.png",
+          "dark": {
+            "image": "./assets/icons/icon-1024.png",
+            "backgroundColor": "#180B6F"
+          },
+          "imageWidth": 200
+        }
+      ],
       [
         "@react-native-tvos/config-tv",
         {
