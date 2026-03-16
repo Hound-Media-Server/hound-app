@@ -202,7 +202,7 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
             
             // Subtitle settings
             MPVLib.setOptionString("sub-scale-with-window", "no")
-            MPVLib.setOptionString("sub-use-margins", "no")
+            MPVLib.setOptionString("sub-use-margins", "yes")
             MPVLib.setOptionString("subs-match-os-language", "yes")
             MPVLib.setOptionString("subs-fallback", "yes")
             

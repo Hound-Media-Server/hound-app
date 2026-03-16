@@ -100,7 +100,7 @@ index 0000000..1675490
 +connection.project.dir=../../../android
 +eclipse.preferences.version=1
 diff --git a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ExoPlayerView.kt b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ExoPlayerView.kt
-index bb945fe..eea9c93 100644
+index bb945fe..7dcdb71 100644
 --- a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ExoPlayerView.kt
 +++ b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ExoPlayerView.kt
 @@ -2,6 +2,7 @@ package com.brentvatne.exoplayer
@@ -111,21 +111,34 @@ index bb945fe..eea9c93 100644
  import android.graphics.drawable.GradientDrawable
  import android.util.AttributeSet
  import android.view.View
-@@ -13,6 +14,7 @@ import androidx.media3.common.Timeline
+@@ -13,8 +14,10 @@ import androidx.media3.common.Timeline
  import androidx.media3.common.util.UnstableApi
  import androidx.media3.exoplayer.ExoPlayer
  import androidx.media3.ui.AspectRatioFrameLayout
 +import androidx.media3.ui.CaptionStyleCompat
  import androidx.media3.ui.DefaultTimeBar
  import androidx.media3.ui.PlayerView
++import android.view.ViewGroup
  import com.brentvatne.common.api.ResizeMode
-@@ -109,13 +111,28 @@ class ExoPlayerView @JvmOverloads constructor(context: Context, attrs: Attribute
+ import com.brentvatne.common.api.SubtitleStyle
+ 
+@@ -109,13 +112,38 @@ class ExoPlayerView @JvmOverloads constructor(context: Context, attrs: Attribute
  
      fun setSubtitleStyle(style: SubtitleStyle) {
          playerView.subtitleView?.let { subtitleView ->
 -            // Reset to defaults
 -            subtitleView.setUserDefaultStyle()
 -            subtitleView.setUserDefaultTextSize()
++            // Move subtitleView to the root FrameLayout (this) to ensure it's locked to the screen
++            // and doesn't get scaled/clipped by the video content's aspect ratio/zoom.
++            val currentParent = subtitleView.parent as? ViewGroup
++            if (currentParent != this) {
++                currentParent?.removeView(subtitleView)
++                // Ensure layout params are match parent so it covers the full view
++                val subLayoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
++                addView(subtitleView, subLayoutParams)
++            }
++
 +            // Apply custom styling: white text, transparent background, black outline
 +            // subfont.tff is noto-sans, but it's loaded by our modules/mpv-player module.
 +            // so our MPV module needs to exist for this font to work.

@@ -294,11 +294,15 @@ function EpisodeCard({
       <View className={"flex-row " + (isTV ? "" : "mb-3")}>
         <View className="relative rounded-md bg-black me-3">
           <TouchableOpacity
-            className="border-2 border-transparent rounded-lg focus:border-white"
+            className={
+              "border-2 border-transparent rounded-lg " +
+              (Platform.isTV ? "focus:border-white" : "")
+            }
             activeOpacity={isTV ? 1 : 0.7}
             focusable
             hasTVPreferredFocus={index === 0}
             onFocus={() => {
+              if (!Platform.isTV) return;
               setFocusedEpisode(episode);
               setFocusedWatchedAt(watchedAt);
               episodeListRef?.current?.scrollToIndex({
@@ -338,7 +342,7 @@ function EpisodeCard({
           >
             {episode.thumbnail_uri ? (
               <Image
-                className="md:w-[240px] md:h-[150px] sm:w-[160px] sm:h-[100px] rounded-md opacity-90"
+                className="w-[160px] h-[100px] md:w-[240px] md:h-[150px] rounded-md opacity-90"
                 source={
                   Platform.isTV
                     ? episode.thumbnail_uri
@@ -348,7 +352,7 @@ function EpisodeCard({
                 transition={1000}
               />
             ) : (
-              <View className="md:w-[240px] md:h-[150px] sm:w-[160px] sm:h-[100px] rounded-md bg-gray-800" />
+              <View className="w-[160px] h-[100px] md:w-[240px] md:h-[150px] rounded-md bg-gray-800" />
             )}
             {watchProgress && (
               <>
