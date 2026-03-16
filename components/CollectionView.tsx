@@ -48,12 +48,22 @@ export default function CollectionView({
 
   const { width } = useWindowDimensions();
 
-  const cardWidth = 120;
+  let cardWidth = 120;
   const horizontalGap = 15;
-  const calculatedColumns = Math.floor(
-    (width - 40) / (cardWidth + horizontalGap),
-  );
-  const numColumns = Math.min(6, Math.max(2, calculatedColumns));
+  let numColumns = 3;
+
+  // for phones, fill width to screen
+  if (width < 600) {
+    numColumns = 3;
+    cardWidth = (width - 40 - (numColumns - 1) * horizontalGap) / numColumns;
+  } else {
+    // for bigger devices, lock to 120
+    const calculatedColumns = Math.floor(
+      (width - 40) / (cardWidth + horizontalGap),
+    );
+    numColumns = Math.min(6, Math.max(3, calculatedColumns));
+  }
+
   const limit = numColumns * 5;
 
   const { data, isLoading, isFetching, error } = useCollection(
@@ -170,6 +180,8 @@ export default function CollectionView({
         error={error}
         onEndReached={loadMore}
         numColumns={numColumns}
+        cardWidth={cardWidth}
+        horizontalGap={horizontalGap}
         autoFocus={autoFocus}
       />
     </View>

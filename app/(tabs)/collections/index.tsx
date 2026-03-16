@@ -35,7 +35,7 @@ export default function Collections() {
 
   return (
     <SafeAreaView className="flex-1 bg-black">
-      <View className={"px-12 " + (Platform.isTV ? "mt-20" : "mt-5")}>
+      <View className={Platform.isTV ? "px-12 mt-20" : "px-5 mt-5"}>
         <ThemedText className="text-2xl text-white mt-3 mb-3">
           Your Collections
         </ThemedText>

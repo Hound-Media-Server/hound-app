@@ -14,6 +14,7 @@ export default function MediaItemCard({
   imgAlt,
   showDescription,
   onFocus,
+  width = 120,
   hasTVPreferredFocus,
 }: {
   mediaItem: any;
@@ -22,6 +23,7 @@ export default function MediaItemCard({
   imgAlt?: string;
   showDescription?: boolean;
   onFocus?: () => void;
+  width?: number;
   hasTVPreferredFocus?: boolean;
 }) {
   if (!mediaItem) return;
@@ -64,21 +66,23 @@ export default function MediaItemCard({
             <Image
               source={imgSource}
               className={
-                "w-[120px] h-[180px] rounded-lg " +
+                "rounded-lg " +
                 (Platform.isTV
                   ? " group-focus:border-white border-2 border-transparent"
                   : "")
               }
+              style={{ width: width, height: width * 1.5 }}
               contentFit="cover"
             />
           ) : (
             <View
               className={
-                "w-[120px] h-[180px] rounded-lg p-2 bg-gray-300 flex items-center justify-center " +
+                "rounded-lg p-2 bg-gray-300 flex items-center justify-center " +
                 (Platform.isTV
                   ? " group-focus:border-white border-2 border-transparent"
                   : "")
               }
+              style={{ width: width, height: width * 1.5 }}
             >
               <ThemedText className="text-black mt-2 text-base text-start">
                 {imgAlt}
@@ -87,16 +91,18 @@ export default function MediaItemCard({
           )}
           {showDescription && !!title && (
             <ThemedText
-              className="text-gray-200 mt-2 text-start px-1 w-[120px]"
+              className="text-gray-200 mt-2 text-start px-1"
               numberOfLines={2}
+              style={{ width: width }}
             >
               {title}
             </ThemedText>
           )}
           {showDescription && !!subtitle && (
             <ThemedText
-              className="text-gray-400 text-sm text-start px-1 w-[120px]"
+              className="text-gray-400 text-sm text-start px-1"
               numberOfLines={1}
+              style={{ width: width }}
             >
               {subtitle}
             </ThemedText>

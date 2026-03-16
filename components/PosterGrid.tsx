@@ -23,6 +23,8 @@ interface PosterGridProps {
   offset?: number;
   autoFocus?: boolean;
   renderHeader?: () => React.ReactNode;
+  cardWidth?: number;
+  horizontalGap?: number;
 }
 
 export default function PosterGrid({
@@ -37,6 +39,8 @@ export default function PosterGrid({
   offset,
   autoFocus = false,
   renderHeader,
+  cardWidth = 120,
+  horizontalGap = 15,
 }: PosterGridProps) {
   const flatListRef = useRef<FlatList<any> | null>(null);
 
@@ -64,8 +68,7 @@ export default function PosterGrid({
   }
 
   error = propError || error;
-  const cardWidth = 120;
-  const horizontalGap = 15;
+
   const totalGridWidth =
     numColumns * cardWidth + (numColumns - 1) * horizontalGap;
 
@@ -150,6 +153,7 @@ export default function PosterGrid({
               showDescription={true}
               onFocus={() => handleFocus(index)}
               hasTVPreferredFocus={autoFocus && index === 0}
+              width={cardWidth}
             />
           </View>
         )}

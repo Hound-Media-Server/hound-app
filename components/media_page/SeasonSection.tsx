@@ -189,12 +189,13 @@ function EpisodeSection({
   const flatlistRef = useRef<FlatList<any>>(null);
 
   // flashlist nagivation seems  less smooth on react-native-tvos (?), so we default to flatlist for now
+  // for tv devices
   // performance will suffer on larger lists, need to find a better solution, probably
   // pagination since it's not good UX to have to scroll through too many episodes anyway
   // having trouble handling initial focus with flashlist, todo:revisit later
   return (
     <View focusable className={isTV ? "opacity-50 focus:opacity-100" : ""}>
-      {seasonDetails?.episodes.length <= 999 ? (
+      {seasonDetails?.episodes.length <= 999 && Platform.isTV ? (
         <FlatList
           ref={flatlistRef}
           data={seasonDetails?.episodes}

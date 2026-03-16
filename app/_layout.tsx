@@ -19,6 +19,7 @@ import { Image, ImageBackground } from "expo-image";
 import { registerLocale } from "@cospired/i18n-iso-languages";
 import { GlobalModalHost } from "@/components/modals/GlobalModalHost";
 import * as SplashScreen from "expo-splash-screen";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 SplashScreen.setOptions({
   duration: 1000,
@@ -121,13 +122,15 @@ export default function RootLayout() {
     return null;
   }
   return (
-    <SessionProvider>
-      <QueryClientProvider client={queryClient}>
-        <StatusBar style="light" translucent backgroundColor="transparent" />
-        <RootLayoutNav />
-        <GlobalModalHost />
-      </QueryClientProvider>
-      <ToastManager theme="dark" showProgressBar={false} useModal={false} />
-    </SessionProvider>
+    <SafeAreaProvider>
+      <SessionProvider>
+        <QueryClientProvider client={queryClient}>
+          <StatusBar style="light" translucent backgroundColor="transparent" />
+          <RootLayoutNav />
+          <GlobalModalHost />
+        </QueryClientProvider>
+        <ToastManager theme="dark" showProgressBar={false} useModal={false} />
+      </SessionProvider>
+    </SafeAreaProvider>
   );
 }
