@@ -5,6 +5,7 @@ import {
   Platform,
   Pressable,
   TouchableHighlight,
+  ScrollView,
   TouchableOpacity,
   Alert,
 } from "react-native";
@@ -13,10 +14,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useSession } from "@/services/ctx";
 import { getSetting, setSetting } from "@/stores/settingsStore";
 import * as Updates from "expo-updates";
+import { ThemedText } from "@/components/ThemedText";
 
 export default function Settings() {
   const { signOut } = useSession();
-  const [player, setPlayer] = useState<string>("exoplayer");
+  const [defaultPlayer, setDefaultPlayer] = useState<string | undefined>(
+    undefined,
+  );
   const [playAction, setPlayAction] = useState<"direct" | "select" | undefined>(
     undefined,
   );
@@ -48,8 +52,7 @@ export default function Settings() {
   }
 
   useEffect(() => {
-    const val = getSetting("defaultPlayer");
-    if (val) setPlayer(val);
+    setDefaultPlayer(getSetting("defaultPlayer"));
     setPlayAction(getSetting("defaultPlayAction"));
     setDefaultShowResizeMode(getSetting("defaultShowResizeMode"));
     setDefaultMovieResizeMode(getSetting("defaultMovieResizeMode"));
@@ -61,7 +64,7 @@ export default function Settings() {
 
   const handleSetPlayer = (newPlayer: "mpv" | "exoplayer") => {
     setSetting("defaultPlayer", newPlayer);
-    setPlayer(newPlayer);
+    setDefaultPlayer(newPlayer);
   };
 
   const handleTogglePlayAction = () => {
@@ -108,93 +111,86 @@ export default function Settings() {
 
   return (
     <SafeAreaView className="flex-1 bg-black items-center justify-center">
-      <Text className="text-blue-500 font-bold text-3xl">Settings!</Text>
-      <Text className="text-white">
-        Platform ISTV: {Platform.isTV ? "yes" : "no"}
-      </Text>
-      <Text className="text-white">
-        Platform ISTVos: {Platform.isTVOS ? "yes" : "no"}
-      </Text>
-      <Text className="text-white">Platform: {Platform.OS}</Text>
-      <Text className="text-white">Player: {player}</Text>
-      <Text className="text-white">PlayAction: {playAction}</Text>
-      <Text className="text-white">
-        Default Show Resize: {defaultShowResizeMode}
-      </Text>
-      <Text className="text-white">
-        Default Movie Resize: {defaultMovieResizeMode}
-      </Text>
-      <Text className="text-white">Subtitle Size: {subtitleSize}</Text>
-      <TouchableOpacity
-        onPress={() => onFetchUpdateAsync()}
-        className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
+      <ScrollView
+        className={"mt-20 flex-1 w-full px-5 md:px-12"}
+        showsVerticalScrollIndicator={false}
       >
-        <Text className="text-white">Fetch Updates</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => handleAudioLanguage()}
-        className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
-      >
-        <Text className="text-white">Audio Lang: {defaultAudioLanguage}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => handleSetPlayer("mpv")}
-        className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
-      >
-        <Text className="text-white">set mpv</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => handleSetPlayer("exoplayer")}
-        className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
-      >
-        <Text className="text-white">set exoplayer</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => handleTogglePlayAction()}
-        className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
-      >
-        <Text className="text-white">toggle play action</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => handleToggleShowResizeMode()}
-        className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
-      >
-        <Text className="text-white">toggle show resize mode</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => handleToggleMovieResizeMode()}
-        className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
-      >
-        <Text className="text-white">toggle movie resize mode</Text>
-      </TouchableOpacity>
-      <View className="flex-row mt-3">
-        <TouchableOpacity
-          onPress={() => handleAdjustSubtitleSize(-2)}
-          className={`p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white mr-2`}
-        >
-          <Text className="text-white">Sub Size -</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => handleAdjustSubtitleSize(2)}
-          className={`p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
-        >
-          <Text className="text-white">Sub Size +</Text>
-        </TouchableOpacity>
-      </View>
-      <TouchableOpacity
-        onPress={() => handleToggleAutoplay()}
-        className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
-      >
-        <Text className="text-white">
-          Autoplay Next Episode: {autoplayNextEpisode ? "On" : "Off"}
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        className={`mt-3 p-2 rounded-lg bg-blue-500 border-2 border-transparent focus:border-white`}
-        onPress={signOut}
-      >
-        <Text className="text-white">Sign Out</Text>
-      </TouchableOpacity>
+        <ThemedText className="text-white text-2xl ps-2">Settings</ThemedText>
+        <PressableSetting onPress={() => onFetchUpdateAsync()}>
+          <ThemedText className="text-white">Fetch Updates</ThemedText>
+        </PressableSetting>
+        <PressableSetting onPress={() => handleAudioLanguage()}>
+          <ThemedText className="text-white">
+            Audio Lang: {defaultAudioLanguage}
+          </ThemedText>
+        </PressableSetting>
+        {
+          // for ios, only use mpv, since the AVPlayer is quite weak
+          Platform.OS !== "ios" && (
+            <PressableSetting
+              onPress={() => {
+                defaultPlayer === "mpv"
+                  ? handleSetPlayer("exoplayer")
+                  : handleSetPlayer("mpv");
+              }}
+            >
+              <ThemedText className="text-white">
+                Player: {defaultPlayer}
+              </ThemedText>
+            </PressableSetting>
+          )
+        }
+        <PressableSetting onPress={() => handleTogglePlayAction()}>
+          <ThemedText className="text-white">
+            PlayAction: {playAction}
+          </ThemedText>
+        </PressableSetting>
+        <PressableSetting onPress={() => handleToggleShowResizeMode()}>
+          <ThemedText className="text-white">
+            Show Resize Mode: {defaultShowResizeMode}
+          </ThemedText>
+        </PressableSetting>
+        <PressableSetting onPress={() => handleToggleMovieResizeMode()}>
+          <ThemedText className="text-white">
+            Movie Resize Mode: {defaultMovieResizeMode}
+          </ThemedText>
+        </PressableSetting>
+        <ThemedText className="text-white mt-3">
+          Subtitle Size: {subtitleSize}
+        </ThemedText>
+        <PressableSetting onPress={() => handleAdjustSubtitleSize(-2)}>
+          <ThemedText className="text-white">Sub Size -</ThemedText>
+        </PressableSetting>
+        <PressableSetting onPress={() => handleAdjustSubtitleSize(2)}>
+          <ThemedText className="text-white">Sub Size +</ThemedText>
+        </PressableSetting>
+        <PressableSetting onPress={() => handleToggleAutoplay()}>
+          <ThemedText className="text-white">
+            Autoplay Next Episode: {autoplayNextEpisode ? "On" : "Off"}
+          </ThemedText>
+        </PressableSetting>
+        <PressableSetting onPress={signOut}>
+          <ThemedText className="text-white">Sign Out</ThemedText>
+        </PressableSetting>
+      </ScrollView>
     </SafeAreaView>
   );
 }
+
+const PressableSetting = ({
+  children,
+  onPress,
+}: {
+  children: React.ReactNode;
+  onPress: () => void;
+}) => {
+  return (
+    <Pressable
+      className={`mt-3 bg-white/10 p-3 rounded-xl active:bg-white/20 border-2 focus:border-white`}
+      onPress={onPress}
+      focusable={Platform.isTV}
+    >
+      {children}
+    </Pressable>
+  );
+};

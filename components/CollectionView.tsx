@@ -101,7 +101,7 @@ export default function CollectionView({
   };
 
   return (
-    <View className={"flex-1 " + (Platform.isTV ? "mt-20" : "")}>
+    <View className={"flex-1 " + (Platform.isTV ? "mt-20" : "mt-5")}>
       <PosterGrid
         header={
           header

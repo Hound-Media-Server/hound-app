@@ -260,13 +260,14 @@ export default function Stream() {
 
   let url = `${session?.host}/api/v1/stream/${encoded_data}`;
 
+  // IOS will only play with MPV
   return (
     <View className="flex-1 bg-black justify-center items-center">
       {isNavigating || (!movieDetails && !showDetails) ? (
         <View className="flex-1 bg-black items-center justify-center">
           <ActivityIndicator size="large" color="white" />
         </View>
-      ) : currentPlayer === "mpv" ? (
+      ) : currentPlayer === "mpv" || Platform.OS === "ios" ? (
         <MPVVideoScreen
           src={url}
           startTime={currentProgress}

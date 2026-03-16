@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ScrollView,
   RefreshControl,
+  Platform,
 } from "react-native";
 import React, { useCallback, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -38,7 +39,7 @@ export default function Search() {
     }
   }, [query]);
 
-  // delay search by some millis
+  // debounce search by some millis
   useEffect(() => {
     if (searchQuery === query) return;
     const handler = setTimeout(() => {
@@ -55,8 +56,9 @@ export default function Search() {
 
   return (
     <SafeAreaView className="flex-1 bg-black items-center">
-      <View className="h-[100px]" />
-      <View className="w-full px-5 md:px-10">
+      <View
+        className={"w-full px-5 md:px-10 " + (Platform.isTV ? "mt-20" : "mt-5")}
+      >
         <TextInput
           className="w-full bg-zinc-800 text-white p-4 rounded-md border border-zinc-700 focus:border-indigo-500 focus:outline-none"
           placeholder="Search..."

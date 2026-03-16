@@ -105,7 +105,7 @@ export default function PosterGrid({
         <LinearGradient
           colors={["#000000", "#000000", "transparent"]}
           locations={[0, 0.83, 1]}
-          className="pt-5 pb-5"
+          className="pb-5"
           style={{
             width: totalGridWidth,
             alignSelf: "center",
@@ -113,7 +113,7 @@ export default function PosterGrid({
           }}
         >
           {header && (
-            <ThemedText className="text-white text-2xl mb-3">
+            <ThemedText className="text-white text-2xl ps-2 mb-3">
               {header}
             </ThemedText>
           )}

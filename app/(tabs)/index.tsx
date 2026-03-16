@@ -81,7 +81,7 @@ export default function Index() {
   const verticalListRef = useRef<FlatList>(null);
   return (
     <SafeAreaView className="flex-1 bg-black h-full">
-      {Platform.isTV && <HomeDetails />}
+      {Platform.isTV ? <HomeDetails /> : <View className="h-5" />}
       <View className="flex-1 pb-5">
         <FlatList
           refreshControl={
