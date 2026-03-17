@@ -3,21 +3,16 @@ import {
   Pressable,
   FlatList,
   TouchableHighlight,
-  Alert,
   ActivityIndicator,
   Platform,
 } from "react-native";
-import { useUnifiedStreams } from "@/services/providerService";
-import React, { useRef } from "react";
+import { useMediaFiles, useProviders } from "@/services/providerService";
+import React, { useRef, useMemo } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import { Ionicons } from "@expo/vector-icons";
 import { getStreamUrl } from "@/utils/navigation";
-import {
-  MediaTypeEpisode,
-  MediaTypeMovie,
-  MediaTypeTVShow,
-} from "@/constants/MediaTypes";
+import { MediaTypeMovie, MediaTypeTVShow } from "@/constants/MediaTypes";
 
 export default function SelectStreamScreen() {
   const { id, mediaType, season, episode, startTime, modalTitle } =
@@ -36,16 +31,36 @@ export default function SelectStreamScreen() {
   const episodeNumber = episode ? parseInt(episode) : undefined;
   const startTimeNum = startTime ? parseInt(startTime) : undefined;
 
-  const {
-    data: providersData,
-    isLoading,
-    error,
-  } = useUnifiedStreams(
+  const { data: mediaFilesData, isLoading: isMediaFilesLoading } =
+    useMediaFiles(
+      mediaType as string,
+      id as string,
+      seasonNumber,
+      episodeNumber,
+    );
+
+  const { data: providersData, isLoading: isProvidersLoading } = useProviders(
     mediaType as string,
     id as string,
     seasonNumber,
     episodeNumber,
   );
+
+  const streams = useMemo(() => {
+    const mediaFilesProvidersList =
+      (mediaFilesData as any)?.data?.providers || [];
+    const externalProvidersList = (providersData as any)?.data?.providers || [];
+
+    const mediaFilesStreams = mediaFilesProvidersList.flatMap(
+      (p: any) => p.streams || [],
+    );
+    const externalStreams = externalProvidersList.flatMap(
+      (p: any) => p.streams || [],
+    );
+    return [...mediaFilesStreams, ...externalStreams];
+  }, [mediaFilesData, providersData]);
+
+  const isLoading = isMediaFilesLoading || isProvidersLoading;
 
   if (mediaType !== MediaTypeMovie && mediaType !== MediaTypeTVShow) {
     return (
@@ -111,7 +126,7 @@ export default function SelectStreamScreen() {
     <View className="flex-1 bg-primary">
       <FlatList
         ref={flatListRef}
-        data={providersData?.streams}
+        data={streams}
         renderItem={renderItem}
         keyExtractor={(item, index) =>
           item.type === "header"
@@ -140,13 +155,16 @@ export default function SelectStreamScreen() {
           </View>
         }
         ListEmptyComponent={
-          isLoading ? (
-            <ActivityIndicator color="white" size="large" className="mt-10" />
-          ) : (
+          !isLoading ? (
             <ThemedText className="text-white text-lg mt-10 text-center">
               No streams available
             </ThemedText>
-          )
+          ) : null
+        }
+        ListFooterComponent={
+          isLoading ? (
+            <ActivityIndicator color="white" size="large" className="my-4" />
+          ) : null
         }
         onScrollToIndexFailed={(info) => {
           setTimeout(() => {

@@ -77,6 +77,18 @@ export const useMediaFiles = (
   });
 };
 
+export const useProviders = (
+  mediaType: MediaType | string,
+  id: string,
+  season?: number | null,
+  episode?: number | null
+) => {
+  return useQuery({
+    queryKey: ["providers", mediaType, id, season, episode],
+    queryFn: () => fetchProviders(mediaType, id, season, episode),
+  });
+};
+
 export const useUnifiedStreams = (
   mediaType: MediaType | string,
   id: string,

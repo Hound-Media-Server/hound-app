@@ -1,9 +1,12 @@
 import { View, Text, ActivityIndicator, Alert } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { useShowDetails } from "@/services/mediaDetailsService";
 import { ThemedText } from "@/components/ThemedText";
-import { useShowContinueWatching, useCreateRewatch } from "@/services/watchDataService";
+import {
+  useShowContinueWatching,
+  useCreateRewatch,
+} from "@/services/watchDataService";
 import { Toast } from "toastify-react-native";
 import { useUnifiedStreamsMutation } from "@/services/providerService";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,6 +35,9 @@ export default function TVDetails() {
     useShowContinueWatching(id as string);
   const { mutateAsync: streamsMutation } = useUnifiedStreamsMutation();
   const { mutateAsync: rewatchMutation } = useCreateRewatch();
+  const [playSeason, setPlaySeason] = useState<number>(1);
+  const [playEpisode, setPlayEpisode] = useState<number>(1);
+  const [playMode, setPlayMode] = useState<"play" | "resume">("play");
 
   useFocusEffect(
     React.useCallback(() => {
@@ -47,79 +53,67 @@ export default function TVDetails() {
     }, [id, queryClient]),
   );
 
-  const watchAction = continueWatching;
   const resumeStartTime =
-    (watchAction?.watch_action_type === "resume"
-      ? watchAction.watch_progress?.current_progress_seconds
+    (continueWatching?.watch_action_type === "resume"
+      ? continueWatching.watch_progress?.current_progress_seconds
       : 0) || 0;
 
-  let playLabel = "▶︎ Play";
-  if (watchAction) {
-    if (
-      watchAction.watch_action_type === "resume" &&
-      watchAction.watch_progress
-    ) {
-      const s = watchAction.watch_progress.season_number;
-      const e = watchAction.watch_progress.episode_number;
-      if (s && e) {
-        playLabel = `▶︎ Resume S${s}E${e}`;
-      } else {
-        playLabel = "▶︎ Resume";
+  useEffect(() => {
+    if (continueWatching) {
+      if (
+        continueWatching.watch_action_type === "resume" &&
+        continueWatching.watch_progress
+      ) {
+        setPlaySeason(continueWatching.watch_progress.season_number);
+        setPlayEpisode(continueWatching.watch_progress.episode_number);
+        setPlayMode("resume");
+      } else if (
+        continueWatching.watch_action_type === "next_episode" &&
+        continueWatching.next_episode
+      ) {
+        setPlaySeason(continueWatching.next_episode.season_number);
+        setPlayEpisode(continueWatching.next_episode.episode_number);
+        setPlayMode("play");
       }
-    } else if (
-      watchAction.watch_action_type === "next_episode" &&
-      watchAction.next_episode
-    ) {
-      const s = watchAction.next_episode.season_number;
-      const e = watchAction.next_episode.episode_number;
-      if (s && e) {
-        playLabel = `▶︎ Play S${s}E${e}`;
-      }
+    } else if (!isContinueLoading) {
+      // evaluate necessity of checking if first episode for all tmdb shows are
+      // s1e1 or if there are edge cases
+      setPlaySeason(1);
+      setPlayEpisode(1);
+      setPlayMode("play");
     }
-  } else if (!isContinueLoading) {
-    // evaluate necessity of checking if first episode for all tmdb shows are
-    // s1e1 or if there are edge cases
-    playLabel = "▶︎ Play S1E1";
-  }
+  }, [continueWatching]);
+
+  const playLabel =
+    playMode === "resume"
+      ? `▶︎ Resume S${playSeason}E${playEpisode}`
+      : `▶︎ Play S${playSeason}E${playEpisode}`;
 
   const handlePlayPress = async () => {
-    let targetSeason: number | undefined;
-    let targetEpisode: number | undefined;
     let encodedData: string | null = null;
     let startTime: number = 0;
     let playerSettings: string | undefined;
-    if (watchAction) {
-      if (
-        watchAction.watch_action_type === "resume" &&
-        watchAction.watch_progress
-      ) {
-        targetSeason = watchAction.watch_progress.season_number;
-        targetEpisode = watchAction.watch_progress.episode_number;
-        encodedData = watchAction.watch_progress.encoded_data;
-        startTime = watchAction.watch_progress.current_progress_seconds;
-        playerSettings = JSON.stringify(
-          watchAction.watch_progress.player_settings,
-        );
-      } else if (
-        watchAction.watch_action_type === "next_episode" &&
-        watchAction.next_episode
-      ) {
-        targetSeason = watchAction.next_episode.season_number;
-        targetEpisode = watchAction.next_episode.episode_number;
-      }
-    } else {
-      // Start at S1E1
-      targetSeason = 1;
-      targetEpisode = 1;
-    }
-    if (targetSeason && targetEpisode) {
+    const navigateSelectStream = async () => {
+      router.navigate(
+        await getSelectStreamUrl({
+          id: id as string,
+          mediaType: MediaTypeTVShow,
+          modalTitle: details?.media_title,
+          season: playSeason,
+          episode: playEpisode,
+          startTime: resumeStartTime,
+          playerSettings: playerSettings,
+        }),
+      );
+    };
+    if (playSeason && playEpisode) {
       if (encodedData) {
         try {
           const res = await streamsMutation({
             mediaType: MediaTypeTVShow,
             id: id as string,
-            season: targetSeason,
-            episode: targetEpisode,
+            season: playSeason,
+            episode: playEpisode,
           });
           // flatten providers array
           const match = res?.data?.providers
@@ -131,29 +125,21 @@ export default function TVDetails() {
               getStreamUrl(match.encoded_data, true, {
                 id: id as string,
                 mediaType: MediaTypeTVShow,
-                season: targetSeason,
-                episode: targetEpisode,
+                season: playSeason,
+                episode: playEpisode,
                 startTime,
                 playerSettings,
               }),
             );
+          } else {
+            await navigateSelectStream();
           }
         } catch (e) {
           console.error("Error matching stream:", e);
         }
+      } else {
+        await navigateSelectStream();
       }
-      // if stream doesn't exist in providers response, open select stream modal
-      router.navigate(
-        await getSelectStreamUrl({
-          id: id as string,
-          mediaType: MediaTypeTVShow,
-          modalTitle: details?.media_title,
-          season: targetSeason,
-          episode: targetEpisode,
-          startTime: resumeStartTime,
-          playerSettings: playerSettings,
-        }),
-      );
     } else {
       Alert.alert(
         "Invalid Season or Episode. Please report this issue on Github",

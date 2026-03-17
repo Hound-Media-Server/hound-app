@@ -135,6 +135,10 @@ export default function Stream() {
   }, [playbackProgress]);
 
   // Next episode logic, if prefetch is true, warm cache without navigating
+  // UPDATE: looks like aiostreams already has a setting for prefetching, we
+  // might not need to duplicate this. Aiostream's implementation more aggressive
+  // since it caches the first providers query, while we try to cache the first
+  // media files query.
   const handleNextEpisode = async (nextSettings: any, prefetch = false) => {
     if (!nextEpisodeInfo || !id) return;
     try {
@@ -166,6 +170,15 @@ export default function Stream() {
       if (firstStream) {
         if (prefetch) {
           cachedNextEpisodeData.current = firstStream;
+          // warm the url for p2p, debrid cases for faster resolution on next call
+          // aiostreams can handle this, we might not need to
+          // const nextUrl = `${session?.host}/api/v1/stream/${firstStream.encoded_data}`;
+          // fetch(nextUrl, { method: "HEAD" }).catch((err) =>
+          //   console.warn(
+          //     "[NEXT_EPISODE] Failed to warm up next episode URL",
+          //     err,
+          //   ),
+          // );
           return;
         }
         const link = getStreamUrl(firstStream.encoded_data, false, {
