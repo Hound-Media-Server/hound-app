@@ -3,7 +3,7 @@ import React from "react";
 import { Image } from "expo-image";
 import { Route, useRouter } from "expo-router";
 import { ThemedText } from "./ThemedText";
-import { getSelectStreamUrl, getStreamUrl } from "@/utils/navigation";
+import { getSelectStreamUrl } from "@/utils/navigation";
 import { FocusItem, useFocusStore } from "@/stores/focusStore";
 import { useModalStore } from "@/stores/modalStore";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
@@ -33,9 +33,7 @@ export default function ContinueWatchingCard({
   // resume case
   if (item.watch_action_type == "resume") {
     const wp = item.watch_progress;
-    // for resume
-    // TODO: allow fallback to select stream if failure
-    route = getStreamUrl(wp.encoded_data, true, {
+    route = getSelectStreamUrl({
       id: itemID,
       mediaType: mediaType,
       modalTitle: wp.media_title,
@@ -43,7 +41,8 @@ export default function ContinueWatchingCard({
       episode: wp.episode_number,
       startTime: wp.current_progress_seconds,
       playerSettings: JSON.stringify(wp.player_settings),
-    });
+      previousEncodedData: wp.encoded_data,
+    }) as string;
     title = wp?.media_title;
     if (mediaType === MediaTypeTVShow) {
       title = `S${wp.season_number}E${wp.episode_number} | ${wp?.media_title}`;
@@ -98,17 +97,17 @@ export default function ContinueWatchingCard({
         }}
         activeOpacity={Platform.isTV ? 1 : 0.9}
         disabled={!item.media_type}
-        onPress={async () => {
+        onPress={() => {
           let finalRoute = route;
           if (item.watch_action_type === "next_episode") {
             const nextEp = item.next_episode;
-            finalRoute = await getSelectStreamUrl({
+            finalRoute = getSelectStreamUrl({
               id: itemID,
               mediaType: mediaType,
               modalTitle: item.media_title,
               season: nextEp.season_number,
               episode: nextEp.episode_number,
-            });
+            }) as string;
           }
           router.navigate(finalRoute as Route);
         }}

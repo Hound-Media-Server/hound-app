@@ -3,7 +3,7 @@ import { ContextModal, ModalAction } from "./Modal";
 import { getSelectStreamUrl, StreamUrlParams } from "@/utils/navigation";
 import { useAddWatchHistory } from "@/services/watchDataService";
 import { Toast } from "toastify-react-native";
-import { MediaTypeMovie, MediaTypeTVShow } from "@/constants/MediaTypes";
+import { MediaTypeTVShow } from "@/constants/MediaTypes";
 
 export default function PlayOptionsModal({
   mediaItem,
@@ -97,7 +97,7 @@ export default function PlayOptionsModal({
       params.episode = 1;
     }
 
-    const url = await getSelectStreamUrl(params, forceSelect);
+    const url = getSelectStreamUrl(params, forceSelect);
     router.navigate(url as RelativePathString);
     onClose();
   }

@@ -7,9 +7,14 @@ import { useSession } from "@/services/ctx";
 import MPVVideoScreen from "@/components/video/MPVVideoScreen";
 import { useKeepAwake } from "expo-keep-awake";
 import VideoScreen from "@/components/video/ExoplayerVideoScreen";
-import { getSetting } from "@/stores/settingsStore";
+import {
+  getAllSettings,
+  getSetting,
+  SettingsSchema,
+} from "@/stores/settingsStore";
 import {
   useMovieDetails,
+  useSeasonDetails,
   useShowDetails,
 } from "@/services/mediaDetailsService";
 import { fetchMediaFiles, fetchProviders } from "@/services/providerService";
@@ -19,11 +24,11 @@ import {
   MediaTypeTVShow,
   MediaType,
 } from "@/constants/MediaTypes";
+import { get2LetterLangCode } from "@/utils/locale";
 
 export type DisplayInfo = {
-  original_language: string;
-  media_title: string;
-  episode_title: string;
+  title: string;
+  subtitle: string;
 };
 
 export default function Stream() {
@@ -43,7 +48,6 @@ export default function Stream() {
   const [currentProgress, setCurrentProgress] = useState<number>(
     startTime ? parseInt(startTime as string, 10) : 0,
   );
-  const [playerHasChanged, setPlayerHasChanged] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const parsedPlayerSettings = playerSettings
     ? JSON.parse(playerSettings as string)
@@ -51,8 +55,30 @@ export default function Stream() {
   const [currentSettings, setCurrentSettings] = useState<any>(
     parsedPlayerSettings || {},
   );
+  const [appSettings] = useState<SettingsSchema>(getAllSettings());
+
+  // streamsMatch=true means the saved progress encoded_data matches this
+  // exact stream, so use last selected subtitle_idx/audio_idx
+  const isStreamsMatch = streamsMatch === "true";
+
+  // MPV indexes 1-based by default, exoplayer is 0-based,
+  // normalized to 1-based here
+  const [activeSubtitleIdx, setActiveSubtitleIdx] = useState<number | null>(
+    isStreamsMatch ? (parsedPlayerSettings?.subtitle_idx ?? null) : null,
+  );
+  const [activeAudioIdx, setActiveAudioIdx] = useState<number | null>(
+    isStreamsMatch ? (parsedPlayerSettings?.audio_idx ?? null) : null,
+  );
   const [displayInfo, setDisplayInfo] = useState<DisplayInfo | undefined>(
     undefined,
+  );
+
+  const handleTrackChange = useCallback(
+    (subtitleIdx: number, audioIdx: number) => {
+      setActiveSubtitleIdx(subtitleIdx);
+      setActiveAudioIdx(audioIdx);
+    },
+    [],
   );
 
   // Autoplay next episode
@@ -73,27 +99,52 @@ export default function Stream() {
     mediaType === MediaTypeTVShow,
   );
 
+  const { data: seasonDetails } = useSeasonDetails(
+    id as string,
+    parseInt(season as string, 10),
+    mediaType === MediaTypeTVShow,
+  );
+
   const { data: movieDetails } = useMovieDetails(
     id as string,
     mediaType === MediaTypeMovie,
   );
 
-  // get default audio language, etc.
+  // get title
   useEffect(() => {
     if (mediaType === MediaTypeMovie && movieDetails) {
+      const year = movieDetails.release_date?.split("-")[0];
       setDisplayInfo({
-        original_language: movieDetails.original_language || "",
-        media_title: movieDetails.media_title || "",
-        episode_title: "",
+        title: movieDetails.media_title + (year ? ` (${year})` : "") || "",
+        subtitle: "",
       });
     } else if (mediaType === MediaTypeTVShow && showDetails) {
+      const year = showDetails.release_date?.split("-")[0];
+      const epTitle = seasonDetails?.episodes?.find(
+        (e: any) => e.episode_number === parseInt(episode as string, 10),
+      )?.media_title;
       setDisplayInfo({
-        original_language: showDetails.original_language || "",
-        media_title: showDetails.media_title || "",
-        episode_title: "",
+        title: showDetails.media_title + (year ? ` (${year})` : "") || "",
+        subtitle: `S${season}E${episode} - ${epTitle}`,
       });
     }
-  }, [mediaType, movieDetails, showDetails]);
+  }, [mediaType, movieDetails, showDetails, seasonDetails]);
+
+  const defaultAudioLang = useMemo(() => {
+    if (mediaType === MediaTypeMovie) {
+      return appSettings.audioLanguage === "original"
+        ? movieDetails?.original_language
+          ? get2LetterLangCode(movieDetails.original_language)
+          : undefined
+        : appSettings.audioLanguage;
+    } else if (mediaType === MediaTypeTVShow) {
+      return appSettings.audioLanguage === "original"
+        ? showDetails?.original_language
+          ? get2LetterLangCode(showDetails.original_language)
+          : undefined
+        : appSettings.audioLanguage;
+    }
+  }, [movieDetails, showDetails, appSettings.audioLanguage]);
 
   const nextEpisodeInfo = useMemo(() => {
     if (mediaType !== MediaTypeTVShow || !showDetails || !season || !episode)
@@ -142,8 +193,8 @@ export default function Stream() {
   const handleNextEpisode = async (nextSettings: any, prefetch = false) => {
     if (!nextEpisodeInfo || !id) return;
     try {
-      let firstStream = cachedNextEpisodeData.current;
-      if (!firstStream) {
+      let topStream = cachedNextEpisodeData.current;
+      if (!topStream) {
         const mediaFilesRes = await fetchMediaFiles(
           MediaTypeTVShow,
           id as string,
@@ -151,11 +202,11 @@ export default function Stream() {
           nextEpisodeInfo.episode,
         );
         if (mediaFilesRes?.data?.providers?.[0].streams?.length > 0) {
-          firstStream = mediaFilesRes?.data?.providers?.[0]?.streams?.[0];
+          topStream = mediaFilesRes?.data?.providers?.[0]?.streams?.[0];
         }
         // prioritize media files, if not found, then fetch
         // this does add a delay to fetching providers
-        if (!firstStream) {
+        if (!topStream) {
           const providersRes = await fetchProviders(
             MediaTypeTVShow,
             id as string,
@@ -163,13 +214,13 @@ export default function Stream() {
             nextEpisodeInfo.episode,
           );
           if (providersRes?.data?.providers?.[0].streams?.length > 0) {
-            firstStream = providersRes?.data?.providers?.[0]?.streams?.[0];
+            topStream = providersRes?.data?.providers?.[0]?.streams?.[0];
           }
         }
       }
-      if (firstStream) {
+      if (topStream) {
         if (prefetch) {
-          cachedNextEpisodeData.current = firstStream;
+          cachedNextEpisodeData.current = topStream;
           // warm the url for p2p, debrid cases for faster resolution on next call
           // aiostreams can handle this, we might not need to
           // const nextUrl = `${session?.host}/api/v1/stream/${firstStream.encoded_data}`;
@@ -181,7 +232,7 @@ export default function Stream() {
           // );
           return;
         }
-        const link = getStreamUrl(firstStream.encoded_data, false, {
+        const link = getStreamUrl(topStream.encoded_data, {
           id: id as string,
           mediaType: MediaTypeTVShow,
           season: nextEpisodeInfo.season,
@@ -254,7 +305,6 @@ export default function Stream() {
   ) => {
     setCurrentProgress(currentTime);
     setCurrentPlayer(newPlayer);
-    setPlayerHasChanged(true);
     if (settings) {
       setCurrentSettings((prev: any) => ({ ...prev, ...settings }));
     }
@@ -289,12 +339,13 @@ export default function Stream() {
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
           encodedData={encoded_data as string}
-          streamsMatch={
-            streamsMatch === "true" || playerHasChanged
-          } /* if we're just changing players, we want to preserve settings */
+          defaultSubtitleIdx={activeSubtitleIdx}
+          defaultAudioIdx={activeAudioIdx}
+          defaultAudioLang={defaultAudioLang}
           displayInfo={displayInfo}
           playerSettings={{ ...currentSettings, player: "mpv" }}
           onChangePlayer={handlePlayerChange}
+          onTrackChange={handleTrackChange}
           hasNextEpisode={!!nextEpisodeInfo}
           onNextEpisode={(settings: any) => handleNextEpisode(settings, false)}
           autoplayEnabled={autoplayEnabled && !!nextEpisodeInfo}
@@ -309,12 +360,13 @@ export default function Stream() {
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
           encodedData={encoded_data as string}
-          streamsMatch={
-            streamsMatch === "true" || playerHasChanged
-          } /* if we're just changing players, we want to preserve settings */
+          defaultSubtitleIdx={activeSubtitleIdx}
+          defaultAudioIdx={activeAudioIdx}
+          defaultAudioLang={defaultAudioLang}
           displayInfo={displayInfo}
           playerSettings={{ ...currentSettings, player: "exoplayer" }}
           onChangePlayer={handlePlayerChange}
+          onTrackChange={handleTrackChange}
           hasNextEpisode={!!nextEpisodeInfo}
           onNextEpisode={(settings: any) => handleNextEpisode(settings, false)}
           autoplayEnabled={autoplayEnabled && !!nextEpisodeInfo}

@@ -37,11 +37,12 @@ export const useShowDetails = (id: string, enabled: boolean = true) => {
   });
 };
 
-export const useSeasonDetails = (id: string, seasonNum: number) => {
+export const useSeasonDetails = (id: string, seasonNum: number, enabled: boolean = true) => {
   return useQuery({
     queryKey: ['season-details', id, seasonNum],
     queryFn: () => fetchSeasonDetails(id, seasonNum),
     staleTime: 1000 * 60 * 5,
+    enabled: enabled && !!id && !!seasonNum,
     select: (data: any) => data.data
   });
 };

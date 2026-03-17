@@ -7,7 +7,7 @@ import {
   Platform,
 } from "react-native";
 import { useMediaFiles, useProviders } from "@/services/providerService";
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useEffect } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,15 +15,27 @@ import { getStreamUrl } from "@/utils/navigation";
 import { MediaTypeMovie, MediaTypeTVShow } from "@/constants/MediaTypes";
 
 export default function SelectStreamScreen() {
-  const { id, mediaType, season, episode, startTime, modalTitle } =
-    useLocalSearchParams<{
-      id: string;
-      mediaType: string;
-      season?: string;
-      episode?: string;
-      startTime?: string;
-      modalTitle?: string;
-    }>();
+  const {
+    id,
+    mediaType,
+    season,
+    episode,
+    startTime,
+    modalTitle,
+    playerSettings,
+    autoSelect,
+    previousEncodedData,
+  } = useLocalSearchParams<{
+    id: string;
+    mediaType: string;
+    season?: string;
+    episode?: string;
+    startTime?: string;
+    modalTitle?: string;
+    playerSettings?: string;
+    autoSelect?: string;
+    previousEncodedData?: string;
+  }>();
 
   const flatListRef = useRef<FlatList>(null);
 
@@ -46,6 +58,15 @@ export default function SelectStreamScreen() {
     episodeNumber,
   );
 
+  const isMounted = useRef(false);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   const streams = useMemo(() => {
     const mediaFilesProvidersList =
       (mediaFilesData as any)?.data?.providers || [];
@@ -60,12 +81,48 @@ export default function SelectStreamScreen() {
     return [...mediaFilesStreams, ...externalStreams];
   }, [mediaFilesData, providersData]);
 
+  const isAutoSelect = autoSelect === "true";
   const isLoading = isMediaFilesLoading || isProvidersLoading;
+
+  // autoSelect mode: as soon as we have a stream result, navigate immediately
+  useEffect(() => {
+    if (!isAutoSelect) return;
+    if (streams.length > 0) {
+      // If we have previousEncodedData, try to find an exact match first
+      const match = previousEncodedData
+        ? streams.find((s) => s.encoded_data === previousEncodedData)
+        : null;
+      const targetStream = match || streams[0];
+      // prevent navigation if user exits when loading
+      if (!isMounted.current) return;
+      router.replace(
+        getStreamUrl(targetStream.encoded_data, {
+          id: id as string,
+          mediaType: mediaType as string,
+          season: seasonNumber,
+          episode: episodeNumber,
+          startTime: startTimeNum,
+          playerSettings: playerSettings,
+          streamsMatch: !!match,
+        }),
+      );
+    }
+  }, [streams, isAutoSelect, previousEncodedData]);
 
   if (mediaType !== MediaTypeMovie && mediaType !== MediaTypeTVShow) {
     return (
       <View className="flex-1 bg-primary justify-center items-center">
         <ThemedText className="text-white">Invalid media type</ThemedText>
+      </View>
+    );
+  }
+
+  // autoselect case, show a loading screen and navigate once the stream is resolved
+  if (isAutoSelect && isLoading) {
+    return (
+      <View className="absolute top-0 left-0 right-0 bottom-0 w-100 h-100 bg-black flex items-center justify-center">
+        <ActivityIndicator size="large" color="white" />
+        <ThemedText className="text-white mb-2">Fetching streams...</ThemedText>
       </View>
     );
   }
@@ -92,13 +149,15 @@ export default function SelectStreamScreen() {
         activeOpacity={Platform.isTV ? 1 : 0.7}
         className="rounded-lg mb-2 border-2 border-transparent focus:border-white"
         onPress={() => {
-          router.replace(
-            getStreamUrl(item.encoded_data, false, {
+          router.push(
+            getStreamUrl(item.encoded_data, {
               id: id as string,
               mediaType: mediaType as string,
               season: seasonNumber,
               episode: episodeNumber,
               startTime: startTimeNum,
+              playerSettings: playerSettings,
+              streamsMatch: previousEncodedData === item.encoded_data,
             }),
           );
         }}

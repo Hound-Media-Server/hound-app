@@ -46,6 +46,7 @@ export default function ContinueWatchingModal({
           episode: wp.episode_number,
           startTime: wp.current_progress_seconds,
           playerSettings: JSON.stringify(wp.player_settings),
+          previousEncodedData: wp.encoded_data,
         };
       }
     } else if (mediaItem.watch_action_type === "next_episode") {
@@ -58,7 +59,7 @@ export default function ContinueWatchingModal({
         };
       }
     }
-    const url = await getSelectStreamUrl(params, forceSelect);
+    const url = getSelectStreamUrl(params, forceSelect);
     router.navigate(url as RelativePathString);
     onClose();
   }

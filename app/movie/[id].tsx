@@ -9,8 +9,7 @@ import {
   useMovieWatchData,
 } from "@/services/watchDataService";
 import { useQueryClient } from "@tanstack/react-query";
-import { getSelectStreamUrl, getStreamUrl } from "@/utils/navigation";
-import { useUnifiedStreamsMutation } from "@/services/providerService";
+import { getSelectStreamUrl } from "@/utils/navigation";
 import { MediaTypeMovie } from "@/constants/MediaTypes";
 
 export interface MovieDetailsProps {
@@ -31,7 +30,6 @@ export default function MovieDetails() {
     useMovieContinueWatching(id as string);
   const { data: movieWatchData, isLoading: isWatchDataLoading } =
     useMovieWatchData(id as string);
-  const { mutateAsync: streamsMutation } = useUnifiedStreamsMutation();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -74,37 +72,14 @@ export default function MovieDetails() {
       }
     }
 
-    if (encodedData) {
-      try {
-        const res = await streamsMutation({
-          mediaType: MediaTypeMovie,
-          id: id as string,
-        });
-        const match = res?.data?.providers
-          ?.flatMap((p: any) => p.streams ?? [])
-          .find((s: any) => s.encoded_data === encodedData);
-        if (match) {
-          router.navigate(
-            getStreamUrl(match.encoded_data, true, {
-              id: id as string,
-              mediaType: MediaTypeMovie,
-              startTime: startTime,
-              playerSettings: playerSettings,
-            }),
-          );
-          return;
-        }
-      } catch (e) {
-        console.error("Error matching stream:", e);
-      }
-    }
     router.navigate(
-      await getSelectStreamUrl({
+      getSelectStreamUrl({
         id: id as string,
         mediaType: MediaTypeMovie,
         modalTitle: details?.media_title,
         startTime: watchAction?.watch_progress?.current_progress_seconds || 0,
         playerSettings: playerSettings,
+        previousEncodedData: encodedData || undefined,
       }),
     );
   };

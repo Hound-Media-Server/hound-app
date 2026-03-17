@@ -10,13 +10,16 @@ export interface StreamUrlParams {
   episode?: number | string;
   startTime?: number | string;
   playerSettings?: string;
+  streamsMatch?: boolean;
+  previousEncodedData?: string; // previous watched stream, will be prioritized if autoSelect is true
 }
 
-export function getStreamUrl(encodedData: string, streamsMatch: boolean, params: StreamUrlParams) {
+export function getStreamUrl(encodedData: string, params: StreamUrlParams) {
   const queryParts = [];
   queryParts.push(`id=${params.id}`);
   queryParts.push(`mediaType=${params.mediaType}`);
-  queryParts.push(`streamsMatch=${streamsMatch ? "true" : "false"}`);
+  if (params.streamsMatch) queryParts.push(`streamsMatch=true`);
+  if (params.previousEncodedData) queryParts.push(`previousEncodedData=${encodeURIComponent(params.previousEncodedData)}`);
   if (params.season) queryParts.push(`season=${params.season}`);
   if (params.episode) queryParts.push(`episode=${params.episode}`);
   if (params.startTime) queryParts.push(`startTime=${params.startTime}`);
@@ -26,36 +29,9 @@ export function getStreamUrl(encodedData: string, streamsMatch: boolean, params:
 }
 
 // direct play or select stream based on user preferences
-export async function getSelectStreamUrl(params: StreamUrlParams, forceSelect?: boolean) {
+// forceSelect -> user explicitly wants to see the select stream modal
+export function getSelectStreamUrl(params: StreamUrlParams, forceSelect?: boolean) {
   const playAction = getSetting("defaultPlayAction");
-  // if file is in hound, and type is direct, play without fetching other providers
-  if (playAction === "direct" && !forceSelect) {
-    try {
-      const mediaFilesRes = await fetchMediaFiles(
-        params.mediaType,
-        params.id,
-        params.season ? parseInt(params.season as string, 10) : undefined,
-        params.episode ? parseInt(params.episode as string, 10) : undefined
-      );
-      if (mediaFilesRes?.data?.providers?.[0].streams?.length > 0) {
-        return getStreamUrl(mediaFilesRes?.data?.providers?.[0].streams?.[0].encoded_data, false, params);
-      }
-      // prioritize media files, if not found, then fetch
-      // this does add a delay to fetching providers
-      const providersRes = await fetchProviders(
-        params.mediaType,
-        params.id,
-        params.season ? parseInt(params.season as string, 10) : undefined,
-        params.episode ? parseInt(params.episode as string, 10) : undefined
-      );
-      if (providersRes?.data?.providers?.[0].streams?.length > 0) {
-        return getStreamUrl(providersRes?.data?.providers?.[0].streams?.[0].encoded_data, false, params);
-      }
-    } catch (e) {
-      console.error("Error fetching providers for direct play:", e);
-    }
-  }
-  // show select stream modal case
   const queryParts = [];
   queryParts.push(`id=${params.id}`);
   queryParts.push(`mediaType=${params.mediaType}`);
@@ -64,6 +40,13 @@ export async function getSelectStreamUrl(params: StreamUrlParams, forceSelect?: 
   if (params.episode) queryParts.push(`episode=${params.episode}`);
   if (params.startTime) queryParts.push(`startTime=${params.startTime}`);
   if (params.playerSettings) queryParts.push(`playerSettings=${encodeURIComponent(params.playerSettings)}`);
+  if (params.previousEncodedData) queryParts.push(`previousEncodedData=${encodeURIComponent(params.previousEncodedData)}`);
+
+  // In direct play, select-stream modal will resolve the top result, 
+  // attempting to match previousEncodeData if available
+  if (playAction === "direct" && !forceSelect) {
+    queryParts.push("autoSelect=true");
+  }
 
   return `/select-stream?${queryParts.join("&")}` as any;
 }

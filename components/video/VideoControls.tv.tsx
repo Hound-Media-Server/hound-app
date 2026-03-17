@@ -22,6 +22,7 @@ import {
   AudioTrack,
 } from "@/modules/mpv-player";
 import { ThemedText } from "../ThemedText";
+import { DisplayInfo } from "@/app/stream/[encoded_data]";
 
 interface VideoControlsProps {
   videoRef: React.RefObject<MpvPlayerViewRef | null>;
@@ -30,6 +31,7 @@ interface VideoControlsProps {
   onPlayPause: () => void;
   currentTime: number;
   duration: number;
+  displayInfo?: DisplayInfo;
   onSeek: (time: number) => void;
   onSeekForward: () => void;
   onSeekBackward: () => void;
@@ -58,6 +60,7 @@ export default function VideoControlsTV({
   onPlayPause,
   currentTime,
   duration,
+  displayInfo,
   onSeek,
   onSeekForward,
   onSeekBackward,
@@ -205,6 +208,17 @@ export default function VideoControlsTV({
         style={[styles.controlsContainer, { opacity: fadeAnim }]}
         pointerEvents={controlsVisible ? "auto" : "none"}
       >
+        {/* Display Info (title) */}
+        {displayInfo && (
+          <View className="absolute top-5 left-5 h-20">
+            <ThemedText className="text-white text-xl">
+              {displayInfo?.title}
+            </ThemedText>
+            <ThemedText className="text-gray-300 text-lg">
+              {displayInfo?.subtitle}
+            </ThemedText>
+          </View>
+        )}
         <View style={styles.bottomBar}>
           {/* Slider */}
           <TVFocusGuideView

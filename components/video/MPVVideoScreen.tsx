@@ -2,7 +2,6 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
-  PixelRatio,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -31,7 +30,10 @@ export default function MPVVideoScreen(props: {
   seasonNumber?: number;
   episodeNumber?: number;
   encodedData: string;
-  streamsMatch: boolean;
+  defaultSubtitleIdx?: number | null;
+  defaultAudioIdx?: number | null;
+  defaultAudioLang?: string | undefined;
+  onTrackChange?: (subtitleIdx: number, audioIdx: number) => void;
   displayInfo?: DisplayInfo;
   playerSettings?: PlayerSettings | null;
   onChangePlayer?: (
@@ -60,14 +62,6 @@ export default function MPVVideoScreen(props: {
   const [isReady, setIsReady] = useState(false);
   const tracksInitialized = useRef(false);
   const [appSettings] = useState<SettingsSchema>(getAllSettings());
-
-  const defaultAudioLang = useMemo(() => {
-    return appSettings.audioLanguage === "original"
-      ? props.displayInfo?.original_language
-        ? get2LetterLangCode(props.displayInfo.original_language)
-        : undefined
-      : appSettings.audioLanguage;
-  }, [props.displayInfo, appSettings.audioLanguage]);
 
   const handleNextEpisode = () => {
     if (props.onNextEpisode) {
@@ -155,6 +149,12 @@ export default function MPVVideoScreen(props: {
   }, [isReady, isZoomedToFill]);
 
   useEffect(() => {
+    if (props.onTrackChange && tracksInitialized.current) {
+      props.onTrackChange(selectedTextTrack, selectedAudioTrack);
+    }
+  }, [selectedTextTrack, selectedAudioTrack]);
+
+  useEffect(() => {
     if (!isReady) return;
     const applySubtitleSize = async () => {
       try {
@@ -199,75 +199,38 @@ export default function MPVVideoScreen(props: {
       if (tracksInitialized.current) return;
       tracksInitialized.current = true;
 
-      // player settings exist, this is an existing watch, load previously selected
-      // settings by the user
-      if (props.playerSettings) {
-        const { player, subtitle_idx, subtitle_lang, audio_idx, audio_lang } =
-          props.playerSettings;
-
-        // if streams match continue watching data, use subtitle_idx
-        if (
-          subtitle_idx !== undefined &&
-          subtitle_idx !== 0 &&
-          props.streamsMatch &&
-          convertedSubtitles?.find((t: any) => t.id === subtitle_idx)
-        ) {
-          targetSub = subtitle_idx;
-        }
-        // otherwise fallback to subtitle_lang
-        else {
-          const targetLang = subtitle_lang || appSettings?.subtitlesLanguage;
-          const matchByLang = convertedSubtitles?.find(
-            (t: any) => t.lang === targetLang,
-          );
-          if (matchByLang) {
-            targetSub = matchByLang.id;
-          }
-        }
-
-        if (
-          convertedAudio &&
-          (selectedAudioTrack === 1 || selectedAudioTrack === undefined)
-        ) {
-          // if streams match continue watching data, use audio_idx
-          if (
-            audio_idx !== undefined &&
-            audio_idx !== -1 &&
-            props.streamsMatch &&
-            convertedAudio.find((t: any) => t.id === audio_idx)
-          ) {
-            targetAudio = audio_idx;
-          }
-          // otherwise fallback to audio_lang
-          else {
-            const targetLang = audio_lang || defaultAudioLang;
-            const matchByLang = convertedAudio.find(
-              (t: any) => t.lang === targetLang,
-            );
-            if (matchByLang) {
-              targetAudio = matchByLang.id;
-            }
-          }
-        }
+      if (
+        props.defaultSubtitleIdx !== null &&
+        props.defaultSubtitleIdx !== undefined &&
+        convertedSubtitles?.find((t: any) => t.id === props.defaultSubtitleIdx)
+      ) {
+        targetSub = props.defaultSubtitleIdx;
       } else {
-        // No player settings (new stream), use app defaults
-        if (appSettings?.subtitlesLanguage) {
-          const matchByLang = convertedSubtitles?.find(
-            (t: any) => t.lang === appSettings.subtitlesLanguage,
-          );
-          if (matchByLang) {
-            targetSub = matchByLang.id;
-          }
+        // Fallback, match by language from playerSettings or app defaults
+        const targetLang =
+          props.playerSettings?.subtitle_lang || appSettings?.subtitlesLanguage;
+        const matchByLang = convertedSubtitles?.find(
+          (t: any) => t.lang === targetLang,
+        );
+        if (matchByLang) {
+          targetSub = matchByLang.id;
         }
-        if (appSettings?.audioLanguage) {
-          // if user prefers audio language as the tmdb original_language,
-          // attempt to apply it
-          const matchByLang = convertedAudio?.find(
-            (t: any) => t.lang === defaultAudioLang,
-          );
-          if (matchByLang) {
-            targetAudio = matchByLang.id;
-          }
+      }
+
+      if (
+        props.defaultAudioIdx !== null &&
+        props.defaultAudioIdx !== undefined &&
+        convertedAudio?.find((t: any) => t.id === props.defaultAudioIdx)
+      ) {
+        targetAudio = props.defaultAudioIdx;
+      } else {
+        const targetLang =
+          props.playerSettings?.audio_lang || props.defaultAudioLang;
+        const matchByLang = convertedAudio?.find(
+          (t: any) => t.lang === targetLang,
+        );
+        if (matchByLang) {
+          targetAudio = matchByLang.id;
         }
       }
 
@@ -279,12 +242,14 @@ export default function MPVVideoScreen(props: {
         }
         setSelectedTextTrack(targetSub);
       } else if (currentSub !== undefined) {
+        targetSub = currentSub;
         setSelectedTextTrack(currentSub);
       }
       if (targetAudio !== undefined && targetAudio !== currentAudio) {
         await videoRef.current?.setAudioTrack(targetAudio);
         setSelectedAudioTrack(targetAudio);
       } else if (currentAudio !== undefined) {
+        targetAudio = currentAudio;
         setSelectedAudioTrack(currentAudio);
       }
     } catch (error) {
@@ -391,6 +356,7 @@ export default function MPVVideoScreen(props: {
         await videoRef.current?.setSubtitleTrack(id);
       }
       setSelectedTextTrack(id);
+      props.onTrackChange?.(id, selectedAudioTrack);
     } catch (error) {
       console.error("Error selecting text track:", error);
     }
@@ -400,6 +366,7 @@ export default function MPVVideoScreen(props: {
     try {
       await videoRef.current?.setAudioTrack(id);
       setSelectedAudioTrack(id);
+      props.onTrackChange?.(selectedTextTrack, id);
     } catch (error) {
       console.error("Error selecting audio track:", error);
     }
@@ -455,6 +422,7 @@ export default function MPVVideoScreen(props: {
             onPlayPause={handlePlayPause}
             currentTime={currentTime}
             duration={duration}
+            displayInfo={props.displayInfo}
             onSeek={handleSeek}
             onSeekForward={handleSeekForward}
             onSeekBackward={handleSeekBackward}
@@ -479,6 +447,7 @@ export default function MPVVideoScreen(props: {
             onPlayPause={handlePlayPause}
             currentTime={currentTime}
             duration={duration}
+            displayInfo={props.displayInfo}
             onSeek={handleSeek}
             onSeekForward={handleSeekForward}
             onSeekBackward={handleSeekBackward}
@@ -505,8 +474,8 @@ export default function MPVVideoScreen(props: {
 const LoadingOverlay = () => {
   return (
     <View className="absolute top-0 left-0 right-0 bottom-0 w-100 h-100 bg-black flex items-center justify-center">
-      <ThemedText className="text-white mb-2">Loading MPV...</ThemedText>
       <ActivityIndicator size="large" color="white" />
+      <ThemedText className="text-white mb-2">Loading MPV...</ThemedText>
     </View>
   );
 };

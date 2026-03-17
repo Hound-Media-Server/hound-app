@@ -37,7 +37,10 @@ export default function ExoplayerVideoScreen(props: {
   seasonNumber?: number;
   episodeNumber?: number;
   encodedData: string;
-  streamsMatch?: boolean;
+  defaultSubtitleIdx?: number | null;
+  defaultAudioIdx?: number | null;
+  defaultAudioLang?: string | undefined;
+  onTrackChange?: (subtitleIdx: number, audioIdx: number) => void;
   displayInfo?: DisplayInfo;
   playerSettings?: PlayerSettings | null;
   onChangePlayer?: (
@@ -70,14 +73,6 @@ export default function ExoplayerVideoScreen(props: {
   const audioInitialized = useRef(false);
   const subtitleInitialized = useRef(false);
   const [appSettings] = useState<SettingsSchema>(getAllSettings());
-
-  const defaultAudioLang = useMemo(() => {
-    return appSettings.audioLanguage === "original"
-      ? props.displayInfo?.original_language
-        ? get2LetterLangCode(props.displayInfo.original_language)
-        : undefined
-      : appSettings.audioLanguage;
-  }, [props.displayInfo, appSettings.audioLanguage]);
 
   const handleNextEpisode = () => {
     if (props.onNextEpisode) {
@@ -143,6 +138,13 @@ export default function ExoplayerVideoScreen(props: {
     setIsZoomedToFill(props.playerSettings?.resize_mode === "cover");
   }, [props.playerSettings?.resize_mode]);
 
+  useEffect(() => {
+    if (!subtitleInitialized.current || !audioInitialized.current) {
+      return;
+    }
+    props.onTrackChange?.(selectedTextTrack, selectedAudioTrack);
+  }, [selectedTextTrack, selectedAudioTrack]);
+
   const handleLoad = (data: OnLoadData) => {
     // Seek to start time if provided
     if (props.startTime && !initialSeekDone.current) {
@@ -185,32 +187,19 @@ export default function ExoplayerVideoScreen(props: {
       subtitleInitialized.current = true;
 
       setSelectedTextTrack((prev) => {
-        const context = props.playerSettings;
         let targetSub = prev;
-        if (context) {
-          const { subtitle_idx, subtitle_lang } = context;
-          // if streams match continue watching data, use subtitle_idx
-          if (
-            subtitle_idx !== undefined &&
-            subtitle_idx !== 0 &&
-            props.streamsMatch &&
-            tracks.find((t: any) => t.id === subtitle_idx)
-          ) {
-            targetSub = subtitle_idx;
-          }
-          // otherwise fallback to subtitle_lang
-          else {
-            const targetLang = subtitle_lang || appSettings?.subtitlesLanguage;
-            const matchByLang = tracks.find((t: any) => t.lang === targetLang);
-            if (matchByLang) {
-              targetSub = matchByLang.id;
-            }
-          }
-        } else if (appSettings?.subtitlesLanguage) {
-          // No player settings (new stream), use app defaults
-          const matchByLang = tracks.find(
-            (t: any) => t.lang === appSettings.subtitlesLanguage,
-          );
+        if (
+          props.defaultSubtitleIdx !== null &&
+          props.defaultSubtitleIdx !== undefined &&
+          tracks.find((t: any) => t.id === props.defaultSubtitleIdx)
+        ) {
+          targetSub = props.defaultSubtitleIdx;
+        } else {
+          // Fall back: match by language from playerSettings or app defaults
+          const targetLang =
+            props.playerSettings?.subtitle_lang ||
+            appSettings?.subtitlesLanguage;
+          const matchByLang = tracks.find((t: any) => t.lang === targetLang);
           if (matchByLang) {
             targetSub = matchByLang.id;
           }
@@ -250,30 +239,20 @@ export default function ExoplayerVideoScreen(props: {
       audioInitialized.current = true;
 
       let targetAudio = prev;
-      if (props.playerSettings) {
-        const { audio_idx, audio_lang } = props.playerSettings;
-        // if streams match continue watching data, use audio_idx
-        if (
-          audio_idx !== undefined &&
-          audio_idx !== -1 &&
-          props.streamsMatch &&
-          tracks.find((t: any) => t.id === audio_idx)
-        ) {
-          targetAudio = audio_idx;
-        }
-        // otherwise fallback to audio_lang
-        else {
-          const targetLang = audio_lang || defaultAudioLang;
-          const matchByLang = tracks.find((t: any) => t.lang === targetLang);
-          if (matchByLang) {
-            targetAudio = matchByLang.id;
-          }
-        }
-      } else if (appSettings?.audioLanguage) {
-        // No player settings (new stream), use app defaults
-        const matchByLang = tracks.find(
-          (t: any) => t.lang === defaultAudioLang,
-        );
+
+      // Parent supplies a pre-resolved index when streamsMatch was true.
+      // Use it directly if the track exists.
+      if (
+        props.defaultAudioIdx !== null &&
+        props.defaultAudioIdx !== undefined &&
+        tracks.find((t: any) => t.id === props.defaultAudioIdx)
+      ) {
+        targetAudio = props.defaultAudioIdx;
+      } else {
+        // Fall back: match by language from playerSettings or app defaults
+        const targetLang =
+          props.playerSettings?.audio_lang || props.defaultAudioLang;
+        const matchByLang = tracks.find((t: any) => t.lang === targetLang);
         if (matchByLang) {
           targetAudio = matchByLang.id;
         }
@@ -330,10 +309,12 @@ export default function ExoplayerVideoScreen(props: {
 
   const handleSelectTextTrack = (id: number) => {
     setSelectedTextTrack(id);
+    props.onTrackChange?.(id, selectedAudioTrack);
   };
 
   const handleSelectAudioTrack = (id: number) => {
     setSelectedAudioTrack(id);
+    props.onTrackChange?.(selectedTextTrack, id);
   };
 
   const handleChangeResizeMode = () => {
@@ -387,6 +368,7 @@ export default function ExoplayerVideoScreen(props: {
             onPlayPause={handlePlayPause}
             currentTime={currentTime}
             duration={duration}
+            displayInfo={props.displayInfo}
             onSeek={handleSeek}
             onSeekForward={handleSeekForward}
             onSeekBackward={handleSeekBackward}
@@ -411,6 +393,7 @@ export default function ExoplayerVideoScreen(props: {
             onPlayPause={handlePlayPause}
             currentTime={currentTime}
             duration={duration}
+            displayInfo={props.displayInfo}
             onSeek={handleSeek}
             onSeekForward={handleSeekForward}
             onSeekBackward={handleSeekBackward}
@@ -437,8 +420,8 @@ export default function ExoplayerVideoScreen(props: {
 const LoadingOverlay = () => {
   return (
     <View className="absolute top-0 left-0 right-0 bottom-0 w-100 h-100 bg-black flex items-center justify-center">
-      <ThemedText className="text-white mb-2">Loading Exoplayer...</ThemedText>
       <ActivityIndicator size="large" color="white" />
+      <ThemedText className="text-white mb-2">Loading Exoplayer...</ThemedText>
     </View>
   );
 };

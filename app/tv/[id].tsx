@@ -9,9 +9,8 @@ import {
   useCreateRewatch,
 } from "@/services/watchDataService";
 import { Toast } from "toastify-react-native";
-import { useUnifiedStreamsMutation } from "@/services/providerService";
 import { useQueryClient } from "@tanstack/react-query";
-import { getSelectStreamUrl, getStreamUrl } from "@/utils/navigation";
+import { getSelectStreamUrl } from "@/utils/navigation";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
 
 export interface TVDetailsProps {
@@ -31,7 +30,6 @@ export default function TVDetails() {
   const { data: details, isLoading, error } = useShowDetails(id as string);
   const { data: continueWatching, isLoading: isContinueLoading } =
     useShowContinueWatching(id as string);
-  const { mutateAsync: streamsMutation } = useUnifiedStreamsMutation();
   const { mutateAsync: rewatchMutation } = useCreateRewatch();
 
   const [playSeason, setPlaySeason] = useState<number>(1);
@@ -88,11 +86,10 @@ export default function TVDetails() {
 
   const handlePlayPress = async () => {
     let encodedData: string | null = null;
-    let startTime: number = 0;
     let playerSettings: string | undefined;
-    const navigateSelectStream = async () => {
+    if (playSeason && playEpisode) {
       router.navigate(
-        await getSelectStreamUrl({
+        getSelectStreamUrl({
           id: id as string,
           mediaType: MediaTypeTVShow,
           modalTitle: details?.media_title,
@@ -100,43 +97,9 @@ export default function TVDetails() {
           episode: playEpisode,
           startTime: resumeStartTime,
           playerSettings: playerSettings,
+          previousEncodedData: encodedData || undefined,
         }),
       );
-    };
-    if (playSeason && playEpisode) {
-      if (encodedData) {
-        try {
-          const res = await streamsMutation({
-            mediaType: MediaTypeTVShow,
-            id: id as string,
-            season: playSeason,
-            episode: playEpisode,
-          });
-          // flatten providers array
-          const match = res?.data?.providers
-            ?.flatMap((p: any) => p.streams ?? [])
-            .find((s: any) => s.encoded_data === encodedData);
-
-          if (match) {
-            router.navigate(
-              getStreamUrl(match.encoded_data, true, {
-                id: id as string,
-                mediaType: MediaTypeTVShow,
-                season: playSeason,
-                episode: playEpisode,
-                startTime,
-                playerSettings,
-              }),
-            );
-          } else {
-            await navigateSelectStream();
-          }
-        } catch (e) {
-          console.error("Error matching stream:", e);
-        }
-      } else {
-        await navigateSelectStream();
-      }
     } else {
       Alert.alert(
         "Invalid Season or Episode. Please report this issue on Github",

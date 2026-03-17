@@ -312,15 +312,17 @@ function EpisodeCard({
                 viewPosition: 0.5,
               });
             }}
-            onPress={async () => {
+            onPress={() => {
               router.navigate(
-                await getSelectStreamUrl({
+                getSelectStreamUrl({
                   id: sourceID,
                   mediaType: MediaTypeTVShow,
                   modalTitle: mediaTitle,
                   season: episode.season_number,
                   episode: episode.episode_number,
                   startTime: watchProgress?.current_progress_seconds,
+                  playerSettings: watchProgress?.player_settings ? JSON.stringify(watchProgress.player_settings) : undefined,
+                  previousEncodedData: watchProgress?.encoded_data,
                 }),
               );
             }}
