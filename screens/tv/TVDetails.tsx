@@ -1,163 +1,26 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
-import React, { useEffect, useState } from "react";
-import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
-import { useShowDetails } from "@/services/mediaDetailsService";
+import { View, TouchableOpacity } from "react-native";
+import React from "react";
+import { router } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import HorizontalList from "@/components/HorizontalList";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import SeasonSection from "@/components/media_page/SeasonSection";
-import { useShowContinueWatching } from "@/services/watchDataService";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  getSelectStreamUrl,
-  getStreamUrl,
-  getAddToCollectionUrl,
-} from "@/utils/navigation";
+import { getAddToCollectionUrl } from "@/utils/navigation";
 import { ImageBackground } from "expo-image";
 import { useModalStore } from "@/stores/modalStore";
-import {
-  useMediaFiles,
-  useUnifiedStreamsMutation,
-} from "@/services/providerService";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
+import { TVDetailsProps } from "@/app/tv/[id]";
 
-export default function TVDetails() {
-  const queryClient = useQueryClient();
-  const { id } = useLocalSearchParams();
+export default function TVDetails({
+  id,
+  details,
+  continueWatching,
+  playLabel,
+  handlePlayPress,
+  handleRewatch,
+}: TVDetailsProps) {
   const openModal = useModalStore((s) => s.open);
-  // fetch show details
-  const { data: details, isLoading, error } = useShowDetails(id as string);
-  const { data: continueWatching, isLoading: isContinueLoading } =
-    useShowContinueWatching(id as string);
-  const { mutateAsync: streamsMutation } = useUnifiedStreamsMutation();
-  const [playSeason, setPlaySeason] = useState<number>(1);
-  const [playEpisode, setPlayEpisode] = useState<number>(1);
-  const [playMode, setPlayMode] = useState<"play" | "resume">("play");
 
-  useFocusEffect(
-    React.useCallback(() => {
-      queryClient.invalidateQueries({
-        queryKey: ["show-continue-watching", id],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["show-watch-data", id],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["show-watch-progress", id],
-      });
-    }, [id, queryClient]),
-  );
-
-  const resumeStartTime =
-    (continueWatching?.watch_action_type === "resume"
-      ? continueWatching.watch_progress?.current_progress_seconds
-      : 0) || 0;
-
-  useEffect(() => {
-    if (continueWatching) {
-      if (
-        continueWatching.watch_action_type === "resume" &&
-        continueWatching.watch_progress
-      ) {
-        setPlaySeason(continueWatching.watch_progress.season_number);
-        setPlayEpisode(continueWatching.watch_progress.episode_number);
-        setPlayMode("resume");
-      } else if (
-        continueWatching.watch_action_type === "next_episode" &&
-        continueWatching.next_episode
-      ) {
-        setPlaySeason(continueWatching.next_episode.season_number);
-        setPlayEpisode(continueWatching.next_episode.episode_number);
-        setPlayMode("play");
-      }
-    } else if (!isContinueLoading) {
-      // evaluate necessity of checking if first episode for all tmdb shows are
-      // s1e1 or if there are edge cases
-      setPlaySeason(1);
-      setPlayEpisode(1);
-      setPlayMode("play");
-    }
-  }, [continueWatching]);
-
-  const playLabel =
-    playMode === "resume"
-      ? `▶︎ Resume S${playSeason}E${playEpisode}`
-      : `▶︎ Play S${playSeason}E${playEpisode}`;
-
-  const handlePlayPress = async () => {
-    let encodedData: string | null = null;
-    let startTime: number = 0;
-    let playerSettings: string | undefined;
-    const navigateSelectStream = async () => {
-      router.navigate(
-        await getSelectStreamUrl({
-          id: id as string,
-          mediaType: MediaTypeTVShow,
-          modalTitle: details?.media_title,
-          season: playSeason,
-          episode: playEpisode,
-          startTime: resumeStartTime,
-          playerSettings: playerSettings,
-        }),
-      );
-    };
-    if (playSeason && playEpisode) {
-      if (encodedData) {
-        try {
-          const res = await streamsMutation({
-            mediaType: MediaTypeTVShow,
-            id: id as string,
-            season: playSeason,
-            episode: playEpisode,
-          });
-          // flatten providers array
-          const match = res?.data?.providers
-            ?.flatMap((p: any) => p.streams ?? [])
-            .find((s: any) => s.encoded_data === encodedData);
-
-          if (match) {
-            router.navigate(
-              getStreamUrl(match.encoded_data, true, {
-                id: id as string,
-                mediaType: MediaTypeTVShow,
-                season: playSeason,
-                episode: playEpisode,
-                startTime,
-                playerSettings,
-              }),
-            );
-          } else {
-            await navigateSelectStream();
-          }
-        } catch (e) {
-          console.error("Error matching stream:", e);
-        }
-      } else {
-        await navigateSelectStream();
-      }
-    } else {
-      Alert.alert(
-        "Invalid Season or Episode. Please report this issue on Github",
-      );
-    }
-  };
-
-  if (isLoading || isContinueLoading) {
-    return (
-      <View className="w-full h-full bg-primary justify-center items-center">
-        <ActivityIndicator color="white" size="large" />
-      </View>
-    );
-  }
-  if (error) {
-    return <Text>Error: {error.message}</Text>;
-  }
   const creators = details?.creators?.map((item: any) => item.name).join(", ");
   // if first season is specials, move it to the end
   const seasonsData =
@@ -232,6 +95,26 @@ export default function TVDetails() {
               >
                 <ThemedText className="text-primary text-md sm:text-lg">
                   Add to Collection
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  openModal({
+                    type: "confirm",
+                    props: {
+                      modalTitle: "Rewatch Show",
+                      message:
+                        "Are you sure you want to rewatch this show? This will archive your current progress.",
+                      autoFocus: true,
+                      onPress: handleRewatch,
+                    },
+                  })
+                }
+                activeOpacity={0.75}
+                className="p-2 mt-3 bg-white rounded-2xl w-[120px] sm:w-[150px] items-center"
+              >
+                <ThemedText className="text-primary text-md sm:text-lg">
+                  Rewatch Show
                 </ThemedText>
               </TouchableOpacity>
               <TouchableOpacity

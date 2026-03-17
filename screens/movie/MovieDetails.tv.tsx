@@ -1,127 +1,27 @@
-import { View, Text, ActivityIndicator } from "react-native";
+import { View } from "react-native";
 import React from "react";
-import { useLocalSearchParams } from "expo-router";
-import { useMovieDetails } from "@/services/mediaDetailsService";
 import { ThemedText } from "@/components/ThemedText";
-import {
-  useMovieContinueWatching,
-  useMovieWatchData,
-} from "@/services/watchDataService";
-import { fetchProviders } from "@/services/providerService";
-import { router, useFocusEffect } from "expo-router";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  getSelectStreamUrl,
-  getStreamUrl,
-  getAddToCollectionUrl,
-} from "@/utils/navigation";
+import { router } from "expo-router";
+import { getAddToCollectionUrl } from "@/utils/navigation";
 import GradientBackgroundView from "@/components/media_page/GradientBackgroundView";
 import {
   TVFocusButtonMore,
   TVFocusButtonText,
 } from "@/components/TVFocusButton";
 import { useModalStore } from "@/stores/modalStore";
-import { useUnifiedStreamsMutation } from "@/services/providerService";
 import { MediaTypeMovie } from "@/constants/MediaTypes";
+import { MovieDetailsProps } from "@/app/movie/[id]";
 
-export default function MovieDetails() {
-  const queryClient = useQueryClient();
-  const { id } = useLocalSearchParams();
+export default function MovieDetails({
+  id,
+  details,
+  continueWatching,
+  movieWatchData,
+  playLabel,
+  handlePlayPress,
+}: MovieDetailsProps) {
   const openModal = useModalStore((s) => s.open);
-  const streamsMutation = useUnifiedStreamsMutation();
 
-  const { data: details, isLoading, error } = useMovieDetails(id as string);
-  const { data: continueWatching, isLoading: isContinueLoading } =
-    useMovieContinueWatching(id as string);
-  const { data: movieWatchData, isLoading: isWatchDataLoading } =
-    useMovieWatchData(id as string);
-
-  useFocusEffect(
-    React.useCallback(() => {
-      queryClient.invalidateQueries({
-        queryKey: ["movie-continue-watching", id],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["movie-watch-data", id],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["movie-watch-progress", id],
-      });
-    }, [id, queryClient]),
-  );
-
-  const watchAction = continueWatching;
-
-  let playLabel = "▶︎ Play";
-  if (watchAction) {
-    if (watchAction.watch_action_type === "resume") {
-      playLabel = "▶︎ Resume";
-    }
-  }
-
-  const handlePlayPress = async () => {
-    let encodedData: string | null = null;
-    let startTime: number = 0;
-    let playerSettings: string | undefined;
-
-    if (watchAction) {
-      if (
-        watchAction.watch_action_type === "resume" &&
-        watchAction.watch_progress
-      ) {
-        encodedData = watchAction.watch_progress.encoded_data;
-        startTime = watchAction.watch_progress.current_progress_seconds;
-        playerSettings = JSON.stringify(
-          watchAction.watch_progress.player_settings,
-        );
-      }
-    }
-
-    if (encodedData) {
-      try {
-        const res = await streamsMutation.mutateAsync({
-          mediaType: MediaTypeMovie,
-          id: id as string,
-        });
-        const match = res?.data?.providers
-          ?.flatMap((p: any) => p.streams ?? [])
-          .find((s: any) => s.encoded_data === encodedData);
-        if (match) {
-          router.navigate(
-            getStreamUrl(match.encoded_data, true, {
-              id: id as string,
-              mediaType: MediaTypeMovie,
-              startTime: startTime,
-              playerSettings: playerSettings,
-            }),
-          );
-          return;
-        }
-      } catch (e) {
-        console.error("Error matching stream:", e);
-      }
-    }
-    router.navigate(
-      await getSelectStreamUrl({
-        id: id as string,
-        mediaType: MediaTypeMovie,
-        modalTitle: details?.media_title,
-        startTime: watchAction?.watch_progress?.current_progress_seconds || 0,
-        playerSettings: playerSettings,
-      }),
-    );
-  };
-
-  if (isLoading || isContinueLoading || isWatchDataLoading) {
-    return (
-      <View className="w-full h-full bg-primary justify-center items-center">
-        <ActivityIndicator color="white" size="large" />
-      </View>
-    );
-  }
-  if (error) {
-    return <Text>Error: {error.message}</Text>;
-  }
   const creators = details?.creators?.map((item: any) => item.name).join(", ");
   // create array to render info in a row
   const info = [];
@@ -149,7 +49,7 @@ export default function MovieDetails() {
             <ThemedText className="text-white text-3xl leading-[36px]">
               {details?.media_title}
               <ThemedText className="text-gray-400 text-2xl leading-[32px]">
-                {" (" + details?.release_date.split("-")[0] + ")"}
+                {" (" + details?.release_date?.split("-")[0] + ")"}
               </ThemedText>
             </ThemedText>
             {movieWatchData && (
