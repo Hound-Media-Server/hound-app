@@ -1,10 +1,4 @@
-import {
-  View,
-  ActivityIndicator,
-  FlatList,
-  Platform,
-  useWindowDimensions,
-} from "react-native";
+import { View, ActivityIndicator, FlatList, Platform } from "react-native";
 import React, { useRef } from "react";
 import MediaItemCard from "./MediaItemCard";
 import { ThemedText } from "./ThemedText";
@@ -16,6 +10,7 @@ interface PosterGridProps {
   isLoading?: boolean;
   error?: any;
   header?: string;
+  collectionID?: number;
   itemData?: any[];
   numColumns?: number;
   onEndReached?: () => void;
@@ -32,6 +27,7 @@ export default function PosterGrid({
   isLoading,
   error: propError,
   header,
+  collectionID,
   itemData,
   numColumns = 3,
   onEndReached,
@@ -148,6 +144,7 @@ export default function PosterGrid({
         renderItem={({ item, index }) => (
           <View style={{ width: cardWidth }}>
             <MediaItemCard
+              collectionID={collectionID}
               mediaItem={item}
               title={getMediaTitle(item)}
               showDescription={true}

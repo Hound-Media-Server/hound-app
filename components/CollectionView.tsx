@@ -110,6 +110,7 @@ export default function CollectionView({
               ? "Collections  >  " + data?.collection?.collection_title
               : ""
         }
+        collectionID={data?.collection?.collection_id}
         renderHeader={() => {
           if (!header) return null;
           const buttons: { type: "all" | MediaType; active: boolean }[] = [

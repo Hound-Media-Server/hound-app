@@ -149,7 +149,7 @@ export default function SelectStreamScreen() {
         activeOpacity={Platform.isTV ? 1 : 0.7}
         className="rounded-lg mb-2 border-2 border-transparent focus:border-white"
         onPress={() => {
-          router.push(
+          router.replace(
             getStreamUrl(item.encoded_data, {
               id: id as string,
               mediaType: mediaType as string,

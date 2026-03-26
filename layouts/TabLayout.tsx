@@ -1,13 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Platform } from "react-native";
-
-import TabLayoutTV from "./TabLayout.tv";
 import { Tabs } from "expo-router";
 
-export default function TabLayout() {
-  if (Platform.isTV || Platform.isTVOS) {
-    return <TabLayoutTV />;
-  }
+export default function TabLayoutMobile() {
   return (
     <Tabs
       initialRouteName="index"

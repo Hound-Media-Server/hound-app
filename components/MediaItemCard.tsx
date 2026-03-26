@@ -9,6 +9,7 @@ import { useModalStore } from "@/stores/modalStore";
 
 export default function MediaItemCard({
   mediaItem,
+  collectionID,
   title,
   subtitle,
   imgAlt,
@@ -18,6 +19,7 @@ export default function MediaItemCard({
   hasTVPreferredFocus,
 }: {
   mediaItem: any;
+  collectionID?: number; // for collection view, to delete items from collection
   title?: string;
   subtitle?: string;
   imgAlt?: string;
@@ -57,6 +59,7 @@ export default function MediaItemCard({
             props: {
               modalTitle: title ? title : "",
               mediaItem: mediaItem,
+              collectionID: collectionID,
             },
           });
         }}

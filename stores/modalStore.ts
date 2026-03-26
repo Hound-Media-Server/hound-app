@@ -11,6 +11,7 @@ type ModalState =
         mediaItem: any;
         modalTitle: string;
         autoFocus?: boolean;
+        collectionID?: number;
       };
     }
   | {

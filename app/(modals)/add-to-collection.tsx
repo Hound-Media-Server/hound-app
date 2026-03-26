@@ -23,14 +23,14 @@ export default function AddToCollectionScreen() {
     media_source: string;
     source_id: string;
   }>();
-  const handleAddToCollection = (collectionId: number | string) => {
+  const handleAddToCollection = (collectionID: number | string) => {
     if (!media_type || !media_source || !source_id) {
       Toast.error("Invalid media params, contact developer");
       return;
     }
     mutate(
       {
-        collectionId,
+        collectionID,
         payload: {
           media_type: media_type as any,
           media_source,

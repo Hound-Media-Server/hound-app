@@ -84,14 +84,36 @@ const fetchCollectionContents = (
 };
 
 const addToCollection = ({
-  collectionId,
+  collectionID,
   payload,
 }: {
-  collectionId: number | string;
+  collectionID: number | string;
   payload: AddToCollectionPayload;
 }): Promise<any> => {
-  return apiClient(`/collection/${collectionId}`, {
+  return apiClient(`/collection/${collectionID}`, {
     method: "POST",
+    body: JSON.stringify(payload),
+  });
+};
+
+const deleteFromCollection = ({
+  collectionID,
+  mediaType,
+  mediaSource,
+  sourceID,
+}: {
+  collectionID: number | string;
+  mediaType: MediaType;
+  mediaSource: string;
+  sourceID: string;
+}): Promise<any> => {
+  const payload: AddToCollectionPayload = {
+    media_type: mediaType,
+    media_source: mediaSource,
+    source_id: sourceID,
+  };
+  return apiClient(`/collection/${collectionID}`, {
+    method: "DELETE",
     body: JSON.stringify(payload),
   });
 };
@@ -138,7 +160,20 @@ export const useAddToCollection = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["collections"] });
       queryClient.invalidateQueries({
-        queryKey: ["collection-contents", variables.collectionId],
+        queryKey: ["collection-contents", variables.collectionID],
+      });
+    },
+  });
+};
+
+export const useDeleteFromCollection = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteFromCollection,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["collections"] });
+      queryClient.invalidateQueries({
+        queryKey: ["collection-contents", variables.collectionID],
       });
     },
   });
