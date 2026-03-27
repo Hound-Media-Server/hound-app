@@ -15,6 +15,7 @@ import { useSession } from "@/services/ctx";
 import { getSetting, setSetting } from "@/stores/settingsStore";
 import * as Updates from "expo-updates";
 import { ThemedText } from "@/components/ThemedText";
+import { useModalStore } from "@/stores/modalStore";
 
 export default function Settings() {
   const { signOut } = useSession();
@@ -34,7 +35,11 @@ export default function Settings() {
   const [defaultAudioLanguage, setDefaultAudioLanguage] = useState<
     string | undefined
   >(undefined);
+  const [defaultSubtitleLanguage, setDefaultSubtitleLanguage] = useState<
+    string | undefined
+  >(undefined);
   const [autoplayNextEpisode, setAutoplayNextEpisode] = useState<boolean>(true);
+  const openModal = useModalStore((s) => s.open);
 
   async function onFetchUpdateAsync() {
     try {
@@ -57,7 +62,8 @@ export default function Settings() {
     setDefaultShowResizeMode(getSetting("defaultShowResizeMode"));
     setDefaultMovieResizeMode(getSetting("defaultMovieResizeMode"));
     setSubtitleSize(getSetting("subtitleSize") || 24);
-    setDefaultAudioLanguage(getSetting("audioLanguage"));
+    setDefaultAudioLanguage(getSetting("defaultAudioLanguage"));
+    setDefaultSubtitleLanguage(getSetting("defaultSubtitleLanguage"));
     const autoplay = getSetting("autoplayNextEpisode");
     setAutoplayNextEpisode(autoplay !== undefined ? autoplay : true);
   }, []);
@@ -97,10 +103,14 @@ export default function Settings() {
     setSubtitleSize(newSize);
   };
 
-  const handleAudioLanguage = () => {
-    const newVal = defaultAudioLanguage === "en" ? "original" : "en";
-    setSetting("audioLanguage", newVal);
-    setDefaultAudioLanguage(newVal);
+  const handleDefaultAudioLanguage = (language: string) => {
+    setSetting("defaultAudioLanguage", language);
+    setDefaultAudioLanguage(language);
+  };
+
+  const handleDefaultSubtitleLanguage = (lang: string) => {
+    setSetting("defaultSubtitleLanguage", lang);
+    setDefaultSubtitleLanguage(lang);
   };
 
   const handleToggleAutoplay = () => {
@@ -119,9 +129,38 @@ export default function Settings() {
         <PressableSetting onPress={() => onFetchUpdateAsync()}>
           <ThemedText className="text-white">Fetch Updates</ThemedText>
         </PressableSetting>
-        <PressableSetting onPress={() => handleAudioLanguage()}>
+        <PressableSetting
+          onPress={() => {
+            openModal({
+              type: "languageSelection",
+              props: {
+                modalTitle: "Set Default Audio Language",
+                lang: defaultAudioLanguage,
+                setLang: handleDefaultAudioLanguage,
+                showOriginalLang: true,
+              },
+            });
+          }}
+        >
           <ThemedText className="text-white">
-            Audio Lang: {defaultAudioLanguage}
+            Audio Language: {defaultAudioLanguage}
+          </ThemedText>
+        </PressableSetting>
+        <PressableSetting
+          onPress={() => {
+            openModal({
+              type: "languageSelection",
+              props: {
+                modalTitle: "Set Default Subtitle Language",
+                lang: defaultSubtitleLanguage,
+                setLang: handleDefaultSubtitleLanguage,
+                showOriginalLang: false,
+              },
+            });
+          }}
+        >
+          <ThemedText className="text-white">
+            Subtitle Language: {defaultSubtitleLanguage}
           </ThemedText>
         </PressableSetting>
         {

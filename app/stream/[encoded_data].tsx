@@ -132,19 +132,19 @@ export default function Stream() {
 
   const defaultAudioLang = useMemo(() => {
     if (mediaType === MediaTypeMovie) {
-      return appSettings.audioLanguage === "original"
+      return appSettings.defaultAudioLanguage === "original"
         ? movieDetails?.original_language
           ? get2LetterLangCode(movieDetails.original_language)
           : undefined
-        : appSettings.audioLanguage;
+        : appSettings.defaultAudioLanguage;
     } else if (mediaType === MediaTypeTVShow) {
-      return appSettings.audioLanguage === "original"
+      return appSettings.defaultAudioLanguage === "original"
         ? showDetails?.original_language
           ? get2LetterLangCode(showDetails.original_language)
           : undefined
-        : appSettings.audioLanguage;
+        : appSettings.defaultAudioLanguage;
     }
-  }, [movieDetails, showDetails, appSettings.audioLanguage]);
+  }, [movieDetails, showDetails, appSettings.defaultAudioLanguage]);
 
   const nextEpisodeInfo = useMemo(() => {
     if (mediaType !== MediaTypeTVShow || !showDetails || !season || !episode)

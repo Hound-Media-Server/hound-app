@@ -19,6 +19,12 @@ export function useModalInternal() {
   return ctx;
 }
 
+/*
+  When autofocus is false, the modal requires an extra press to start interacting
+  with its content/actions. This is because when using onLongPress(), in my testing,
+  an extra press is registered, which would otherwise automatically press the first 
+  highlighted action.
+*/
 export function ContextModal({
   visible,
   modalTitle,
@@ -80,10 +86,12 @@ export function ModalAction({
   label,
   onPress,
   hasTVPreferredFocus,
+  onFocus,
 }: {
   label: string;
   onPress: () => void;
   hasTVPreferredFocus?: boolean;
+  onFocus?: () => void;
 }) {
   const { tvPressedOnce } = useModalInternal();
   return (
@@ -97,6 +105,7 @@ export function ModalAction({
       onPress={() => {
         onPress();
       }}
+      onFocus={onFocus}
     >
       <ThemedText className="text-white">{label}</ThemedText>
     </Pressable>

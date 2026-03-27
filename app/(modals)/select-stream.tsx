@@ -143,7 +143,7 @@ export default function SelectStreamScreen() {
     return (
       <TouchableHighlight
         focusable
-        hasTVPreferredFocus={index === 0}
+        hasTVPreferredFocus={Platform.isTV && index === 0}
         key={item.provider + "-" + item.info_hash}
         underlayColor="#1e293b"
         activeOpacity={Platform.isTV ? 1 : 0.7}

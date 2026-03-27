@@ -3,6 +3,7 @@ import MediaPosterModal from "./MediaPosterModal";
 import ContinueWatchingModal from "./ContinueWatchingModal";
 import PlayOptionsModal from "./PlayOptionsModal";
 import ConfirmModal from "./ConfirmModal";
+import LanguageSelectionModal from "./LanguageSelectionModal";
 
 export function GlobalModalHost() {
   const modal = useModalStore((s) => s.modal);
@@ -22,6 +23,11 @@ export function GlobalModalHost() {
 
     case "confirm":
       return <ConfirmModal {...modal.props} visible onClose={close} />;
+
+    case "languageSelection":
+      return (
+        <LanguageSelectionModal {...modal.props} visible onClose={close} />
+      );
 
     default:
       return null;

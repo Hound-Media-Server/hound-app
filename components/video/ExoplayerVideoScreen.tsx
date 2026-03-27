@@ -198,7 +198,7 @@ export default function ExoplayerVideoScreen(props: {
           // Fall back: match by language from playerSettings or app defaults
           const targetLang =
             props.playerSettings?.subtitle_lang ||
-            appSettings?.subtitlesLanguage;
+            appSettings?.defaultSubtitleLanguage;
           const matchByLang = tracks.find((t: any) => t.lang === targetLang);
           if (matchByLang) {
             targetSub = matchByLang.id;

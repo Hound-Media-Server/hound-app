@@ -208,7 +208,8 @@ export default function MPVVideoScreen(props: {
       } else {
         // Fallback, match by language from playerSettings or app defaults
         const targetLang =
-          props.playerSettings?.subtitle_lang || appSettings?.subtitlesLanguage;
+          props.playerSettings?.subtitle_lang ||
+          appSettings?.defaultSubtitleLanguage;
         const matchByLang = convertedSubtitles?.find(
           (t: any) => t.lang === targetLang,
         );

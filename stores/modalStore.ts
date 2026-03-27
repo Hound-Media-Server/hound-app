@@ -39,6 +39,15 @@ type ModalState =
         onPress: () => void;
       };
     }
+  | {
+      type: "languageSelection";
+      props: {
+        modalTitle?: string;
+        lang?: string;
+        setLang: (language: string) => void;
+        showOriginalLang?: boolean;
+      };
+    }
   | null;
 
 type ModalStore = {
