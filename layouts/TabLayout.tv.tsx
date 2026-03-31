@@ -16,7 +16,11 @@ function TVTabBar({
   const tabRefs = useRef<any[]>([]);
   const [tabBarFocused, setTabBarFocused] = useState<boolean>(false);
   const fadeAnimation = useRef(new Animated.Value(0.4)).current;
-  const selectedTabRef = tabRefs.current[state.index] ?? null;
+  const [selectedTabNode, setSelectedTabNode] = useState<any>(null);
+
+  useEffect(() => {
+    setSelectedTabNode(tabRefs.current[state.index] ?? null);
+  }, [state.index]);
 
   useEffect(() => {
     Animated.timing(fadeAnimation, {
@@ -30,7 +34,7 @@ function TVTabBar({
     <View className="absolute top-5 left-10 right-0 z-50">
       <TVFocusGuideView
         autoFocus
-        destinations={selectedTabRef ? [selectedTabRef] : undefined}
+        destinations={selectedTabNode ? [selectedTabNode] : undefined}
         onFocus={() => {
           setTabBarFocused(true);
         }}
@@ -72,7 +76,11 @@ function TVTabBar({
                   onPress();
                 }}
               >
-                <View className="rounded-full px-4 py-2 bg-white/10 group-focus:bg-white">
+                <View
+                  className={`rounded-full px-4 py-2 overflow-hidden ${
+                    isSelected ? "bg-white/20" : "bg-white/0"
+                  } group-focus:bg-white`}
+                >
                   <ThemedText className="text-white group-focus:text-black">
                     {descriptors[route.key]?.options?.title === "Search" ? (
                       <Ionicons
