@@ -6,10 +6,12 @@ import {
   useState,
 } from "react";
 import * as SecureStore from "expo-secure-store";
+import * as Crypto from "expo-crypto";
 import { DeviceEventEmitter, Platform } from "react-native";
-import { login } from "./auth";
+import { login, logout } from "./auth";
 
 const SESSION_KEY = "auth-session";
+const DEVICE_ID_KEY = "device-id";
 
 export type Session = {
   host: string;
@@ -19,14 +21,14 @@ export type Session = {
 
 type AuthContextType = {
   signIn: (host: string, username: string, password: string) => Promise<void>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   session?: Session | null;
   isLoading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType>({
   signIn: async () => {},
-  signOut: () => {},
+  signOut: async () => {},
   session: null,
   isLoading: false,
 });
@@ -78,7 +80,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
   }, []);
 
   const signIn = async (host: string, username: string, password: string) => {
-    const data = await login(host, username, password);
+    const deviceId = await getDeviceID();
+    const data = await login(host, username, password, deviceId);
     const newSession: Session = {
       host: host.trim().replace(/\/$/, ""),
       token: data.data.token,
@@ -98,8 +101,12 @@ export function SessionProvider({ children }: PropsWithChildren) {
     setSession(newSession);
   };
 
-  // we don't have jwt invalidation server-side for now
-  const signOut = () => {
+  const signOut = async () => {
+    if (session) {
+      logout().catch(() => {
+        console.log("logout call failed");
+      });
+    }
     setSession(null);
     if (Platform.OS === "web") {
       localStorage.removeItem(SESSION_KEY);
@@ -120,4 +127,22 @@ export function SessionProvider({ children }: PropsWithChildren) {
       {children}
     </AuthContext.Provider>
   );
+}
+
+async function getDeviceID(): Promise<string> {
+  let deviceId: string | null = null;
+  if (Platform.OS === "web") {
+    deviceId = localStorage.getItem(DEVICE_ID_KEY);
+  } else {
+    deviceId = await SecureStore.getItemAsync(DEVICE_ID_KEY);
+  }
+  if (!deviceId) {
+    deviceId = Crypto.randomUUID();
+    if (Platform.OS === "web") {
+      localStorage.setItem(DEVICE_ID_KEY, deviceId);
+    } else {
+      await SecureStore.setItemAsync(DEVICE_ID_KEY, deviceId);
+    }
+  }
+  return deviceId;
 }

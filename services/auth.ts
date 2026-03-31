@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import { apiClient } from "./apiClient";
 
 export interface LoginResponse {
   status: string;
@@ -14,6 +15,7 @@ export async function login(
   host: string,
   username: string,
   password: string,
+  deviceId: string,
 ): Promise<LoginResponse> {
   let baseUrl = host.trim();
   if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
@@ -34,6 +36,7 @@ export async function login(
         "Content-Type": "application/json",
         "X-Client-Id": clientID,
         "X-Client-Platform": platform,
+        "X-Device-Id": deviceId,
       },
       body: JSON.stringify({ username, password }),
     });
@@ -58,5 +61,15 @@ export async function login(
       );
     }
     throw error;
+  }
+}
+
+export async function logout(): Promise<void> {
+  try {
+    await apiClient("/auth/logout", {
+      method: "POST",
+    });
+  } catch (error) {
+    console.warn("Logout request failed:", error);
   }
 }

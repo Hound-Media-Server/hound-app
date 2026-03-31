@@ -79,7 +79,7 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "name": "hound-app",
+    "name": "Hound Beta",
     "slug": "hound-app",
     "extra": {
       "router": {},
