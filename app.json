@@ -4,6 +4,7 @@
     "backgroundColor": "#000000",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icons/icon-1024.png",
+    "version": "0.0.1",
     "plugins": [
       [
         "expo-splash-screen",

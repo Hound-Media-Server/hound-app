@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 3.15.1"
+    "version": ">= 3.15.1",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -44,6 +45,7 @@
       "channel": "preview_tv"
     },
     "production": {
+      "autoIncrement": true
     },
     "production_tv": {
       "extends": "production",
