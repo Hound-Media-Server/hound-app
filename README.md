@@ -4,7 +4,8 @@
 
 ## About
 
-This is the repo for Hound Media Server's Android, AndroidTV, iOS and tvOS apps. For the server repo, go to [here](https://github.com/houndmediaserver/hound).
+This is the repo for Hound Media Server's Android, AndroidTV, iOS and tvOS apps.
+For the server and web app repo, go [here](https://github.com/houndmediaserver/hound).
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
