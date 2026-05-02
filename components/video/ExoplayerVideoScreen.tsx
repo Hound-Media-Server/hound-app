@@ -12,7 +12,11 @@ import {
   useUpdatePlaybackProgress,
   PlayerSettings,
 } from "@/services/watchDataService";
-import Video, { ResizeMode, SelectedTrackType } from "react-native-video";
+import Video, {
+  ResizeMode,
+  SelectedTrackType,
+  TextTrackType,
+} from "react-native-video";
 import type {
   VideoRef,
   OnLoadData,
@@ -52,6 +56,7 @@ export default function ExoplayerVideoScreen(props: {
   onNextEpisode?: (settings: any) => void;
   autoplayEnabled?: boolean;
   onProgress?: (time: number, duration: number) => void;
+  externalSubtitles?: { title: string; lang: string; url: string }[];
 }) {
   const { width, height } = useWindowDimensions();
   const videoRef = useRef<VideoRef>(null);
@@ -174,15 +179,22 @@ export default function ExoplayerVideoScreen(props: {
     to make this work
   */
   const handleTextTracks = (data: OnTextTracksData) => {
-    // Convert react-native-video track format to MPV format for controls compatibility
-    // 1-indexed to follow mpv
-    // convert iso 3-letter to 2-letter
-    const tracks = data.textTracks.map((track) => ({
+    const embeddedTracks = data.textTracks.map((track) => ({
       id: track.index + 1,
-      title: track.title,
+      title: track.title || `Track ${track.index + 1}`,
       lang: track.language ? get2LetterLangCode(track.language) : undefined,
       selected: track.index + 1 === selectedTextTrack,
     }));
+    const externalTracks = (props.externalSubtitles || []).map((ext, i) => {
+      const id = embeddedTracks.length + i + 1;
+      return {
+        id: id,
+        title: ext.title,
+        lang: ext.lang ? get2LetterLangCode(ext.lang) : undefined,
+        selected: id === selectedTextTrack,
+      };
+    });
+    const tracks = [...embeddedTracks, ...externalTracks];
     if (!subtitleInitialized.current) {
       subtitleInitialized.current = true;
 
@@ -334,7 +346,15 @@ export default function ExoplayerVideoScreen(props: {
       <View style={{ width, height, backgroundColor: "black" }}>
         <Video
           ref={videoRef}
-          source={{ uri: props.src }}
+          source={{
+            uri: props.src,
+            textTracks: props.externalSubtitles?.map((s) => ({
+              title: s.title,
+              language: s.lang as any,
+              type: TextTrackType.VTT,
+              uri: s.url + "?convert=vtt",
+            })),
+          }}
           style={{ width, height }}
           paused={paused}
           resizeMode={isZoomedToFill ? ResizeMode.COVER : ResizeMode.CONTAIN}

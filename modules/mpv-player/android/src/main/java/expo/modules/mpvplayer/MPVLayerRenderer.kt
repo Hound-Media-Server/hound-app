@@ -100,6 +100,7 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
     private var pendingExternalSubtitles: List<String> = emptyList()
     private var initialSubtitleId: Int? = null
     private var initialAudioId: Int? = null
+    private var addedExternalSubtitles = mutableSetOf<String>()
     
     val isPausedState: Boolean
         get() = _isPaused
@@ -298,6 +299,7 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         currentUrl = url
         currentHeaders = headers
         pendingExternalSubtitles = externalSubtitles ?: emptyList()
+        addedExternalSubtitles.clear()
         this.initialSubtitleId = initialSubtitleId
         this.initialAudioId = initialAudioId
         
@@ -341,6 +343,23 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
     fun reloadCurrentItem() {
         currentUrl?.let { url ->
             load(url, currentHeaders)
+        }
+    }
+
+    fun updateExternalSubtitles(subtitles: List<String>) {
+        if (!isRunning) return
+        
+        if (!isReadyToSeek) {
+            pendingExternalSubtitles = subtitles
+            return
+        }
+
+        subtitles.forEach { subUrl ->
+            if (!addedExternalSubtitles.contains(subUrl)) {
+                Log.d(TAG, "Dynamically adding external subtitle: $subUrl")
+                addSubtitleFile(subUrl, false)
+                addedExternalSubtitles.add(subUrl)
+            }
         }
     }
     
@@ -661,17 +680,16 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         when (eventId) {
             MPVLib.MPV_EVENT_FILE_LOADED -> {
                 // Add external subtitles now that file is loaded
-                if (pendingExternalSubtitles.isNotEmpty()) {
-                    pendingExternalSubtitles.forEachIndexed { index, subUrl ->
-                        android.util.Log.d("MPVRenderer", "Adding external subtitle [$index]: $subUrl")
-                        // "auto" flag = add without auto-selecting (order preserved, MPVLib.command is sync)
-                        MPVLib.command(arrayOf("sub-add", subUrl, "auto"))
-                    }
-                    pendingExternalSubtitles = emptyList()
-                    
-                    // Set subtitle after external subs are added
-                    initialSubtitleId?.let { setSubtitleTrack(it) } ?: disableSubtitles()
+                pendingExternalSubtitles.forEachIndexed { index, subUrl ->
+                    Log.d(TAG, "Adding external subtitle [$index]: $subUrl")
+                    // "auto" flag = add without auto-selecting (order preserved, MPVLib.command is sync)
+                    MPVLib.command(arrayOf("sub-add", subUrl, "auto"))
+                    addedExternalSubtitles.add(subUrl)
                 }
+                pendingExternalSubtitles = emptyList()
+                
+                // Set subtitle after external subs are added
+                initialSubtitleId?.let { setSubtitleTrack(it) } ?: disableSubtitles()
                 
                 if (!isReadyToSeek) {
                     isReadyToSeek = true

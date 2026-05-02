@@ -32,6 +32,7 @@ final class MPVLayerRenderer {
     private var pendingExternalSubtitles: [String] = []
     private var initialSubtitleId: Int?
     private var initialAudioId: Int?
+    private var addedExternalSubtitles = Set<String>()
     
     private var isRunning = false
     private var isStopping = false
@@ -248,6 +249,7 @@ final class MPVLayerRenderer {
         currentURL = url
         currentHeaders = headers
         pendingExternalSubtitles = externalSubtitles ?? []
+        addedExternalSubtitles.removeAll()
         self.initialSubtitleId = initialSubtitleId
         self.initialAudioId = initialAudioId
         queue.async { [weak self] in
@@ -287,6 +289,24 @@ final class MPVLayerRenderer {
             }
             let target = url.isFileURL ? url.path : url.absoluteString
             self.command(handle, ["loadfile", target, "replace"])
+        }
+    }
+
+    func updateExternalSubtitles(_ subtitles: [String]) {
+        queue.async { [weak self] in
+            guard let self, let handle = self.mpv else { return }
+            
+            if !self.isReadyToSeek {
+                self.pendingExternalSubtitles = subtitles
+                return
+            }
+            
+            for subUrl in subtitles {
+                if !self.addedExternalSubtitles.contains(subUrl) {
+                    self.commandSync(handle, ["sub-add", subUrl, "auto"])
+                    self.addedExternalSubtitles.insert(subUrl)
+                }
+            }
         }
     }
     
@@ -410,6 +430,7 @@ final class MPVLayerRenderer {
                     // Use commandSync to ensure subs are added in exact order (not async)
                     // "auto" flag = add without auto-selecting
                     commandSync(handle, ["sub-add", subUrl, "auto"])
+                    addedExternalSubtitles.insert(subUrl)
                 }
                 pendingExternalSubtitles = []
                 // Set subtitle after external subs are added

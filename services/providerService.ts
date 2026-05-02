@@ -30,6 +30,21 @@ export const fetchProviders = async (
   return apiClient(`/${mediaType}/${id}/providers${queryString}`);
 };
 
+export const fetchSubtitles = async (
+  mediaType: MediaType | string,
+  id: string,
+  season?: number | null,
+  episode?: number | null,
+): Promise<any> => {
+  const queryParams = new URLSearchParams();
+  if (season) queryParams.append("season", season.toString());
+  if (season && episode) queryParams.append("episode", episode.toString());
+  const queryString = queryParams.toString()
+    ? `?${queryParams.toString()}`
+    : "";
+  return apiClient(`/${mediaType}/${id}/subtitles${queryString}`);
+};
+
 export const fetchUnifiedStreams = async (
   mediaType: MediaType | string,
   id: string,
@@ -122,5 +137,17 @@ export const useUnifiedStreamsMutation = () => {
         providers: null, 
       };
     },
+  });
+};
+
+export const useSubtitles = (
+  mediaType: MediaType | string,
+  id: string,
+  season?: number | null,
+  episode?: number | null
+) => {
+  return useQuery({
+    queryKey: ["subtitles", mediaType, id, season, episode],
+    queryFn: () => fetchSubtitles(mediaType, id, season, episode),
   });
 };

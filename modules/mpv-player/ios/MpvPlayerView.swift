@@ -49,6 +49,7 @@ class MpvPlayerView: ExpoView {
 	let onTracksReady = EventDispatcher()
 
 	private var currentURL: URL?
+	private var currentExternalSubtitles: [String]?
 	private var cachedPosition: Double = 0
 	private var cachedDuration: Double = 0
 	private var intendedPlayState: Bool = false
@@ -112,9 +113,16 @@ class MpvPlayerView: ExpoView {
 	func loadVideo(config: VideoLoadConfig) {
 		// Skip reload if same URL is already playing
 		if currentURL == config.url {
+			if currentExternalSubtitles != config.externalSubtitles {
+				if let subtitles = config.externalSubtitles {
+					renderer?.updateExternalSubtitles(subtitles)
+				}
+				currentExternalSubtitles = config.externalSubtitles
+			}
 			return
 		}
 		currentURL = config.url
+		currentExternalSubtitles = config.externalSubtitles
 
 		let preset = PlayerPreset(
 			id: .sdrRec709,

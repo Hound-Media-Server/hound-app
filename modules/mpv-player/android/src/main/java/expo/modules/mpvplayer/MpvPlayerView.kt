@@ -47,6 +47,7 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
     private var pipController: PiPController? = null
     
     private var currentUrl: String? = null
+    private var currentExternalSubtitles: List<String>? = null
     private var cachedPosition: Double = 0.0
     private var cachedDuration: Double = 0.0
     private var intendedPlayState: Boolean = false
@@ -127,6 +128,12 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
     fun loadVideo(config: VideoLoadConfig) {
         // Skip reload if same URL is already playing
         if (currentUrl == config.url) {
+            if (currentExternalSubtitles != config.externalSubtitles) {
+                config.externalSubtitles?.let {
+                    renderer?.updateExternalSubtitles(it)
+                }
+                currentExternalSubtitles = config.externalSubtitles
+            }
             return
         }
 
@@ -141,6 +148,7 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
     
     private fun loadVideoInternal(config: VideoLoadConfig) {
         currentUrl = config.url
+        currentExternalSubtitles = config.externalSubtitles
         
         renderer?.load(
             url = config.url,

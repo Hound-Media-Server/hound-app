@@ -45,6 +45,7 @@ export default function MPVVideoScreen(props: {
   onNextEpisode?: (settings: any) => void;
   autoplayEnabled?: boolean;
   onProgress?: (time: number, duration: number) => void;
+  externalSubtitles?: { title: string; lang: string; url: string }[];
 }) {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const videoRef = useRef<MpvPlayerViewRef>(null);
@@ -177,12 +178,29 @@ export default function MPVVideoScreen(props: {
     try {
       const subtitles = await videoRef.current?.getSubtitleTracks();
       const audio = await videoRef.current?.getAudioTracks();
+      let embeddedCount = 0;
+      if (subtitles) {
+        embeddedCount =
+          subtitles.length - (props.externalSubtitles?.length || 0);
+      }
+      const convertedSubtitles = subtitles?.map((track, index) => {
+        let lang = track.lang;
+        let title = track.title;
+        // If it's an external track, should be at end of list
+        if (props.externalSubtitles && index >= embeddedCount) {
+          const extSub = props.externalSubtitles[index - embeddedCount];
+          if (extSub) {
+            lang = extSub.lang;
+            title = extSub.title;
+          }
+        }
+        return {
+          ...track,
+          lang: lang ? get2LetterLangCode(lang) : undefined,
+          title: title,
+        };
+      });
 
-      // convert iso 3-letter to 2-letter iso codes
-      const convertedSubtitles = subtitles?.map((track) => ({
-        ...track,
-        lang: track.lang ? get2LetterLangCode(track.lang) : undefined,
-      }));
       const convertedAudio = audio?.map((track) => ({
         ...track,
         lang: track.lang ? get2LetterLangCode(track.lang) : undefined,
@@ -267,7 +285,6 @@ export default function MPVVideoScreen(props: {
 
     if (isReadyToSeek) {
       setIsReady(true);
-
       // seek to start time
       if (props.startTime) {
         try {
@@ -404,9 +421,9 @@ export default function MPVVideoScreen(props: {
           ref={videoRef}
           source={{
             url: props.src,
-            // url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
             startPosition: props.startTime,
             autoplay: true,
+            externalSubtitles: props.externalSubtitles?.map((s) => s.url),
           }}
           style={{ width: windowWidth, height: windowHeight }}
           onLoad={handleLoad}
