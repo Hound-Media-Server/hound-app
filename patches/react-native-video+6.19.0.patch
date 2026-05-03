@@ -115,10 +115,10 @@ index 59408c7..ad3ef73 100644
          val SIDELOAD_TEXT_TRACK_LANGUAGE = "language"
          val SIDELOAD_TEXT_TRACK_TITLE = "title"
 diff --git a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ExoPlayerView.kt b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ExoPlayerView.kt
-index bb945fe..7dc2298 100644
+index bb945fe..efb2ef2 100644
 --- a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ExoPlayerView.kt
 +++ b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ExoPlayerView.kt
-@@ -2,6 +2,7 @@ package com.brentvatne.exoplayer
+@@ -2,19 +2,27 @@ package com.brentvatne.exoplayer
  
  import android.content.Context
  import android.graphics.Color
@@ -126,18 +126,27 @@ index bb945fe..7dc2298 100644
  import android.graphics.drawable.GradientDrawable
  import android.util.AttributeSet
  import android.view.View
-@@ -13,8 +14,10 @@ import androidx.media3.common.Timeline
+ import android.view.View.MeasureSpec
+ import android.widget.FrameLayout
+ import android.widget.TextView
++import androidx.media3.common.C
++import androidx.media3.common.MimeTypes
+ import androidx.media3.common.Player
+ import androidx.media3.common.Timeline
++import androidx.media3.common.text.Cue
++import androidx.media3.common.text.CueGroup
  import androidx.media3.common.util.UnstableApi
  import androidx.media3.exoplayer.ExoPlayer
  import androidx.media3.ui.AspectRatioFrameLayout
 +import androidx.media3.ui.CaptionStyleCompat
  import androidx.media3.ui.DefaultTimeBar
  import androidx.media3.ui.PlayerView
++import androidx.media3.ui.SubtitleView
 +import android.view.ViewGroup
  import com.brentvatne.common.api.ResizeMode
  import com.brentvatne.common.api.SubtitleStyle
  
-@@ -109,13 +112,37 @@ class ExoPlayerView @JvmOverloads constructor(context: Context, attrs: Attribute
+@@ -109,13 +117,37 @@ class ExoPlayerView @JvmOverloads constructor(context: Context, attrs: Attribute
  
      fun setSubtitleStyle(style: SubtitleStyle) {
          playerView.subtitleView?.let { subtitleView ->
@@ -180,6 +189,47 @@ index bb945fe..7dc2298 100644
              }
  
              subtitleView.setPadding(
+@@ -131,6 +163,7 @@ class ExoPlayerView @JvmOverloads constructor(context: Context, attrs: Attribute
+             } else {
+                 subtitleView.visibility = android.view.View.GONE
+             }
++            subtitleView.setBottomPaddingFraction(0.05f)
+         }
+         localStyle = style
+     }
+@@ -250,10 +283,32 @@ class ExoPlayerView @JvmOverloads constructor(context: Context, attrs: Attribute
+                 requestLayout()
+             }
+         }
++
++        /**
++         * Detect and reposition cues that are at the WebVTT "auto" default position.
++         * since this ignores setBottomPaddingFraction() and squishes subtitle
++         * to the bottom without margin by default
++         * https://www.w3.org/TR/webvtt1/#webvtt-cue-line-automatic
++         * https://github.com/google/ExoPlayer/issues/7934
++         */
++        override fun onCues(cueGroup: CueGroup) {
++            val paddedCues = cueGroup.cues.map { cue ->
++                if (cue.line == -1f && cue.lineType == Cue.LINE_TYPE_NUMBER) {
++                    cue.buildUpon()
++                        .setLine(SUBTITLE_BOTTOM_FRACTION, Cue.LINE_TYPE_FRACTION)
++                        .setLineAnchor(Cue.ANCHOR_TYPE_END)
++                        .build()
++                } else {
++                    cue
++                }
++            }
++            playerView.subtitleView?.setCues(paddedCues)
++        }
+     }
+ 
+     companion object {
+         private const val TAG = "ExoPlayerView"
++        private const val SUBTITLE_BOTTOM_FRACTION = 0.95f
+     }
+ 
+     /**
 diff --git a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java
 index e16ac96..563920c 100644
 --- a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java
