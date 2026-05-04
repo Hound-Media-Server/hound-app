@@ -139,6 +139,7 @@ export default function Stream() {
     id as string,
     season ? parseInt(season as string, 10) : null,
     episode ? parseInt(episode as string, 10) : null,
+    appSettings.enableExternalSubtitles,
   );
 
   const externalSubtitles = useMemo(() => {

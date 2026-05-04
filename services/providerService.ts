@@ -144,10 +144,12 @@ export const useSubtitles = (
   mediaType: MediaType | string,
   id: string,
   season?: number | null,
-  episode?: number | null
+  episode?: number | null,
+  enabled: boolean = false,
 ) => {
   return useQuery({
     queryKey: ["subtitles", mediaType, id, season, episode],
     queryFn: () => fetchSubtitles(mediaType, id, season, episode),
+    enabled,
   });
 };
