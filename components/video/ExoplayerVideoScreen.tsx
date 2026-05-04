@@ -179,22 +179,23 @@ export default function ExoplayerVideoScreen(props: {
     to make this work
   */
   const handleTextTracks = (data: OnTextTracksData) => {
-    const embeddedTracks = data.textTracks.map((track) => ({
+    const tracks = data.textTracks.map((track) => ({
       id: track.index + 1,
       title: track.title || `Track ${track.index + 1}`,
       lang: track.language ? get2LetterLangCode(track.language) : undefined,
       selected: track.index + 1 === selectedTextTrack,
     }));
-    const externalTracks = (props.externalSubtitles || []).map((ext, i) => {
-      const id = embeddedTracks.length + i + 1;
-      return {
-        id: id,
-        title: ext.title,
-        lang: ext.lang ? get2LetterLangCode(ext.lang) : undefined,
-        selected: id === selectedTextTrack,
-      };
-    });
-    const tracks = [...embeddedTracks, ...externalTracks];
+    // patched in upstream instead, previously tracks didn't return all tracks
+    // const externalTracks = (props.externalSubtitles || []).map((ext, i) => {
+    //   const id = embeddedTracks.length + i + 1;
+    //   return {
+    //     id: id,
+    //     title: ext.title,
+    //     lang: ext.lang ? get2LetterLangCode(ext.lang) : undefined,
+    //     selected: id === selectedTextTrack,
+    //   };
+    // });
+    // const tracks = [...embeddedTracks, ...externalTracks];
     if (!subtitleInitialized.current) {
       subtitleInitialized.current = true;
 
