@@ -235,9 +235,6 @@ export default function MPVVideoScreen(props: {
         subtitles.length > (embeddedTracksCount.current ?? 0);
       const isComplete = externalCount === 0 || hasExternalTracks;
 
-      console.log("ext", externalCount);
-      console.log("converted", convertedSubtitles);
-
       if (!defaultSubtitleSelected.current) {
         targetSub = currentSub;
         if (

@@ -145,8 +145,8 @@ export default function Stream() {
   const externalSubtitles = useMemo(() => {
     if (!subtitlesData?.data?.subtitles) return [];
     const flattened: any[] = [];
-    subtitlesData.data.subtitles.forEach((provider: any) => {
-      provider.subtitles.forEach((sub: any) => {
+    subtitlesData.data.subtitles?.forEach((provider: any) => {
+      provider.subtitles?.forEach((sub: any) => {
         flattened.push({
           title: sub.title,
           lang: sub.lang,
