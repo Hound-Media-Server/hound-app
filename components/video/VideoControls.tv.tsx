@@ -51,6 +51,7 @@ interface VideoControlsProps {
   hasNextEpisode?: boolean;
   onNextEpisode?: () => void;
   autoplayEnabled?: boolean;
+  streamData?: any;
 }
 
 export default function VideoControlsTV({
@@ -76,10 +77,12 @@ export default function VideoControlsTV({
   hasNextEpisode,
   onNextEpisode,
   autoplayEnabled,
+  streamData,
 }: VideoControlsProps) {
   const [controlsVisible, setControlsVisible] = useState(true);
   const [showSubtitlesModal, setShowSubtitlesModal] = useState(false);
   const [showAudioModal, setShowAudioModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [sliderFocused, setSliderFocused] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
@@ -193,7 +196,8 @@ export default function VideoControlsTV({
     setIsSeeking(false);
   };
 
-  const isModalOpen = showSubtitlesModal || showAudioModal || showSettingsModal;
+  const isModalOpen =
+    showSubtitlesModal || showAudioModal || showInfoModal || showSettingsModal;
 
   return (
     <View style={styles.overlay}>
@@ -321,6 +325,20 @@ export default function VideoControlsTV({
                   color="white"
                 />
               </FocusablePressable>
+
+              {streamData && (
+                <FocusablePressable
+                  focusable
+                  style={styles.iconButton}
+                  onPress={() => setShowInfoModal(true)}
+                >
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={24}
+                    color="white"
+                  />
+                </FocusablePressable>
+              )}
 
               <FocusablePressable
                 focusable
@@ -469,6 +487,41 @@ export default function VideoControlsTV({
         </Pressable>
       </Modal>
 
+      {/* Info Modal */}
+      <Modal
+        visible={showInfoModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowInfoModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowInfoModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Stream Info</Text>
+            <ScrollView>
+              {streamData && (
+                <>
+                  <Text className="text-gray-200 text-lg">
+                    {streamData.title}
+                  </Text>
+                  <Text className="text-gray-500">
+                    {streamData.description}
+                  </Text>
+                  <Text className="text-gray-300">
+                    Provider: {streamData.provider_profile_name}
+                  </Text>
+                  <Text className="text-gray-300">
+                    Protocol: {streamData.stream_protocol}
+                  </Text>
+                </>
+              )}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
+
       {/* Settings Modal */}
       <Modal
         visible={showSettingsModal}
@@ -482,7 +535,6 @@ export default function VideoControlsTV({
         >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Settings</Text>
-            <Text style={styles.modalItemText}>Player: {player}</Text>
             <ScrollView>
               {onChangePlayer && (
                 <TouchableOpacity

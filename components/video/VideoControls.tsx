@@ -8,6 +8,7 @@ import {
   ScrollView,
   Platform,
   StyleSheet,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getName as getLanguageName } from "@cospired/i18n-iso-languages";
@@ -48,6 +49,7 @@ interface VideoControlsProps {
   hasNextEpisode?: boolean;
   onNextEpisode?: () => void;
   autoplayEnabled?: boolean;
+  streamData?: any;
 }
 
 export default function VideoControls({
@@ -73,10 +75,12 @@ export default function VideoControls({
   hasNextEpisode,
   onNextEpisode,
   autoplayEnabled,
+  streamData,
 }: VideoControlsProps) {
   const [showControls, setShowControls] = useState(true);
   const [showSubtitlesModal, setShowSubtitlesModal] = useState(false);
   const [showAudioModal, setShowAudioModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
   const [autoplayCanceled, setAutoplayCanceled] = useState(false);
@@ -156,6 +160,28 @@ export default function VideoControls({
                 <Ionicons name="arrow-back" size={28} color="white" />
               </TouchableOpacity>
               <View style={styles.topBarRight}>
+                {streamData && (
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => setShowInfoModal(true)}
+                  >
+                    <Ionicons
+                      name="information-circle-outline"
+                      size={24}
+                      color="white"
+                    />
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => setShowInfoModal(true)}
+                >
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={24}
+                    color="white"
+                  />
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => setShowSettingsModal(true)}
@@ -376,6 +402,43 @@ export default function VideoControls({
         </Pressable>
       </Modal>
 
+      {/* Info Modal */}
+      <Modal
+        visible={showInfoModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowInfoModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowInfoModal(false)}
+        >
+          <TouchableWithoutFeedback>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Stream Info</Text>
+              <ScrollView>
+                {streamData && (
+                  <>
+                    <Text className="text-gray-200 text-lg">
+                      {streamData.title}
+                    </Text>
+                    <Text className="text-gray-500">
+                      {streamData.description}
+                    </Text>
+                    <Text className="text-gray-300">
+                      Provider: {streamData.provider_profile_name}
+                    </Text>
+                    <Text className="text-gray-300">
+                      Protocol: {streamData.stream_protocol}
+                    </Text>
+                  </>
+                )}
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
+        </Pressable>
+      </Modal>
+
       {/* Settings Modal */}
       <Modal
         visible={showSettingsModal}
@@ -387,33 +450,36 @@ export default function VideoControls({
           style={styles.modalOverlay}
           onPress={() => setShowSettingsModal(false)}
         >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Settings</Text>
-            <Text style={styles.modalItemText}>Player: {player}</Text>
-            <ScrollView>
-              {onChangePlayer && (
-                <TouchableOpacity
-                  style={styles.modalItem}
-                  onPress={() => {
-                    const otherPlayer = player === "mpv" ? "exoplayer" : "mpv";
-                    onChangePlayer(otherPlayer, currentTime, {
-                      subtitle_idx: selectedTextTrack,
-                      audio_idx: selectedAudioTrack,
-                      resize_mode: isZoomedToFill ? "cover" : "contain",
-                    });
-                    setShowSettingsModal(false);
-                  }}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.modalItemText}>
-                      Switch to {player === "mpv" ? "ExoPlayer" : "MPV"}
-                    </Text>
-                  </View>
-                  <Ionicons name="swap-horizontal" size={24} color="white" />
-                </TouchableOpacity>
-              )}
-            </ScrollView>
-          </View>
+          <TouchableWithoutFeedback>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Settings</Text>
+              <Text style={styles.modalItemText}>Player: {player}</Text>
+              <ScrollView>
+                {onChangePlayer && (
+                  <TouchableOpacity
+                    style={styles.modalItem}
+                    onPress={() => {
+                      const otherPlayer =
+                        player === "mpv" ? "exoplayer" : "mpv";
+                      onChangePlayer(otherPlayer, currentTime, {
+                        subtitle_idx: selectedTextTrack,
+                        audio_idx: selectedAudioTrack,
+                        resize_mode: isZoomedToFill ? "cover" : "contain",
+                      });
+                      setShowSettingsModal(false);
+                    }}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.modalItemText}>
+                        Switch to {player === "mpv" ? "ExoPlayer" : "MPV"}
+                      </Text>
+                    </View>
+                    <Ionicons name="swap-horizontal" size={24} color="white" />
+                  </TouchableOpacity>
+                )}
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
         </Pressable>
       </Modal>
     </>
