@@ -80,6 +80,17 @@ export const fetchUnifiedStreams = async (
   };
 };
 
+export const fetchDecodeStreams = async (
+  encodedData: string
+) => {
+  return apiClient<any>(`/decode`, {
+    method: "POST",
+    body: JSON.stringify({
+      encoded_data: encodedData,
+    }),
+  });
+};
+
 export const useMediaFiles = (
   mediaType: MediaType | string,
   id: string,
@@ -151,5 +162,15 @@ export const useSubtitles = (
     queryKey: ["subtitles", mediaType, id, season, episode],
     queryFn: () => fetchSubtitles(mediaType, id, season, episode),
     enabled,
+  });
+};
+
+export const useDecodeStreams = (
+  encodedData: string
+) => {
+  return useQuery({
+    queryKey: ["decode", encodedData],
+    queryFn: () => fetchDecodeStreams(encodedData),
+    enabled: !!encodedData,
   });
 };

@@ -20,6 +20,7 @@ import {
 import {
   fetchMediaFiles,
   fetchProviders,
+  useDecodeStreams,
   useSubtitles,
 } from "@/services/providerService";
 import { getStreamUrl } from "@/utils/navigation";
@@ -47,6 +48,7 @@ export default function Stream() {
     streamsMatch,
     playerSettings,
   } = useLocalSearchParams();
+  const { data: decodedStreams } = useDecodeStreams(encoded_data as string);
   const { session } = useSession();
   const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
   const [currentProgress, setCurrentProgress] = useState<number>(
@@ -378,6 +380,7 @@ export default function Stream() {
           autoplayEnabled={autoplayEnabled && !!nextEpisodeInfo}
           onProgress={handleProgress}
           externalSubtitles={externalSubtitles}
+          streamData={decodedStreams?.data}
         />
       ) : (
         <VideoScreen
@@ -400,6 +403,7 @@ export default function Stream() {
           autoplayEnabled={autoplayEnabled && !!nextEpisodeInfo}
           onProgress={handleProgress}
           externalSubtitles={externalSubtitles}
+          streamData={decodedStreams?.data}
         />
       )}
     </View>
