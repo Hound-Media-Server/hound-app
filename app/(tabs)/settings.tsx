@@ -39,6 +39,8 @@ export default function Settings() {
     string | undefined
   >(undefined);
   const [autoplayNextEpisode, setAutoplayNextEpisode] = useState<boolean>(true);
+  const [enableExternalSubtitles, setEnableExternalSubtitles] =
+    useState<boolean>(false);
   const openModal = useModalStore((s) => s.open);
 
   async function onFetchUpdateAsync() {
@@ -66,6 +68,7 @@ export default function Settings() {
     setDefaultSubtitleLanguage(getSetting("defaultSubtitleLanguage"));
     const autoplay = getSetting("autoplayNextEpisode");
     setAutoplayNextEpisode(autoplay !== undefined ? autoplay : true);
+    setEnableExternalSubtitles(!!getSetting("enableExternalSubtitles"));
   }, []);
 
   const handleSetPlayer = (newPlayer: "mpv" | "exoplayer") => {
@@ -119,6 +122,12 @@ export default function Settings() {
     setAutoplayNextEpisode(newValue);
   };
 
+  const handleToggleExternalSubtitles = () => {
+    const newValue = !enableExternalSubtitles;
+    setSetting("enableExternalSubtitles", newValue);
+    setEnableExternalSubtitles(newValue);
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-black items-center justify-center">
       <ScrollView
@@ -163,6 +172,11 @@ export default function Settings() {
             Subtitle Language: {defaultSubtitleLanguage}
           </ThemedText>
         </PressableSetting>
+        <PressableSetting onPress={() => handleToggleExternalSubtitles()}>
+          <ThemedText className="text-white">
+            Enable External Subtitles: {enableExternalSubtitles ? "On" : "Off"}
+          </ThemedText>
+        </PressableSetting>
         {
           // for ios, only use mpv, since the AVPlayer is quite weak
           Platform.OS !== "ios" && (
@@ -174,14 +188,15 @@ export default function Settings() {
               }}
             >
               <ThemedText className="text-white">
-                Player: {defaultPlayer}
+                Default Player: {defaultPlayer}
               </ThemedText>
             </PressableSetting>
           )
         }
         <PressableSetting onPress={() => handleTogglePlayAction()}>
           <ThemedText className="text-white">
-            PlayAction: {playAction}
+            Play Action:{" "}
+            {playAction === "direct" ? "Direct Play" : "Select Stream"}
           </ThemedText>
         </PressableSetting>
         <PressableSetting onPress={() => handleToggleShowResizeMode()}>

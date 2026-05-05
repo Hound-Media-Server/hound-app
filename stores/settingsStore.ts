@@ -11,6 +11,7 @@ export type SettingsSchema = {
   defaultMovieResizeMode?: "cover" | "contain";
   subtitleSize?: number;
   autoplayNextEpisode?: boolean;
+  enableExternalSubtitles?: boolean;
 };
 
 const DEFAULTS: SettingsSchema = {
@@ -22,6 +23,7 @@ const DEFAULTS: SettingsSchema = {
   defaultMovieResizeMode: "contain",
   subtitleSize: 24,
   autoplayNextEpisode: true,
+  enableExternalSubtitles: false,
 };
 
 const STORAGE_KEY = "@app_settings";

@@ -17,7 +17,11 @@ import {
   useSeasonDetails,
   useShowDetails,
 } from "@/services/mediaDetailsService";
-import { fetchMediaFiles, fetchProviders } from "@/services/providerService";
+import {
+  fetchMediaFiles,
+  fetchProviders,
+  useSubtitles,
+} from "@/services/providerService";
 import { getStreamUrl } from "@/utils/navigation";
 import {
   MediaTypeMovie,
@@ -129,6 +133,29 @@ export default function Stream() {
       });
     }
   }, [mediaType, movieDetails, showDetails, seasonDetails]);
+
+  const { data: subtitlesData } = useSubtitles(
+    mediaType as string,
+    id as string,
+    season ? parseInt(season as string, 10) : null,
+    episode ? parseInt(episode as string, 10) : null,
+    appSettings.enableExternalSubtitles,
+  );
+
+  const externalSubtitles = useMemo(() => {
+    if (!subtitlesData?.data?.subtitles) return [];
+    const flattened: any[] = [];
+    subtitlesData.data.subtitles.forEach((provider: any) => {
+      provider.subtitles.forEach((sub: any) => {
+        flattened.push({
+          title: sub.title,
+          lang: sub.lang,
+          url: `${session?.host}/api/v1/subtitle/${sub.encoded_data}`,
+        });
+      });
+    });
+    return flattened;
+  }, [subtitlesData, session?.host]);
 
   const defaultAudioLang = useMemo(() => {
     if (mediaType === MediaTypeMovie) {
@@ -350,6 +377,7 @@ export default function Stream() {
           onNextEpisode={(settings: any) => handleNextEpisode(settings, false)}
           autoplayEnabled={autoplayEnabled && !!nextEpisodeInfo}
           onProgress={handleProgress}
+          externalSubtitles={externalSubtitles}
         />
       ) : (
         <VideoScreen
@@ -371,6 +399,7 @@ export default function Stream() {
           onNextEpisode={(settings: any) => handleNextEpisode(settings, false)}
           autoplayEnabled={autoplayEnabled && !!nextEpisodeInfo}
           onProgress={handleProgress}
+          externalSubtitles={externalSubtitles}
         />
       )}
     </View>
