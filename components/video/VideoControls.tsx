@@ -160,6 +160,18 @@ export default function VideoControls({
                 <Ionicons name="arrow-back" size={28} color="white" />
               </TouchableOpacity>
               <View style={styles.topBarRight}>
+                {streamData && (
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => setShowInfoModal(true)}
+                  >
+                    <Ionicons
+                      name="information-circle-outline"
+                      size={24}
+                      color="white"
+                    />
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => setShowInfoModal(true)}

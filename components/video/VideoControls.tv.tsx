@@ -326,17 +326,19 @@ export default function VideoControlsTV({
                 />
               </FocusablePressable>
 
-              <FocusablePressable
-                focusable
-                style={styles.iconButton}
-                onPress={() => setShowInfoModal(true)}
-              >
-                <Ionicons
-                  name="information-circle-outline"
-                  size={24}
-                  color="white"
-                />
-              </FocusablePressable>
+              {streamData && (
+                <FocusablePressable
+                  focusable
+                  style={styles.iconButton}
+                  onPress={() => setShowInfoModal(true)}
+                >
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={24}
+                    color="white"
+                  />
+                </FocusablePressable>
+              )}
 
               <FocusablePressable
                 focusable
