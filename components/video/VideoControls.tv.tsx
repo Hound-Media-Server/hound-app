@@ -373,6 +373,7 @@ export default function VideoControlsTV({
 
       {/* Subtitles Modal */}
       <Modal
+        supportedOrientations={["portrait", "landscape"]}
         visible={showSubtitlesModal}
         transparent
         animationType="fade"
@@ -436,6 +437,7 @@ export default function VideoControlsTV({
 
       {/* Audio Track Modal */}
       <Modal
+        supportedOrientations={["portrait", "landscape"]}
         visible={showAudioModal}
         transparent
         animationType="fade"
@@ -489,6 +491,7 @@ export default function VideoControlsTV({
 
       {/* Info Modal */}
       <Modal
+        supportedOrientations={["portrait", "landscape"]}
         visible={showInfoModal}
         transparent
         animationType="fade"
@@ -524,6 +527,7 @@ export default function VideoControlsTV({
 
       {/* Settings Modal */}
       <Modal
+        supportedOrientations={["portrait", "landscape"]}
         visible={showSettingsModal}
         transparent
         animationType="fade"

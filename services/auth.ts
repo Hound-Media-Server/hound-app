@@ -6,7 +6,7 @@ export interface LoginResponse {
   data: {
     token: string;
     username: string;
-  }
+  };
 }
 
 const clientID = "hound-app";
@@ -23,9 +23,10 @@ export async function login(
   }
   baseUrl = baseUrl.replace(/\/$/, "");
 
-  // platforms: web, android-mobile, android-tv, ios, ipados, tvos
+  // platforms: web, android-mobile, android-tv
   let platform = Platform.OS as string;
-  if (Platform.isTVOS) platform = "tvos";
+  if (Platform.isTVOS) platform = "ios-tv"; // tvos
+  if (Platform.OS === "ios" && !Platform.isTV) platform = "ios-mobile";
   if (Platform.OS === "android" && Platform.isTV) platform = "android-tv";
   if (Platform.OS === "android" && !Platform.isTV) platform = "android-mobile";
 

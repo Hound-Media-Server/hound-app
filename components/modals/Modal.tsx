@@ -47,6 +47,7 @@ export function ContextModal({
 
   return (
     <Modal
+      supportedOrientations={["portrait", "landscape"]}
       visible={visible}
       transparent
       animationType="fade"
