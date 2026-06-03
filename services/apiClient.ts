@@ -38,7 +38,9 @@ export async function apiClient<T>(
   // Convert /tvshow/ to /tv/ for API endpoints, easier to do
   const finalEndpoint = endpoint.replace("/tvshow/", "/tv/");
   const url = `${host}/api/v1${finalEndpoint}`;
+  // 'omit' to stop cookies being sent, we use auth header instead
   const response = await fetch(url, {
+    credentials: "omit",
     ...options,
     headers: {
       "Content-Type": "application/json",

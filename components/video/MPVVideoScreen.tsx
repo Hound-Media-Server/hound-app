@@ -333,7 +333,12 @@ export default function MPVVideoScreen(props: {
   const handleProgress = (event: any) => {
     const { position, duration: dur } = event.nativeEvent;
     setCurrentTime(position);
-    if (dur) setDuration(dur);
+    if (dur) {
+      setDuration(dur);
+      if (!isReady && dur > 0) {
+        setIsReady(true);
+      }
+    }
     if (props.onProgress) {
       props.onProgress(position, dur || duration);
     }

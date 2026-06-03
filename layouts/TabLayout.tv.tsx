@@ -1,8 +1,9 @@
 import { ThemedText } from "@/components/ThemedText";
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Pressable, TVFocusGuideView, View } from "react-native";
+import { useSession } from "@/services/ctx";
 
 function TVTabBar({
   state,
@@ -17,6 +18,8 @@ function TVTabBar({
   const [tabBarFocused, setTabBarFocused] = useState<boolean>(false);
   const fadeAnimation = useRef(new Animated.Value(0.4)).current;
   const [selectedTabNode, setSelectedTabNode] = useState<any>(null);
+  const { session } = useSession();
+  const router = useRouter();
 
   useEffect(() => {
     setSelectedTabNode(tabRefs.current[state.index] ?? null);
@@ -30,17 +33,23 @@ function TVTabBar({
     }).start();
   }, [tabBarFocused, fadeAnimation]);
 
+  const initial = session?.username
+    ? session.username.charAt(0).toUpperCase()
+    : "?";
+
   return (
-    <View className="absolute top-5 left-10 right-0 z-50">
+    <View
+      className="absolute top-5 left-10 right-10 z-50 flex-row justify-between items-center"
+      onFocus={() => {
+        setTabBarFocused(true);
+      }}
+      onBlur={() => {
+        setTabBarFocused(false);
+      }}
+    >
       <TVFocusGuideView
         autoFocus
         destinations={selectedTabNode ? [selectedTabNode] : undefined}
-        onFocus={() => {
-          setTabBarFocused(true);
-        }}
-        onBlur={() => {
-          setTabBarFocused(false);
-        }}
       >
         <Animated.View
           className="self-start flex-row bg-black/50 rounded-full overflow-hidden p-2"
@@ -98,6 +107,18 @@ function TVTabBar({
           })}
         </Animated.View>
       </TVFocusGuideView>
+
+      <Animated.View style={{ opacity: fadeAnimation }}>
+        <Pressable
+          className="w-10 h-10 rounded-full bg-gray-600 justify-center items-center border-2 border-transparent focus:border-white active:scale-95"
+          onPress={() => router.push("/profile-select")}
+          focusable={true}
+        >
+          <ThemedText className="text-white font-bold uppercase text-base">
+            {initial}
+          </ThemedText>
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }

@@ -7,6 +7,7 @@ import { getSelectStreamUrl } from "@/utils/navigation";
 import { FocusItem, useFocusStore } from "@/stores/focusStore";
 import { useModalStore } from "@/stores/modalStore";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
+import { getYear } from "@/utils/dateUtils";
 
 export default function ContinueWatchingCard({
   item,
@@ -47,7 +48,10 @@ export default function ContinueWatchingCard({
     if (mediaType === MediaTypeTVShow) {
       title = `S${wp.season_number}E${wp.episode_number} | ${wp?.media_title}`;
     }
-    subtitle = mediaType === MediaTypeTVShow ? wp.episode_title : "";
+    subtitle =
+      mediaType === MediaTypeTVShow
+        ? `"${wp.episode_title}"`
+        : getYear(wp.release_date);
     imgSource = wp?.thumbnail_uri;
   } else if (item.watch_action_type == "next_episode") {
     const nextEp = item.next_episode;
@@ -56,7 +60,7 @@ export default function ContinueWatchingCard({
     if (mediaType === MediaTypeTVShow) {
       title = `S${nextEp.season_number}E${nextEp.episode_number} | ${nextEp?.media_title}`;
     }
-    subtitle = mediaType === MediaTypeTVShow ? nextEp.episode_title : "";
+    subtitle = mediaType === MediaTypeTVShow ? `"${nextEp.episode_title}"` : "";
     imgSource = nextEp?.thumbnail_uri;
   } else {
     return <></>;
@@ -175,7 +179,7 @@ export default function ContinueWatchingCard({
                 className="text-gray-400 text-sm text-start"
                 numberOfLines={1}
               >
-                "{subtitle}"
+                {subtitle}
               </ThemedText>
             )}
           </View>

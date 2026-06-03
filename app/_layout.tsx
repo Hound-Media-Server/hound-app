@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { SessionProvider, useSession } from "../services/ctx";
 import ToastManager from "toastify-react-native";
 import "./../global.css";
@@ -32,69 +32,86 @@ SplashScreen.preventAutoHideAsync();
 cssInterop(Image, { className: "style" });
 cssInterop(ImageBackground, { className: "style" });
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 3,
-    },
-  },
-});
-
 function RootLayoutNav() {
-  const { session, isLoading } = useSession();
+  const { session, isLoading, profiles } = useSession();
   const segments = useSegments();
   const router = useRouter();
+
+  const queryClient = useMemo(() => {
+    return new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: 3,
+        },
+      },
+    });
+  }, [session?.username, session?.host]);
 
   useEffect(() => {
     if (isLoading) return;
     const inSignIn = segments[0] === "sign-in";
+    const inProfileSelect = segments[0] === "profile-select";
 
-    if (!session && !inSignIn) {
-      router.replace("/sign-in");
-    } else if (session && inSignIn) {
-      router.replace("/");
+    if (profiles.length === 0) {
+      if (!inSignIn) {
+        router.replace("/sign-in");
+      }
+    } else {
+      if (!session) {
+        if (!inProfileSelect && !inSignIn) {
+          router.replace("/profile-select");
+        }
+      } else {
+        if (inSignIn) {
+          router.replace("/");
+        }
+      }
     }
-  }, [session, segments, isLoading]);
+  }, [session, profiles, segments, isLoading]);
 
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="movie/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="tv/[id]" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="stream/[encoded_data]"
-        options={{
-          headerShown: false,
-          presentation: "modal",
-          animation: "fade",
-        }}
-      />
-      <Stack.Screen name="sign-in" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="(modals)/select-stream"
-        options={{
-          headerShown: false,
-          presentation: "modal",
-          animation: "fade",
-        }}
-      />
-      <Stack.Screen
-        name="(modals)/add-to-collection"
-        options={{
-          headerShown: false,
-          presentation: "transparentModal",
-          animation: "fade",
-        }}
-      />
-      <Stack.Screen
-        name="(modals)/seasons"
-        options={{
-          headerShown: false,
-          presentation: "modal",
-          animation: "fade",
-        }}
-      />
-    </Stack>
+    <QueryClientProvider client={queryClient}>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="movie/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="tv/[id]" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="stream/[encoded_data]"
+          options={{
+            headerShown: false,
+            presentation: "modal",
+            animation: "fade",
+          }}
+        />
+        <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+        <Stack.Screen name="profile-select" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="(modals)/select-stream"
+          options={{
+            headerShown: false,
+            presentation: "modal",
+            animation: "fade",
+          }}
+        />
+        <Stack.Screen
+          name="(modals)/add-to-collection"
+          options={{
+            headerShown: false,
+            presentation: "transparentModal",
+            animation: "fade",
+          }}
+        />
+        <Stack.Screen
+          name="(modals)/seasons"
+          options={{
+            headerShown: false,
+            presentation: "modal",
+            animation: "fade",
+          }}
+        />
+      </Stack>
+      <GlobalModalHost />
+    </QueryClientProvider>
   );
 }
 
@@ -124,11 +141,8 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SessionProvider>
-        <QueryClientProvider client={queryClient}>
-          <StatusBar style="light" translucent backgroundColor="transparent" />
-          <RootLayoutNav />
-          <GlobalModalHost />
-        </QueryClientProvider>
+        <StatusBar style="light" translucent backgroundColor="transparent" />
+        <RootLayoutNav />
         <ToastManager theme="dark" showProgressBar={false} useModal={false} />
       </SessionProvider>
     </SafeAreaProvider>

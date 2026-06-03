@@ -12,13 +12,15 @@ import {
 import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSession } from "@/services/ctx";
+import { useRouter } from "expo-router";
 import { getSetting, setSetting } from "@/stores/settingsStore";
 import * as Updates from "expo-updates";
 import { ThemedText } from "@/components/ThemedText";
 import { useModalStore } from "@/stores/modalStore";
 
 export default function Settings() {
-  const { signOut } = useSession();
+  const { signOut, session } = useSession();
+  const router = useRouter();
   const [defaultPlayer, setDefaultPlayer] = useState<string | undefined>(
     undefined,
   );
@@ -221,6 +223,11 @@ export default function Settings() {
         <PressableSetting onPress={() => handleToggleAutoplay()}>
           <ThemedText className="text-white">
             Autoplay Next Episode: {autoplayNextEpisode ? "On" : "Off"}
+          </ThemedText>
+        </PressableSetting>
+        <PressableSetting onPress={() => router.push("/profile-select")}>
+          <ThemedText className="text-white">
+            Switch Profile ({session?.username}@{session?.host})
           </ThemedText>
         </PressableSetting>
         <PressableSetting onPress={signOut}>

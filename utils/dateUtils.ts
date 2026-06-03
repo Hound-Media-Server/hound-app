@@ -67,3 +67,15 @@ export const formatRelativeTime = (
     return "";
   }
 };
+
+export const getYear = (isoString: string): string => {
+  if (!isoString) return "";
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return "";
+    return date.getFullYear().toString();
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return "";
+  }
+};
