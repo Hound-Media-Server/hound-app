@@ -104,9 +104,11 @@ export default function Profiles() {
               onPress={() => setIsAdding(true)}
               focusable={Platform.isTV}
             >
-              <Text className="text-white text-lg font-bold">
-                + Add Profile
-              </Text>
+              <View className="flex-1 items-center justify-center">
+                <Text className="text-white text-lg font-semibold">
+                  + Add Profile
+                </Text>
+              </View>
             </FocusablePressable>
           </View>
         ) : (
