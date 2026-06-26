@@ -308,15 +308,16 @@ export default function MPVVideoScreen(props: {
     } catch (error) {
       console.error("Error getting tracks:", error);
     }
+    if (!isReady) {
+      setIsReady(true);
+    }
   };
 
   const handlePlaybackStateChange = async (event: any) => {
     const { isPaused, isReadyToSeek } = event.nativeEvent;
-
     if (isPaused !== undefined) {
       setPaused(isPaused);
     }
-
     if (isReadyToSeek) {
       setIsReady(true);
       // seek to start time
