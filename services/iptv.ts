@@ -25,14 +25,14 @@ export const useXtreamCategories = (iptvProviderID: number) => {
   });
 };
 
-const fetchXtreamChannels = (iptvProviderID: number | null, categoryID: number | null): Promise<any> => {
+const fetchXtreamChannels = (iptvProviderID: number, categoryID: number): Promise<any> => {
     return apiClient(`/live/${iptvProviderID}/channels?category_id=${categoryID}`)
 }
 
 export const useXtreamChannels = (iptvProviderID: number | null, categoryID: number | null) => {
     return useQuery({
         queryKey: ["xtream-channels", iptvProviderID, categoryID],
-        queryFn: () => fetchXtreamChannels(iptvProviderID, categoryID),
+        queryFn: () => fetchXtreamChannels(iptvProviderID as number, categoryID as number),
         enabled: iptvProviderID !== null && categoryID !== null,
         select: (data: any) => data.data,
     })

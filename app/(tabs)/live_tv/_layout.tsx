@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 
-export default function CollectionsLayout() {
+export default function LiveTVLayout() {
   return (
     <Stack
       screenOptions={{

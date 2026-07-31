@@ -12,16 +12,14 @@ index 0000000..bbe97e5
 +</classpath>
 diff --git a/node_modules/react-native-video/android/.gradle/8.9/checksums/checksums.lock b/node_modules/react-native-video/android/.gradle/8.9/checksums/checksums.lock
 new file mode 100644
-index 0000000..017062c
+index 0000000..22900fa
 Binary files /dev/null and b/node_modules/react-native-video/android/.gradle/8.9/checksums/checksums.lock differ
 diff --git a/node_modules/react-native-video/android/.gradle/8.9/checksums/md5-checksums.bin b/node_modules/react-native-video/android/.gradle/8.9/checksums/md5-checksums.bin
 new file mode 100644
-index 0000000..fde46a5
-Binary files /dev/null and b/node_modules/react-native-video/android/.gradle/8.9/checksums/md5-checksums.bin differ
+index 0000000..e69de29
 diff --git a/node_modules/react-native-video/android/.gradle/8.9/checksums/sha1-checksums.bin b/node_modules/react-native-video/android/.gradle/8.9/checksums/sha1-checksums.bin
 new file mode 100644
-index 0000000..c6b298b
-Binary files /dev/null and b/node_modules/react-native-video/android/.gradle/8.9/checksums/sha1-checksums.bin differ
+index 0000000..e69de29
 diff --git a/node_modules/react-native-video/android/.gradle/8.9/dependencies-accessors/gc.properties b/node_modules/react-native-video/android/.gradle/8.9/dependencies-accessors/gc.properties
 new file mode 100644
 index 0000000..e69de29
@@ -31,22 +29,22 @@ index 0000000..f76dd23
 Binary files /dev/null and b/node_modules/react-native-video/android/.gradle/8.9/fileChanges/last-build.bin differ
 diff --git a/node_modules/react-native-video/android/.gradle/8.9/fileHashes/fileHashes.lock b/node_modules/react-native-video/android/.gradle/8.9/fileHashes/fileHashes.lock
 new file mode 100644
-index 0000000..6fcd91a
+index 0000000..7b6cfdc
 Binary files /dev/null and b/node_modules/react-native-video/android/.gradle/8.9/fileHashes/fileHashes.lock differ
 diff --git a/node_modules/react-native-video/android/.gradle/8.9/gc.properties b/node_modules/react-native-video/android/.gradle/8.9/gc.properties
 new file mode 100644
 index 0000000..e69de29
 diff --git a/node_modules/react-native-video/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock b/node_modules/react-native-video/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock
 new file mode 100644
-index 0000000..fea87b0
+index 0000000..de08880
 Binary files /dev/null and b/node_modules/react-native-video/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock differ
 diff --git a/node_modules/react-native-video/android/.gradle/buildOutputCleanup/cache.properties b/node_modules/react-native-video/android/.gradle/buildOutputCleanup/cache.properties
 new file mode 100644
-index 0000000..4b8e7e7
+index 0000000..6bc0a08
 --- /dev/null
 +++ b/node_modules/react-native-video/android/.gradle/buildOutputCleanup/cache.properties
 @@ -0,0 +1,2 @@
-+#Thu Mar 05 21:24:46 WIB 2026
++#Fri Jul 31 09:43:18 WIB 2026
 +gradle.version=8.9
 diff --git a/node_modules/react-native-video/android/.gradle/vcs-1/gc.properties b/node_modules/react-native-video/android/.gradle/vcs-1/gc.properties
 new file mode 100644
@@ -231,7 +229,7 @@ index bb945fe..efb2ef2 100644
  
      /**
 diff --git a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java
-index e16ac96..563920c 100644
+index e16ac96..32b3df6 100644
 --- a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java
 +++ b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/ReactExoplayerView.java
 @@ -42,6 +42,7 @@ import androidx.media3.common.C;
@@ -345,9 +343,9 @@ index e16ac96..563920c 100644
 -        if (exoPlayerView == null) return;
 +        if (exoPlayerView == null)
 +            return;
- 
+         
          exoPlayerView.setControllerShowTimeoutMs(5000);
- 
+         
 @@ -461,7 +474,8 @@ public class ReactExoplayerView extends FrameLayout implements
      }
  
@@ -355,7 +353,7 @@ index e16ac96..563920c 100644
 -        if (exoPlayerView == null) return;
 +        if (exoPlayerView == null)
 +            return;
- 
+             
          exoPlayerView.setUseController(controls && !controlsConfig.getHideFullscreen());
      }
 @@ -469,7 +483,7 @@ public class ReactExoplayerView extends FrameLayout implements
@@ -394,7 +392,7 @@ index e16ac96..563920c 100644
      /**
       * Update the layout
 -     * @param view  view needs to update layout
-      * 
+      *
 -     * This is a workaround for the open bug in react-native: <a href="https://github.com/facebook/react-native/issues/17968">...</a>
 +     * @param view view needs to update layout
 +     *
@@ -542,7 +540,7 @@ index e16ac96..563920c 100644
 +                .forceEnableMediaCodecAsynchronousQueueing();
  
          DefaultMediaSourceFactory mediaSourceFactory;
- 
+         
 @@ -743,11 +770,13 @@ public class ReactExoplayerView extends FrameLayout implements
          } else {
              mediaSourceFactory = new DefaultMediaSourceFactory(mediaDataSourceFactory);
@@ -693,7 +691,7 @@ index e16ac96..563920c 100644
 @@ -1023,22 +1069,16 @@ public class ReactExoplayerView extends FrameLayout implements
              mediaItemBuilder.setMediaMetadata(customMetadata);
          }
- 
+         
 -        // Add external subtitles to MediaItem
 -        List<MediaItem.SubtitleConfiguration> subtitleConfigurations = buildSubtitleConfigurations();
 -        if (subtitleConfigurations != null) {
@@ -838,7 +836,7 @@ index e16ac96..563920c 100644
 @@ -1183,44 +1218,57 @@ public class ReactExoplayerView extends FrameLayout implements
                      }
                  }
- 
+                 
 -                MediaItem.SubtitleConfiguration.Builder configBuilder = new MediaItem.SubtitleConfiguration.Builder(track.getUri())
 +                Format.Builder formatBuilder = new Format.Builder()
 +                        .setSampleMimeType(track.getType())
@@ -846,13 +844,13 @@ index e16ac96..563920c 100644
 -                        .setMimeType(track.getType())
                          .setLabel(label)
                          .setRoleFlags(C.ROLE_FLAG_SUBTITLE);
- 
+                 
                  // Set language if available
                  if (track.getLanguage() != null && !track.getLanguage().isEmpty()) {
 -                    configBuilder.setLanguage(track.getLanguage());
 +                    formatBuilder.setLanguage(track.getLanguage());
                  }
- 
+                 
 -                // Set selection flags - make first track default if no specific track is selected
 +                // Set selection flags - make first track default if no specific track is
 +                // selected
@@ -863,7 +861,7 @@ index e16ac96..563920c 100644
 -                    configBuilder.setSelectionFlags(0);
 +                    formatBuilder.setSelectionFlags(0);
                  }
- 
+                 
 -                MediaItem.SubtitleConfiguration subtitleConfiguration = configBuilder.build();
 -                subtitleConfigurations.add(subtitleConfiguration);
 +                Format format = formatBuilder.build();
@@ -878,7 +876,7 @@ index e16ac96..563920c 100644
 +
 +                sourcesToMerge.add(
 +                        progressiveMediaSourceFactory.createMediaSource(MediaItem.fromUri(track.getUri().toString())));
- 
+                 
 -                DebugLog.d(TAG, "Created subtitle configuration: " + trackId + " - " + label + " (" + track.getType() + ")");
 +                DebugLog.d(TAG,
 +                        "Created subtitle configuration: " + trackId + " - " + label + " (" + track.getType() + ")");
@@ -1025,7 +1023,7 @@ index e16ac96..563920c 100644
                      eventEmitter.onVideoLoad.invoke(duration, currentPosition, width, height,
 -                            audioTracks, textTracks, videoTracks, trackId );
 +                            audioTracks, textTracks, videoTracks, trackId);
- 
+                     
                      updateSubtitleButtonVisibility();
                  });
 @@ -1533,9 +1587,9 @@ public class ReactExoplayerView extends FrameLayout implements
@@ -1136,7 +1134,7 @@ index e16ac96..563920c 100644
 -                
 -                textTrack.setIndex(textTracks.size());
 +                Track textTrack = exoplayerTrackToGenericTrack(format, realIndex, selection, group);
- 
+                 
                  if (textTrack.getTitle() == null || textTrack.getTitle().isEmpty()) {
 +                    boolean isExternal = format.id != null && format.id.startsWith("external-subtitle-");
                      if (isExternal) {
@@ -1147,7 +1145,7 @@ index e16ac96..563920c 100644
 +                        textTrack.setTitle("Track " + (realIndex + 1));
                      }
                  }
- 
+                 
 @@ -1755,7 +1814,8 @@ public class ReactExoplayerView extends FrameLayout implements
              track.setLanguage(format.language != null ? format.language : "unknown");
              track.setTitle(format.label != null ? format.label : "Track " + (groupIndex + 1));
@@ -1156,10 +1154,10 @@ index e16ac96..563920c 100644
 +            if (format.sampleMimeType != null)
 +                track.setMimeType(format.sampleMimeType);
              track.setBitrate(format.bitrate == Format.NO_VALUE ? 0 : format.bitrate);
- 
+             
              tracks.add(track);
 @@ -1786,14 +1846,14 @@ public class ReactExoplayerView extends FrameLayout implements
- 
+                 
                  Track textTrack = new Track();
                  textTrack.setIndex(textTracks.size());
 -                if (format.sampleMimeType != null) textTrack.setMimeType(format.sampleMimeType);
@@ -1170,7 +1168,7 @@ index e16ac96..563920c 100644
 +                    textTrack.setMimeType(format.sampleMimeType);
 +                if (format.language != null)
 +                    textTrack.setLanguage(format.language);
- 
+                 
                  if (format.label != null && !format.label.isEmpty()) {
                      textTrack.setTitle(format.label);
 -                } else if (isExternal) {
@@ -1222,25 +1220,25 @@ index e16ac96..563920c 100644
 @@ -1890,15 +1956,17 @@ public class ReactExoplayerView extends FrameLayout implements
          updateSubtitleButtonVisibility();
      }
- 
+     
 -    
      private boolean hasBuiltInTextTracks() {
 -        if (player == null || trackSelector == null) return false;
 +        if (player == null || trackSelector == null)
 +            return false;
- 
+         
          MappingTrackSelector.MappedTrackInfo info = trackSelector.getCurrentMappedTrackInfo();
 -        if (info == null) return false;
 +        if (info == null)
 +            return false;
- 
+         
          int textRendererIndex = getTrackRendererIndex(C.TRACK_TYPE_TEXT);
 -        if (textRendererIndex == C.INDEX_UNSET) return false;
 +        if (textRendererIndex == C.INDEX_UNSET)
 +            return false;
- 
+         
          TrackGroupArray groups = info.getTrackGroups(textRendererIndex);
- 
+         
 @@ -1918,11 +1986,12 @@ public class ReactExoplayerView extends FrameLayout implements
      }
  
@@ -1248,13 +1246,13 @@ index e16ac96..563920c 100644
 -        if (exoPlayerView == null) return;
 +        if (exoPlayerView == null)
 +            return;
- 
-         boolean hasTextTracks = (source.getSideLoadedTextTracks() != null &&
+         
+         boolean hasTextTracks = (source.getSideLoadedTextTracks() != null && 
 -                                !source.getSideLoadedTextTracks().getTracks().isEmpty()) ||
 -                               hasBuiltInTextTracks();
 +                !source.getSideLoadedTextTracks().getTracks().isEmpty()) ||
 +                hasBuiltInTextTracks();
- 
+         
          exoPlayerView.setShowSubtitleButton(hasTextTracks);
      }
 @@ -1942,7 +2011,8 @@ public class ReactExoplayerView extends FrameLayout implements
@@ -1322,7 +1320,7 @@ index e16ac96..563920c 100644
 -        if (trackSelector == null) return;
 +        if (trackSelector == null)
 +            return;
- 
+         
          DefaultTrackSelector.Parameters disableParameters = trackSelector.getParameters()
                  .buildUpon()
 @@ -2127,7 +2202,8 @@ public class ReactExoplayerView extends FrameLayout implements
@@ -1332,16 +1330,16 @@ index e16ac96..563920c 100644
 -        if (player == null || trackSelector == null) return;
 +        if (player == null || trackSelector == null)
 +            return;
- 
+         
          DebugLog.d(TAG, "selectTextTrackInternal: type=" + type + ", value=" + value);
- 
+         
 @@ -2146,7 +2222,10 @@ public class ReactExoplayerView extends FrameLayout implements
                  if (textRendererIndex != C.INDEX_UNSET) {
                      TrackGroupArray groups = info.getTrackGroups(textRendererIndex);
                      boolean trackFound = false;
 +                    int targetIndex = "index".equals(type) ? ReactBridgeUtils.safeParseInt(value, -1) : -1;
 +                    int flatTextTrackIndex = 0;
- 
+                     
 +                    int realIndex = 0;
                      for (int groupIndex = 0; groupIndex < groups.length; groupIndex++) {
                          TrackGroup group = groups.get(groupIndex);
@@ -1356,9 +1354,9 @@ index e16ac96..563920c 100644
                                      isMatch = true;
                                  }
                              }
- 
+                             
                              if (isMatch) {
-                                 TrackSelectionOverride override = new TrackSelectionOverride(group,
+                                 TrackSelectionOverride override = new TrackSelectionOverride(group, 
 -                                    java.util.Arrays.asList(trackIndex));
 +                                        java.util.Arrays.asList(trackIndex));
                                  parametersBuilder.addOverride(override);
@@ -1371,9 +1369,9 @@ index e16ac96..563920c 100644
 +                        if (trackFound)
 +                            break;
                      }
- 
+                     
                      if (!trackFound) {
-                         DebugLog.w(TAG, "Text track not found for type=" + type + ", value=" + value +
+                         DebugLog.w(TAG, "Text track not found for type=" + type + ", value=" + value + 
 -                            ". Keeping current selection.");
 +                                ". Keeping current selection.");
                      }
@@ -1386,7 +1384,7 @@ index e16ac96..563920c 100644
 -        if (player == null || trackSelector == null) return;
 +        if (player == null || trackSelector == null)
 +            return;
- 
+         
          if (controls) {
              return;
 @@ -2272,9 +2353,11 @@ public class ReactExoplayerView extends FrameLayout implements
@@ -1436,7 +1434,7 @@ index e16ac96..563920c 100644
 @@ -2364,7 +2448,8 @@ public class ReactExoplayerView extends FrameLayout implements
                      .setRendererDisabled(rendererIndex, false);
  
-             // Clear existing overrides for this track type to avoid conflicts
+             // Clear existing overrides for this track type to avoid conflicts  
 -            // But be careful with audio tracks - don't clear unless explicitly selecting a different track
 +            // But be careful with audio tracks - don't clear unless explicitly selecting a
 +            // different track
@@ -1446,7 +1444,7 @@ index e16ac96..563920c 100644
 @@ -2380,7 +2465,7 @@ public class ReactExoplayerView extends FrameLayout implements
                  selectionParameters.setForceHighestSupportedBitrate(false);
                  selectionParameters.setForceLowestBitrate(false);
-                 DebugLog.d(TAG, "Audio track selection: group=" + groupIndex + ", tracks=" + tracks +
+                 DebugLog.d(TAG, "Audio track selection: group=" + groupIndex + ", tracks=" + tracks + 
 -                    ", override=" + selectionOverride);
 +                        ", override=" + selectionOverride);
              }
@@ -1609,7 +1607,7 @@ index e16ac96..563920c 100644
 -        );
 +                "type", String.valueOf(error.getErrorType()));
          eventEmitter.onReceiveAdEvent.invoke("ERROR", errMap);
- 
+         
          handleDaiBackupStream();
 @@ -2796,10 +2891,10 @@ public class ReactExoplayerView extends FrameLayout implements
       * @return The configured IMA server-side ad insertion AdsLoader
@@ -1636,7 +1634,7 @@ index e16ac96..563920c 100644
 +                daiAdsLoader, mediaSourceFactory);
  
          mediaSourceFactory.setServerSideAdInsertionMediaSourceFactory(adsMediaSourceFactory);
- 
+         
 @@ -2850,7 +2945,8 @@ public class ReactExoplayerView extends FrameLayout implements
      /**
       * Requests a DAI stream from Google IMA using the ExoPlayer IMA extension.
@@ -1655,7 +1653,7 @@ index e16ac96..563920c 100644
 +                throw new IllegalArgumentException(
 +                        "Either assetKey (for live) or contentSourceId+videoId (for VOD) must be provided");
              }
- 
+             
              Map<String, String> adTagParameters = adsProps.getAdTagParameters();
 @@ -2906,7 +3003,8 @@ public class ReactExoplayerView extends FrameLayout implements
      /**
@@ -1669,7 +1667,7 @@ index e16ac96..563920c 100644
       * @return true if backup stream was successfully used, false otherwise
 diff --git a/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/UnknownSubtitlesExtractor.java b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/UnknownSubtitlesExtractor.java
 new file mode 100644
-index 0000000..3623da0
+index 0000000..8f1e62b
 --- /dev/null
 +++ b/node_modules/react-native-video/android/src/main/java/com/brentvatne/exoplayer/UnknownSubtitlesExtractor.java
 @@ -0,0 +1,56 @@
