@@ -1,5 +1,4 @@
 import { View, TouchableOpacity } from "react-native";
-import React from "react";
 import { router } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import HorizontalList from "@/components/HorizontalList";

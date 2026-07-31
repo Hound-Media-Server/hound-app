@@ -49,7 +49,7 @@
             "minSdkVersion": 26
           },
           "ios": {
-            "deploymentTarget": "15.6",
+            "deploymentTarget": "16.4",
             "useFrameworks": "static"
           }
         }
@@ -66,9 +66,6 @@
       "permissions": []
     },
     "ios": {
-      "splash": {
-        "image": "./assets/images/splash.png"
-      },
       "bundleIdentifier": "com.anonymous.houndapp"
     },
     "web": {
