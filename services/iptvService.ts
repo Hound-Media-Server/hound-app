@@ -51,15 +51,16 @@ export const useXtreamCategories = (iptvProviderID: number | undefined, iptvProv
   });
 };
 
-const fetchXtreamChannels = (iptvProviderID: number, categoryID: number): Promise<any> => {
-    return apiClient(`/live/${iptvProviderID}/channels?category_id=${categoryID}`)
+const fetchChannels = (iptvProviderID: number, categoryID: number | undefined): Promise<any> => {
+    return apiClient(`/live/${iptvProviderID}/channels/${categoryID ? "?category_id=" + categoryID : ""}`)
 }
 
-export const useXtreamChannels = (iptvProviderID: number | null, categoryID: number | null) => {
+export const useChannels = (iptvProviderID: number | undefined, iptvProviderType: string | undefined, categoryID: number | null) => {
+    // xtream must provide category id  
     return useQuery({
         queryKey: ["xtream-channels", iptvProviderID, categoryID],
-        queryFn: () => fetchXtreamChannels(iptvProviderID as number, categoryID as number),
-        enabled: iptvProviderID !== null && categoryID !== null,
+        queryFn: () => fetchChannels(iptvProviderID as number, categoryID as number),
+        enabled: !!iptvProviderID && !(iptvProviderType === "xtream" && !categoryID),
         select: (data: any) => data.data,
     })
 }

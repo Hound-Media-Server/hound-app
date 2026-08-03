@@ -128,6 +128,7 @@ export default function TabLayout() {
   return (
     <Tabs
       initialRouteName="index"
+      backBehavior="initialRoute"
       screenOptions={{ headerShown: false, tabBarPosition: "top" }}
       tabBar={(props) => <TVTabBar {...props} />}
     >
