@@ -8,11 +8,15 @@ type Rect = {
 };  
 
 type LiveTVStore = {
+  sourceURL: string | null;
   rect: Rect | null;
   setRect: (rect: Rect) => void;
+  setSource: (sourceURL: string) => void;
 }
 
 export const useLiveTVStore = create<LiveTVStore>((set) => ({
+  sourceURL: null,
   rect: null,
   setRect: (rect) => set({ rect }),
+  setSource: (sourceURL: string) => set({ sourceURL }),
 }));
