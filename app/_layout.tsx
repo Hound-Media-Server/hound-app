@@ -20,6 +20,7 @@ import { registerLocale } from "@cospired/i18n-iso-languages";
 import { GlobalModalHost } from "@/components/modals/GlobalModalHost";
 import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import GlobalLiveTVPlayer from "@/components/video/GlobalLiveTVScreen";
 
 SplashScreen.setOptions({
   duration: 1000,
@@ -68,7 +69,7 @@ function RootLayoutNav() {
       }
     }
   }, [session, profiles, segments, isLoading]);
-
+  const isLiveTV = segments?.[0] === "(tabs)" && segments?.[1] === "live_tv";
   return (
     <QueryClientProvider client={queryClient}>
       <Stack>
@@ -111,6 +112,7 @@ function RootLayoutNav() {
         />
       </Stack>
       <GlobalModalHost />
+      {isLiveTV && <GlobalLiveTVPlayer />}
     </QueryClientProvider>
   );
 }

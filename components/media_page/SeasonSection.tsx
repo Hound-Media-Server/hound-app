@@ -195,7 +195,7 @@ function EpisodeSection({
   // having trouble handling initial focus with flashlist, todo:revisit later
   return (
     <View focusable className={isTV ? "opacity-50 focus:opacity-100" : ""}>
-      {seasonDetails?.episodes.length <= 999 && Platform.isTV ? (
+      {seasonDetails?.episodes.length <= 100 && Platform.isTV ? (
         <FlatList
           ref={flatlistRef}
           data={seasonDetails?.episodes}
@@ -228,6 +228,7 @@ function EpisodeSection({
           showsHorizontalScrollIndicator={false}
           removeClippedSubviews={false}
           horizontal={isTV}
+          scrollAnimationEnabled={false}
           renderItem={({ item, index }: { item: any; index: number }) => (
             <EpisodeCard
               index={index}
@@ -321,7 +322,9 @@ function EpisodeCard({
                   season: episode.season_number,
                   episode: episode.episode_number,
                   startTime: watchProgress?.current_progress_seconds,
-                  playerSettings: watchProgress?.player_settings ? JSON.stringify(watchProgress.player_settings) : undefined,
+                  playerSettings: watchProgress?.player_settings
+                    ? JSON.stringify(watchProgress.player_settings)
+                    : undefined,
                   previousEncodedData: watchProgress?.encoded_data,
                 }),
               );

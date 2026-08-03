@@ -535,7 +535,7 @@ const LoadingOverlay = () => {
   return (
     <View className="absolute top-0 left-0 right-0 bottom-0 w-100 h-100 bg-black flex items-center justify-center">
       <ActivityIndicator size="large" color="white" />
-      <ThemedText className="text-white mb-2">Loading MPV...</ThemedText>
+      <ThemedText className="text-white mt-2">Loading MPV...</ThemedText>
     </View>
   );
 };
