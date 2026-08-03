@@ -1,25 +1,46 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Pressable, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/ThemedText";
-import { useIPTVProviders } from "@/services/iptv";
+import {
+  useIPTVProviders,
+  IPTVProvider,
+  useXtreamCategories,
+} from "@/services/iptvService";
 import IPTVScreenTV from "@/screens/live_tv/IPTVScreen.tv";
 
 export interface LiveTVProps {
-  iptvProviders: any;
-  iptvProviderID: number | null;
+  iptvProviders: IPTVProvider[] | undefined;
+  selectedProvider: IPTVProvider | null;
   setIPTVProviderID: (iptvProviderID: number) => void;
+  categories: any;
 }
 
 export default function LiveTV() {
-  const { data: providers, isLoading, error } = useIPTVProviders();
   const [iptvProviderID, setIPTVProviderID] = useState<number | null>(null);
-
+  const [selectedProvider, setSelectedProvider] = useState<IPTVProvider | null>(
+    null,
+  );
+  const { data: providers, isLoading, error } = useIPTVProviders();
+  const { data: xtreamCategories } = useXtreamCategories(
+    selectedProvider?.iptv_provider_id,
+    selectedProvider?.iptv_provider_type,
+  );
   useEffect(() => {
     if (!iptvProviderID && providers && providers.length > 0) {
       setIPTVProviderID(providers[0].iptv_provider_id);
     }
   }, [providers]);
+
+  useEffect(() => {
+    if (iptvProviderID) {
+      const provider = providers?.find(
+        (provider: IPTVProvider) =>
+          provider.iptv_provider_id === iptvProviderID,
+      );
+      setSelectedProvider(provider || null);
+    }
+  }, [iptvProviderID]);
 
   if (isLoading) {
     return (
@@ -41,8 +62,9 @@ export default function LiveTV() {
       {Platform.isTV ? (
         <IPTVScreenTV
           iptvProviders={providers}
-          iptvProviderID={iptvProviderID}
+          selectedProvider={selectedProvider}
           setIPTVProviderID={setIPTVProviderID}
+          categories={xtreamCategories}
         />
       ) : null}
     </SafeAreaView>

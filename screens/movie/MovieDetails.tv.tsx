@@ -39,7 +39,7 @@ export default function MovieDetails({
     info.push(creators);
   }
   return (
-    <View className="flex-1">
+    <View className="flex-1 absolute inset-0 bg-red-500">
       <GradientBackgroundView
         uri={details?.backdrop_uri as string}
         className="h-full w-full px-8 py-8"

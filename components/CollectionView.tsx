@@ -127,7 +127,7 @@ export default function CollectionView({
 
           const children = (
             <Animated.View
-              className="flex-row gap-2 pt-2 pb-2"
+              className="flex-row gap-2 pt-2 pb-4"
               style={{ opacity: fadeAnim }}
             >
               {buttons.map((btn, idx) => (
