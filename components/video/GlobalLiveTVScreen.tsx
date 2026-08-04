@@ -1,7 +1,7 @@
 import { MpvPlayerView, MpvPlayerViewRef } from "@/modules";
 import { useLiveTVStore } from "@/stores/livePlayerStore";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { ThemedText } from "../ThemedText";
 
 export default function GlobalLiveTVPlayer() {
