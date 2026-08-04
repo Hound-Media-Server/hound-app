@@ -1,3 +1,4 @@
+import { EPGProgramme } from "@/screens/live_tv/IPTVScreen.tv";
 import { apiClient } from "./apiClient";
 import { useQuery } from "@tanstack/react-query";
 
@@ -64,3 +65,28 @@ export const useChannels = (iptvProviderID: number | undefined, iptvProviderType
         select: (data: any) => data.data,
     })
 }
+
+export const fetchChannelEPGs = async (
+  iptvProviderID: number,
+  epgChannelIDs: string[],
+) => {
+    return apiClient(`/live/${iptvProviderID}/epg`, {
+    method: "POST",
+    body: JSON.stringify({epg_channel_ids: epgChannelIDs}),
+  });
+};
+
+export const useChannelEPGs = (
+  iptvProviderID: number | undefined,
+  iptvProviderType: string | undefined,
+  epgChannelIDs: string[] | undefined,
+) => {
+  return useQuery({
+    queryKey: ["channel-epg", iptvProviderID, epgChannelIDs],
+    queryFn: () =>
+      fetchChannelEPGs(iptvProviderID as number, epgChannelIDs as string[]),
+    select: (data: any) => data.data as EPGProgramme[],
+    staleTime: 30 * 60 * 1000,
+    enabled: !!iptvProviderID && iptvProviderType === "xtream" && !!epgChannelIDs && epgChannelIDs.length > 0,
+  });
+};
