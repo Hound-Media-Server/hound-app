@@ -4,6 +4,8 @@ import { Tabs, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Pressable, TVFocusGuideView, View } from "react-native";
 import { useSession } from "@/services/ctx";
+import { ServerVersionGTE } from "@/utils/version";
+import { useServerInfo } from "@/services/internalService";
 
 function TVTabBar({
   state,
@@ -125,6 +127,11 @@ function TVTabBar({
 }
 
 export default function TabLayout() {
+  // live tv apis available from 0.3.0
+  const { data: serverInfo, isLoading: isServerInfoLoading } = useServerInfo();
+  const showLiveTV = isServerInfoLoading
+    ? false
+    : ServerVersionGTE(serverInfo?.data?.version, "0.3.0-beta");
   return (
     <Tabs
       initialRouteName="index"
@@ -134,8 +141,10 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="search" options={{ title: "Search" }} />
       <Tabs.Screen name="index" options={{ title: "Home" }} />
+      {showLiveTV ? (
+        <Tabs.Screen name="live_tv" options={{ title: "Live TV" }} />
+      ) : null}
       <Tabs.Screen name="library" options={{ title: "Library" }} />
-      <Tabs.Screen name="live_tv" options={{ title: "Live TV" }} />
       <Tabs.Screen name="collections" options={{ title: "Collections" }} />
       <Tabs.Screen name="settings" options={{ title: "Settings" }} />
     </Tabs>

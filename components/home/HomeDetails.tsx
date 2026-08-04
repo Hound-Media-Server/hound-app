@@ -5,7 +5,6 @@ import {
   Platform,
   Dimensions,
 } from "react-native";
-import React from "react";
 import { Image } from "expo-image";
 import { ThemedText } from "../ThemedText";
 import { LinearGradient } from "expo-linear-gradient";
@@ -16,7 +15,9 @@ const HERO_HEIGHT = SCREEN_HEIGHT / 1.85;
 
 export default function HomeDetails() {
   const focusedItem = useFocusStore((s) => s.focusedItem);
-  if (!focusedItem) return null;
+  if (!focusedItem) {
+    return <View className="relative" style={{ height: HERO_HEIGHT }} />;
+  }
   const releaseYear = focusedItem.release_date?.slice(0, 4);
   const genres = focusedItem.genres?.map((g) => g.genre).join(", ");
   // TODO: HACKY, we need a better way to support image sizes in hound
