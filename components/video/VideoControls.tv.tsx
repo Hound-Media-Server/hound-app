@@ -581,7 +581,7 @@ const FocusablePressable = ({ children, ...props }: any) => {
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "transparent",
   },
   controlsContainer: {
