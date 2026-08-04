@@ -346,18 +346,24 @@ export default function IPTVScreenTV({
                   );
                   const programTitle = pickText(currentEPG?.titles);
                   const programDescription = pickText(currentEPG?.descriptions);
-                  const programStartTime = new Date(
+                  let programStartTime = new Date(
                     currentEPG?.start_time || "",
                   ).toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
                   });
-                  const programStopTime = new Date(
+                  let programStopTime = new Date(
                     currentEPG?.stop_time || "",
                   ).toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
                   });
+                  if (programStartTime === "Invalid Date") {
+                    programStartTime = "";
+                  }
+                  if (programStopTime === "Invalid Date") {
+                    programStopTime = "";
+                  }
                   return (
                     <Pressable
                       className="bg-white/10 p-4 rounded-xl mb-3 active:bg-white/20 border-2 focus:border-white flex-row"
