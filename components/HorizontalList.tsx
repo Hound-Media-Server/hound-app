@@ -75,14 +75,21 @@ export default function HorizontalList({
   }
   if (isLoading) {
     return (
-      <View className="me-5 md:me-10 flex-1">
+      <View
+        className="flex-1"
+        style={{ paddingHorizontal: Platform.isTV ? 40 : 20 }}
+      >
         {!!header && (
-          <ThemedText className="text-white text-2xl mb-3 ps-5 md:ps-10">
-            {header}
-          </ThemedText>
+          <ThemedText className="text-white text-2xl mb-3">{header}</ThemedText>
         )}
-        <View className="w-full h-[100px] justify-center items-center">
-          <ActivityIndicator color="white" size="large" />
+        <View className="flex-row gap-[10px]">
+          {[...Array(7)].map((_, index) =>
+            itemType === "episode" ? (
+              <ContinueWatchingCardPlaceholder key={index} />
+            ) : (
+              <MediaItemCardPlaceholder key={index} />
+            ),
+          )}
         </View>
       </View>
     );
@@ -92,12 +99,15 @@ export default function HorizontalList({
   // prevents errors on other platforms (web)
   return wrapTVFocusGuideView(
     <View>
-      {!!header && data && (
-        <ThemedText className="text-white text-2xl mb-3 ps-5 md:ps-10">
-          {header}
-        </ThemedText>
-      )}
       <View style={{ minHeight: 100 }}>
+        {!!header && data && (
+          <ThemedText
+            className="text-white text-2xl mb-3"
+            style={{ paddingHorizontal: Platform.isTV ? 40 : 20 }}
+          >
+            {header}
+          </ThemedText>
+        )}
         <FlatList
           keyExtractor={(item: any) => {
             if (item.media_source && item.source_id) {
@@ -167,24 +177,6 @@ export default function HorizontalList({
               />
             );
           }}
-          ListEmptyComponent={
-            <View>
-              {!!header && (
-                <ThemedText className="text-white text-2xl mb-3">
-                  {header}
-                </ThemedText>
-              )}
-              <View className="flex-row gap-[10px]">
-                {[...Array(7)].map((_, index) =>
-                  itemType === "episode" ? (
-                    <ContinueWatchingCardPlaceholder key={index} />
-                  ) : (
-                    <MediaItemCardPlaceholder key={index} />
-                  ),
-                )}
-              </View>
-            </View>
-          }
         />
       </View>
     </View>,
