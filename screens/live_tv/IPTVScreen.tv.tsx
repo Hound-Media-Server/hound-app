@@ -6,7 +6,7 @@ import {
   XtreamCategory,
 } from "@/services/iptvService";
 import { useLiveTVStore } from "@/stores/livePlayerStore";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, FlashListRef } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -180,6 +180,9 @@ export default function IPTVScreenTV({
     }).start();
   }, [providersFocused, fadeAnim]);
 
+  const categoryListRef = useRef<FlashListRef<any>>(null);
+  const channelListRef = useRef<FlashListRef<any>>(null);
+
   return (
     <View
       className={"flex-1 px-5 md:px-12 " + (Platform.isTV ? "mt-20" : "mt-5")}
@@ -222,6 +225,7 @@ export default function IPTVScreenTV({
             Categories
           </ThemedText>
           <FlashList<XtreamCategory>
+            ref={categoryListRef}
             data={categories}
             keyExtractor={(item) => `category-${item.category_id}`}
             renderItem={({ item, index }) => (
@@ -230,6 +234,13 @@ export default function IPTVScreenTV({
                 focusable={Platform.isTV}
                 onPress={() => {
                   setCategoryID(item.category_id);
+                }}
+                onFocus={() => {
+                  categoryListRef?.current?.scrollToIndex({
+                    index,
+                    animated: true,
+                    viewPosition: 0.15,
+                  });
                 }}
               >
                 <ThemedText
@@ -273,10 +284,11 @@ export default function IPTVScreenTV({
             </View>
           ) : (
             <FlashList<any>
+              ref={channelListRef}
               data={channels?.channels}
               keyExtractor={(item) => `channel-${item.stream_id}`}
               showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => {
+              renderItem={({ item, index }) => {
                 const currentEPG = getCurrentEPG(
                   epgByChannelId?.get(item.epg_channel_id),
                 );
@@ -319,6 +331,13 @@ export default function IPTVScreenTV({
                           stop_time: programStopTime || "",
                         });
                       }
+                    }}
+                    onFocus={() => {
+                      channelListRef?.current?.scrollToIndex({
+                        index,
+                        animated: true,
+                        viewPosition: 0.15,
+                      });
                     }}
                   >
                     <View className="flex-row justify-center">
