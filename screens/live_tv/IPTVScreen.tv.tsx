@@ -159,10 +159,6 @@ export default function IPTVScreenTV({
     }
   }, [categories]);
 
-  const providerRefs = useRef<(View | null)[]>([]);
-  useEffect(() => {
-    providerRefs.current.length = iptvProviders?.length ?? 0;
-  }, [iptvProviders]);
   const fadeAnim = useRef(new Animated.Value(Platform.isTV ? 0.4 : 1)).current;
   const [focusedProviderIdx, setFocusedProviderIdx] = useState<number>(0);
 
@@ -195,10 +191,8 @@ export default function IPTVScreenTV({
         >
           {iptvProviders?.map((p, idx) => (
             <Pressable
+              focusable
               key={`iptv-provider-${p.iptv_provider_id}`}
-              ref={(el) => {
-                providerRefs.current[idx] = el;
-              }}
               onFocus={() => {
                 if (!Platform.isTV) return;
                 setProvidersFocused(true);
@@ -222,8 +216,11 @@ export default function IPTVScreenTV({
           ))}
         </Animated.View>
       </TVFocusGuideView>
-      <View className="flex-1 flex-row">
-        <TVFocusGuideView autoFocus className="w-[25%] pr-3">
+      <View className="flex-1 flex-row gap-1 justify-between">
+        <TVFocusGuideView autoFocus className="w-[25%]">
+          <ThemedText className="text-white text-2xl font-semibold ml-2 mb-4">
+            Categories
+          </ThemedText>
           <FlashList<XtreamCategory>
             data={categories}
             keyExtractor={(item) => `category-${item.category_id}`}
@@ -234,13 +231,6 @@ export default function IPTVScreenTV({
                 onPress={() => {
                   setCategoryID(item.category_id);
                 }}
-                nextFocusUp={
-                  index === 0
-                    ? findNodeHandle(
-                        providerRefs?.current[focusedProviderIdx] || null,
-                      )
-                    : undefined
-                }
               >
                 <ThemedText
                   className={
@@ -263,9 +253,6 @@ export default function IPTVScreenTV({
                 <Pressable
                   className="bg-white/10 p-4 rounded-xl mb-3 active:bg-white/20 border-2 focus:border-white"
                   focusable={Platform.isTV}
-                  nextFocusUp={findNodeHandle(
-                    providerRefs?.current[focusedProviderIdx] || null,
-                  )}
                 >
                   <ThemedText className="text-lg font-semibold text-white">
                     All Channels
@@ -276,168 +263,164 @@ export default function IPTVScreenTV({
             showsVerticalScrollIndicator={false}
           />
         </TVFocusGuideView>
-        <View className="flex-1">
-          <View className="flex-row mb-5">
-            <Pressable
-              className="bg-black focus:bg-white flex-1 rounded-md"
-              focusable
-              onPress={() => {
-                setFullscreen();
-              }}
-              style={{
-                width: "50%",
-                padding: 3,
-                aspectRatio: 16 / 9,
-              }}
-            >
-              <View
-                ref={videoPlayerRef}
-                className="bg-black flex-1"
-                onLayout={updatePlayer}
-              />
-            </Pressable>
-            <View className="flex-1 ps-5 pe-2">
-              <ThemedText
-                type="defaultSemiBold"
-                className="text-2xl text-white mb-0 pb-0"
-                numberOfLines={2}
-              >
-                {channelInfo?.name}
-              </ThemedText>
-              {channelInfo?.program_title ? (
-                <>
-                  <ThemedText
-                    className="text-lg text-secondary"
-                    numberOfLines={2}
-                  >
-                    {channelInfo?.program_title}
-                  </ThemedText>
-                </>
-              ) : null}
-              {channelInfo?.start_time && channelInfo?.stop_time ? (
-                <ThemedText className="text-md text-white">
-                  {channelInfo?.start_time} - {channelInfo?.stop_time}
-                </ThemedText>
-              ) : null}
-              {channelInfo?.program_title &&
-              channelInfo?.program_description ? (
-                <ThemedText className="text-md text-gray-400" numberOfLines={6}>
-                  {channelInfo?.program_description}
-                </ThemedText>
-              ) : null}
+        <TVFocusGuideView autoFocus className="w-[30%]">
+          <ThemedText className="text-white text-2xl font-semibold ml-2 mb-4">
+            Channels
+          </ThemedText>
+          {isChannelsLoading ? (
+            <View className="w-full h-[80%] justify-center items-center">
+              <ActivityIndicator color="white" size="large" />
             </View>
-          </View>
-          <TVFocusGuideView autoFocus className="flex-1">
-            <ThemedText className="text-white text-2xl font-semibold ml-2 mb-4">
-              Channels
-            </ThemedText>
-            {isChannelsLoading ? (
-              <View className="w-full h-[80%] justify-center items-center">
-                <ActivityIndicator color="white" size="large" />
-              </View>
-            ) : (
-              <FlashList<any>
-                data={channels?.channels}
-                keyExtractor={(item) => `channel-${item.stream_id}`}
-                showsVerticalScrollIndicator={false}
-                renderItem={({ item }) => {
-                  const currentEPG = getCurrentEPG(
-                    epgByChannelId?.get(item.epg_channel_id),
-                  );
-                  const programTitle = pickText(currentEPG?.titles);
-                  const programDescription = pickText(currentEPG?.descriptions);
-                  let programStartTime = new Date(
-                    currentEPG?.start_time || "",
-                  ).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
-                  let programStopTime = new Date(
-                    currentEPG?.stop_time || "",
-                  ).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
-                  if (programStartTime === "Invalid Date") {
-                    programStartTime = "";
-                  }
-                  if (programStopTime === "Invalid Date") {
-                    programStopTime = "";
-                  }
-                  return (
-                    <Pressable
-                      className="bg-white/10 p-4 rounded-xl mb-3 active:bg-white/20 border-2 focus:border-white flex-row"
-                      focusable={Platform.isTV}
-                      onPress={() => {
-                        if (item.stream_url === sourceURL) {
-                          setFullscreen();
-                        } else {
-                          setSource(item.stream_url as string);
-                          setChannelInfo({
-                            name: item.name,
-                            description: item.description,
-                            program_title: programTitle,
-                            program_description:
-                              programDescription || "No description avaiable",
-                            start_time: programStartTime || "",
-                            stop_time: programStopTime || "",
-                          });
-                        }
-                      }}
-                    >
-                      <View className="flex-row justify-center">
-                        {item.thumbnail_url && (
-                          <Image
-                            source={{ uri: item.thumbnail_url }}
-                            style={{
-                              width: 50,
-                              height: 50,
-                              objectFit: "contain",
-                            }}
-                            contentFit="contain"
-                            recyclingKey={item.id}
-                          />
-                        )}
-                        <View className="ml-4">
-                          <ThemedText
-                            className={
-                              "text-lg font-semibold overflow-hidden line-clamp-1 " +
-                              (item.stream_url === sourceURL
-                                ? "text-secondary"
-                                : "text-white")
-                            }
-                            numberOfLines={1}
-                          >
-                            {item.name}
-                          </ThemedText>
-                          {programTitle ? (
-                            <>
-                              <ThemedText
-                                className="text-gray-200"
-                                numberOfLines={1}
-                              >
-                                {programTitle}
-                              </ThemedText>
-                              <ThemedText className="text-gray-400">
-                                {programStartTime + " - " + programStopTime}
-                              </ThemedText>
-                            </>
-                          ) : (
+          ) : (
+            <FlashList<any>
+              data={channels?.channels}
+              keyExtractor={(item) => `channel-${item.stream_id}`}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => {
+                const currentEPG = getCurrentEPG(
+                  epgByChannelId?.get(item.epg_channel_id),
+                );
+                const programTitle = pickText(currentEPG?.titles);
+                const programDescription = pickText(currentEPG?.descriptions);
+                let programStartTime = new Date(
+                  currentEPG?.start_time || "",
+                ).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+                let programStopTime = new Date(
+                  currentEPG?.stop_time || "",
+                ).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+                if (programStartTime === "Invalid Date") {
+                  programStartTime = "";
+                }
+                if (programStopTime === "Invalid Date") {
+                  programStopTime = "";
+                }
+                return (
+                  <Pressable
+                    className="bg-white/10 p-3 rounded-xl mb-3 active:bg-white/20 border-2 focus:border-white flex-row"
+                    focusable={Platform.isTV}
+                    onPress={() => {
+                      if (item.stream_url === sourceURL) {
+                        setFullscreen();
+                      } else {
+                        setSource(item.stream_url as string);
+                        setChannelInfo({
+                          name: item.name,
+                          description: item.description,
+                          program_title: programTitle,
+                          program_description:
+                            programDescription || "No description avaiable",
+                          start_time: programStartTime || "",
+                          stop_time: programStopTime || "",
+                        });
+                      }
+                    }}
+                  >
+                    <View className="flex-row justify-center">
+                      {/* {item.thumbnail_url && (
+                        <Image
+                          source={{ uri: item.thumbnail_url }}
+                          style={{
+                            width: 30,
+                            height: 30,
+                            objectFit: "contain",
+                          }}
+                          contentFit="contain"
+                          recyclingKey={item.id}
+                        />
+                      )} */}
+                      <View className="ml-4">
+                        <ThemedText
+                          className={
+                            "text-lg font-semibold overflow-hidden " +
+                            (item.stream_url === sourceURL
+                              ? "text-secondary"
+                              : "text-white")
+                          }
+                          numberOfLines={1}
+                        >
+                          {item.name}
+                        </ThemedText>
+                        {programTitle ? (
+                          <>
                             <ThemedText
-                              className="text-gray-200"
+                              className="text-gray-300"
                               numberOfLines={1}
                             >
-                              No Program Data
+                              {programTitle}
                             </ThemedText>
-                          )}
-                        </View>
+                            <ThemedText className="text-gray-400">
+                              {programStartTime + " - " + programStopTime}
+                            </ThemedText>
+                          </>
+                        ) : (
+                          <ThemedText
+                            className="text-gray-300"
+                            numberOfLines={1}
+                          >
+                            No Program Data
+                          </ThemedText>
+                        )}
                       </View>
-                    </Pressable>
-                  );
-                }}
-              />
-            )}
-          </TVFocusGuideView>
+                    </View>
+                  </Pressable>
+                );
+              }}
+            />
+          )}
+        </TVFocusGuideView>
+        <View className="w-[40%]">
+          <Pressable
+            className="w-full bg-gray-700 focus:bg-white rounded-md"
+            focusable
+            onPress={() => {
+              setFullscreen();
+            }}
+            style={{
+              padding: 3,
+              aspectRatio: 16 / 9,
+            }}
+          >
+            <View
+              ref={videoPlayerRef}
+              className="bg-black flex-1"
+              onLayout={updatePlayer}
+            />
+          </Pressable>
+          <View className="flex-1 mt-2 ps-5 pe-2">
+            <ThemedText
+              type="defaultSemiBold"
+              className="text-2xl text-white mb-0 pb-0"
+              numberOfLines={2}
+            >
+              {channelInfo?.name}
+            </ThemedText>
+            {channelInfo?.program_title ? (
+              <>
+                <ThemedText
+                  className="text-lg text-secondary"
+                  numberOfLines={2}
+                >
+                  {channelInfo?.program_title}
+                </ThemedText>
+              </>
+            ) : null}
+            {channelInfo?.start_time && channelInfo?.stop_time ? (
+              <ThemedText className="text-md text-white">
+                {channelInfo?.start_time} - {channelInfo?.stop_time}
+              </ThemedText>
+            ) : null}
+            {channelInfo?.program_title && channelInfo?.program_description ? (
+              <ThemedText className="text-md text-gray-400" numberOfLines={6}>
+                {channelInfo?.program_description}
+              </ThemedText>
+            ) : null}
+          </View>
         </View>
       </View>
     </View>

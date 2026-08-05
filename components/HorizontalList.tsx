@@ -6,9 +6,11 @@ import {
   Text,
 } from "react-native";
 import React, { useRef } from "react";
-import MediaItemCard from "./MediaItemCard";
+import MediaItemCard, { MediaItemCardPlaceholder } from "./MediaItemCard";
 import { ThemedText } from "./ThemedText";
-import ContinueWatchingCard from "./ContinueWatchingCard";
+import ContinueWatchingCard, {
+  ContinueWatchingCardPlaceholder,
+} from "./ContinueWatchingCard";
 import { TVFocusGuideView } from "react-native";
 import { FocusItem, useFocusStore } from "@/stores/focusStore";
 
@@ -86,9 +88,6 @@ export default function HorizontalList({
     );
   }
 
-  if (!data || data.length === 0) {
-    return null;
-  }
   // only wrap tv focus guide view if platform is tv
   // prevents errors on other platforms (web)
   return wrapTVFocusGuideView(
@@ -168,7 +167,24 @@ export default function HorizontalList({
               />
             );
           }}
-          ListEmptyComponent={<></>}
+          ListEmptyComponent={
+            <View>
+              {!!header && (
+                <ThemedText className="text-white text-2xl mb-3">
+                  {header}
+                </ThemedText>
+              )}
+              <View className="flex-row gap-[10px]">
+                {[...Array(7)].map((_, index) =>
+                  itemType === "episode" ? (
+                    <ContinueWatchingCardPlaceholder key={index} />
+                  ) : (
+                    <MediaItemCardPlaceholder key={index} />
+                  ),
+                )}
+              </View>
+            </View>
+          }
         />
       </View>
     </View>,

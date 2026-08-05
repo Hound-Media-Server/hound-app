@@ -1,22 +1,24 @@
-import {
-  View,
-  Text,
-  TouchableHighlight,
-  Platform,
-  Dimensions,
-} from "react-native";
+import { View, Dimensions } from "react-native";
 import { Image } from "expo-image";
 import { ThemedText } from "../ThemedText";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusStore } from "@/stores/focusStore";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
+import { useEffect } from "react";
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 const HERO_HEIGHT = SCREEN_HEIGHT / 1.85;
 
 export default function HomeDetails() {
   const focusedItem = useFocusStore((s) => s.focusedItem);
+
   if (!focusedItem) {
-    return <View className="relative" style={{ height: HERO_HEIGHT }} />;
+    return <PlaceholderHero />;
   }
   const releaseYear = focusedItem.release_date?.slice(0, 4);
   const genres = focusedItem.genres?.map((g) => g.genre).join(", ");
@@ -71,11 +73,50 @@ export default function HomeDetails() {
         )}
         <ThemedText
           className="text-gray-400 text-lg"
-          numberOfLines={4}
+          numberOfLines={3}
           ellipsizeMode="tail"
         >
           {focusedItem.overview}
         </ThemedText>
+      </View>
+    </View>
+  );
+}
+
+function PlaceholderHero() {
+  const opacity = useSharedValue(0.8);
+  // shimmer animation
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withTiming(1, {
+        duration: 700,
+      }),
+      -1,
+      true,
+    );
+  }, []);
+  const pulsingStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+  return (
+    <View className="relative" style={{ height: HERO_HEIGHT }}>
+      <View className="absolute left-0 bottom-0 ps-10 pe-10 mb-5 w-4/5">
+        <Animated.View
+          className="bg-gray-700 rounded-lg"
+          style={[{ width: 200, height: 30 }, pulsingStyle]}
+        />
+        <Animated.View
+          className="bg-gray-700 rounded-lg mt-2"
+          style={[{ width: 100, height: 20 }, pulsingStyle]}
+        />
+        <Animated.View
+          className="bg-gray-700 rounded-lg mt-2"
+          style={[{ width: 300, height: 20 }, pulsingStyle]}
+        />
+        <Animated.View
+          className="bg-gray-700 rounded-lg mt-2"
+          style={[{ width: 300, height: 20 }, pulsingStyle]}
+        />
       </View>
     </View>
   );

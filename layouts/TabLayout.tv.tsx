@@ -59,7 +59,6 @@ function TVTabBar({
         >
           {state.routes.map((route: any, index: number) => {
             const isSelected = state.index === index;
-
             const onPress = () => {
               if (isSelected) return;
 

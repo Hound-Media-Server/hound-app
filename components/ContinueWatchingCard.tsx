@@ -1,5 +1,5 @@
 import { View, Text, TouchableHighlight, Platform } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { Image } from "expo-image";
 import { Route, useRouter } from "expo-router";
 import { ThemedText } from "./ThemedText";
@@ -8,6 +8,12 @@ import { FocusItem, useFocusStore } from "@/stores/focusStore";
 import { useModalStore } from "@/stores/modalStore";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
 import { getYear } from "@/utils/dateUtils";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 
 export default function ContinueWatchingCard({
   item,
@@ -186,5 +192,48 @@ export default function ContinueWatchingCard({
         </View>
       </TouchableHighlight>
     </>
+  );
+}
+
+export function ContinueWatchingCardPlaceholder({ width = 120 }) {
+  const opacity = useSharedValue(0.8);
+  // shimmer animation
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withTiming(1, {
+        duration: 700,
+      }),
+      -1,
+      true,
+    );
+  }, []);
+  const pulsingStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+  return (
+    <View>
+      <View className="rounded-lg">
+        <Animated.View
+          className={
+            "w-[200px] h-[112px] rounded-lg bg-zinc-800 items-center justify-center"
+          }
+          style={pulsingStyle}
+        />
+      </View>
+      <View className="w-[200px]">
+        <Animated.View
+          className={
+            "mt-2 w-[80px] h-[13px] rounded-md bg-gray-700 items-center justify-center"
+          }
+          style={pulsingStyle}
+        />
+        <Animated.View
+          className={
+            "mt-1 w-[100px] h-[13px] rounded-md bg-gray-700 items-center justify-center"
+          }
+          style={pulsingStyle}
+        />
+      </View>
+    </View>
   );
 }
