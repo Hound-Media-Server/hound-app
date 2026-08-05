@@ -136,7 +136,7 @@ export default function ContinueWatchingCard({
             {imgSource ? (
               <Image
                 className={
-                  "border-2 w-[200px] h-[112px] rounded-lg bg-gray-300" +
+                  "border-2 w-[200px] h-[112px] rounded-lg bg-zinc-800" +
                   (Platform.isTV ? " group-focus:border-white" : "")
                 }
                 source={imgSource}

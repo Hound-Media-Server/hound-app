@@ -75,7 +75,7 @@ export default function MediaItemCard({
             <Image
               source={imgSource}
               className={
-                "rounded-lg " +
+                "rounded-lg" +
                 (Platform.isTV
                   ? " group-focus:border-white border-2 border-transparent"
                   : "")
@@ -86,7 +86,7 @@ export default function MediaItemCard({
           ) : (
             <View
               className={
-                "rounded-lg p-2 bg-gray-300 flex items-center justify-center " +
+                "rounded-lg p-2 bg-gray-300 flex items-center justify-center" +
                 (Platform.isTV
                   ? " group-focus:border-white border-2 border-transparent"
                   : "")
@@ -146,7 +146,7 @@ export function MediaItemCardPlaceholder({
         <View>
           <Animated.View
             className={
-              "rounded-lg p-2 bg-zinc-800 flex items-center justify-center " +
+              "rounded-lg p-2 bg-zinc-800 flex items-center justify-center" +
               (Platform.isTV
                 ? " group-focus:border-white border-2 border-transparent"
                 : "")
