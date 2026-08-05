@@ -1,11 +1,17 @@
 import { View, TouchableHighlight } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { Platform } from "react-native";
 import { Image } from "expo-image";
 import { RelativePathString, useRouter } from "expo-router";
 import { ThemedText } from "./ThemedText";
 import { getMediaPageUrl } from "@/utils/navigation";
 import { useModalStore } from "@/stores/modalStore";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 
 export default function MediaItemCard({
   mediaItem,
@@ -112,6 +118,61 @@ export default function MediaItemCard({
           )}
         </View>
       </TouchableHighlight>
+    </>
+  );
+}
+
+export function MediaItemCardPlaceholder({
+  width = 120,
+  showDescription = false,
+}) {
+  const opacity = useSharedValue(0.8);
+  // shimmer animation
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withTiming(1, {
+        duration: 700,
+      }),
+      -1,
+      true,
+    );
+  }, []);
+  const pulsingStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+  return (
+    <>
+      <View className={"rounded-lg"}>
+        <View>
+          <Animated.View
+            className={
+              "rounded-lg p-2 bg-zinc-800 flex items-center justify-center " +
+              (Platform.isTV
+                ? " group-focus:border-white border-2 border-transparent"
+                : "")
+            }
+            style={[{ width: width, height: width * 1.5 }, pulsingStyle]}
+          />
+          {/* {showDescription && (
+            <>
+              <ThemedText
+                className="text-gray-200 mt-2 text-start px-1"
+                numberOfLines={2}
+                style={{ width: width }}
+              >
+                test title
+              </ThemedText>
+              <ThemedText
+                className="text-gray-400 text-sm text-start px-1"
+                numberOfLines={1}
+                style={{ width: width }}
+              >
+                test subtitle
+              </ThemedText>
+            </>
+          )} */}
+        </View>
+      </View>
     </>
   );
 }
