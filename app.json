@@ -33,7 +33,9 @@
           }
         }
       ],
-      ["./plugins/with-runtime-framework-headers.js"],
+      [
+        "./plugins/with-runtime-framework-headers.js"
+      ],
       [
         "./plugins/withGitPod.js",
         {
@@ -59,7 +61,8 @@
       "expo-web-browser",
       "expo-secure-store",
       "react-native-video",
-      "expo-image"
+      "expo-image",
+      "expo-status-bar"
     ],
     "android": {
       "package": "com.anonymous.houndapp",
