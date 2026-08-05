@@ -7,7 +7,7 @@ import {
 } from "@/services/iptvService";
 import { useLiveTVStore } from "@/stores/livePlayerStore";
 import { FlashList, FlashListRef } from "@shopify/flash-list";
-import { Image } from "expo-image";
+import { useKeepAwake } from "expo-keep-awake";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -182,6 +182,8 @@ export default function IPTVScreenTV({
 
   const categoryListRef = useRef<FlashListRef<any>>(null);
   const channelListRef = useRef<FlashListRef<any>>(null);
+
+  useKeepAwake();
 
   return (
     <View
