@@ -12,8 +12,7 @@ index 0000000..bbe97e5
 +</classpath>
 diff --git a/node_modules/react-native-video/android/.gradle/8.9/checksums/checksums.lock b/node_modules/react-native-video/android/.gradle/8.9/checksums/checksums.lock
 new file mode 100644
-index 0000000..22900fa
-Binary files /dev/null and b/node_modules/react-native-video/android/.gradle/8.9/checksums/checksums.lock differ
+index 0000000..e69de29
 diff --git a/node_modules/react-native-video/android/.gradle/8.9/checksums/md5-checksums.bin b/node_modules/react-native-video/android/.gradle/8.9/checksums/md5-checksums.bin
 new file mode 100644
 index 0000000..e69de29
@@ -25,19 +24,16 @@ new file mode 100644
 index 0000000..e69de29
 diff --git a/node_modules/react-native-video/android/.gradle/8.9/fileChanges/last-build.bin b/node_modules/react-native-video/android/.gradle/8.9/fileChanges/last-build.bin
 new file mode 100644
-index 0000000..f76dd23
-Binary files /dev/null and b/node_modules/react-native-video/android/.gradle/8.9/fileChanges/last-build.bin differ
+index 0000000..e69de29
 diff --git a/node_modules/react-native-video/android/.gradle/8.9/fileHashes/fileHashes.lock b/node_modules/react-native-video/android/.gradle/8.9/fileHashes/fileHashes.lock
 new file mode 100644
-index 0000000..7b6cfdc
-Binary files /dev/null and b/node_modules/react-native-video/android/.gradle/8.9/fileHashes/fileHashes.lock differ
+index 0000000..e69de29
 diff --git a/node_modules/react-native-video/android/.gradle/8.9/gc.properties b/node_modules/react-native-video/android/.gradle/8.9/gc.properties
 new file mode 100644
 index 0000000..e69de29
 diff --git a/node_modules/react-native-video/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock b/node_modules/react-native-video/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock
 new file mode 100644
-index 0000000..de08880
-Binary files /dev/null and b/node_modules/react-native-video/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock differ
+index 0000000..e69de29
 diff --git a/node_modules/react-native-video/android/.gradle/buildOutputCleanup/cache.properties b/node_modules/react-native-video/android/.gradle/buildOutputCleanup/cache.properties
 new file mode 100644
 index 0000000..6bc0a08
