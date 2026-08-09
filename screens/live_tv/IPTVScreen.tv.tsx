@@ -8,12 +8,12 @@ import {
 import { useLiveTVStore } from "@/stores/livePlayerStore";
 import { FlashList, FlashListRef } from "@shopify/flash-list";
 import { useKeepAwake } from "expo-keep-awake";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
   BackHandler,
-  findNodeHandle,
   Platform,
   Pressable,
   TVFocusGuideView,
@@ -21,13 +21,10 @@ import {
   View,
 } from "react-native";
 
-export interface NowPlayingInfo {
+export interface NowPlayingChannel {
   name: string;
   description: string;
-  program_title: string;
-  program_description: string;
-  start_time: string;
-  stop_time: string;
+  epg_channel_id: string;
 }
 
 export interface EPGProgrammeLanguage {
@@ -43,9 +40,11 @@ export interface EPGProgramme {
   descriptions: EPGProgrammeLanguage[];
 }
 
-function getCurrentEPG(epgData: EPGProgramme[] | undefined) {
+function getCurrentEPG(
+  epgData: EPGProgramme[] | undefined,
+  currentTime: number,
+) {
   if (!epgData) return null;
-  const currentTime = Date.now();
   for (const prog of epgData) {
     const start = new Date(prog.start_time).getTime();
     const stop = new Date(prog.stop_time).getTime();
@@ -79,7 +78,14 @@ export default function IPTVScreenTV({
   const { width: fw, height: fh } = useWindowDimensions();
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [categoryID, setCategoryID] = useState<number | null>(null);
-  const [channelInfo, setChannelInfo] = useState<NowPlayingInfo | null>(null);
+  const [nowPlayingChannel, setNowPlayingChannel] = useState<NowPlayingChannel>(
+    {
+      name: "",
+      description: "",
+      epg_channel_id: "",
+    },
+  );
+  const [nowPlayingEPG, setNowPlayingEPG] = useState<EPGProgramme | null>(null);
   const [providersFocused, setProvidersFocused] = useState<boolean>(false);
 
   const { data: channels, isLoading: isChannelsLoading } = useChannels(
@@ -125,23 +131,35 @@ export default function IPTVScreenTV({
     setIsFullscreen(true);
   };
 
+  // trigger epg ui update every 60 seconds
+  const [now, setNow] = useState(Date.now());
+  useFocusEffect(
+    useCallback(() => {
+      const id = setInterval(() => {
+        setNow(Date.now());
+      }, 60 * 1000);
+      return () => clearInterval(id);
+    }, []),
+  );
+
   useEffect(() => {
     if (channels?.channels?.length && !sourceURL) {
       const firstChannel = channels.channels[0];
-      const currentEPG = getCurrentEPG(
-        epgByChannelId?.get(firstChannel.epg_channel_id),
-      );
       setSource(firstChannel.stream_url);
-      setChannelInfo({
+      setNowPlayingChannel({
         name: firstChannel.name,
         description: firstChannel.description,
-        program_title: pickText(currentEPG?.titles),
-        program_description: pickText(currentEPG?.descriptions),
-        start_time: currentEPG?.start_time || "",
-        stop_time: currentEPG?.stop_time || "",
+        epg_channel_id: firstChannel.epg_channel_id,
       });
     }
-  }, [channels, epgByChannelId]);
+  }, [channels]);
+
+  useEffect(() => {
+    if (!nowPlayingChannel.epg_channel_id || !epgByChannelId) return;
+    setNowPlayingEPG(
+      getCurrentEPG(epgByChannelId?.get(nowPlayingChannel.epg_channel_id), now),
+    );
+  }, [nowPlayingChannel.epg_channel_id, epgByChannelId, now]);
 
   useEffect(() => {
     if (!isFullscreen) return;
@@ -240,7 +258,7 @@ export default function IPTVScreenTV({
                 onFocus={() => {
                   categoryListRef?.current?.scrollToIndex({
                     index,
-                    animated: true,
+                    animated: false,
                     viewPosition: 0.15,
                   });
                 }}
@@ -293,9 +311,9 @@ export default function IPTVScreenTV({
               renderItem={({ item, index }) => {
                 const currentEPG = getCurrentEPG(
                   epgByChannelId?.get(item.epg_channel_id),
+                  now,
                 );
                 const programTitle = pickText(currentEPG?.titles);
-                const programDescription = pickText(currentEPG?.descriptions);
                 let programStartTime = new Date(
                   currentEPG?.start_time || "",
                 ).toLocaleTimeString([], {
@@ -323,21 +341,17 @@ export default function IPTVScreenTV({
                         setFullscreen();
                       } else {
                         setSource(item.stream_url as string);
-                        setChannelInfo({
+                        setNowPlayingChannel({
                           name: item.name,
                           description: item.description,
-                          program_title: programTitle,
-                          program_description:
-                            programDescription || "No description avaiable",
-                          start_time: programStartTime || "",
-                          stop_time: programStopTime || "",
+                          epg_channel_id: item.epg_channel_id,
                         });
                       }
                     }}
                     onFocus={() => {
                       channelListRef?.current?.scrollToIndex({
                         index,
-                        animated: true,
+                        animated: false,
                         viewPosition: 0.15,
                       });
                     }}
@@ -413,32 +427,40 @@ export default function IPTVScreenTV({
               onLayout={updatePlayer}
             />
           </Pressable>
-          <View className="flex-1 mt-2 ps-5 pe-2">
+          <View className="flex-1 mt-2 ps-2 pe-2">
             <ThemedText
               type="defaultSemiBold"
               className="text-2xl text-white mb-0 pb-0"
               numberOfLines={2}
             >
-              {channelInfo?.name}
+              {nowPlayingChannel?.name}
             </ThemedText>
-            {channelInfo?.program_title ? (
+            {pickText(nowPlayingEPG?.titles) ? (
               <>
                 <ThemedText
                   className="text-lg text-secondary"
                   numberOfLines={2}
                 >
-                  {channelInfo?.program_title}
+                  {pickText(nowPlayingEPG?.titles)}
                 </ThemedText>
               </>
             ) : null}
-            {channelInfo?.start_time && channelInfo?.stop_time ? (
+            {nowPlayingEPG?.start_time && nowPlayingEPG?.stop_time ? (
               <ThemedText className="text-md text-white">
-                {channelInfo?.start_time} - {channelInfo?.stop_time}
+                {new Date(nowPlayingEPG.start_time).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}{" "}
+                -{" "}
+                {new Date(nowPlayingEPG.stop_time).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </ThemedText>
             ) : null}
-            {channelInfo?.program_title && channelInfo?.program_description ? (
+            {pickText(nowPlayingEPG?.descriptions) ? (
               <ThemedText className="text-md text-gray-400" numberOfLines={6}>
-                {channelInfo?.program_description}
+                {pickText(nowPlayingEPG?.descriptions)}
               </ThemedText>
             ) : null}
           </View>
