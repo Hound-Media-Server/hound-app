@@ -20,6 +20,9 @@ export function useModalInternal() {
 }
 
 /*
+  UPDATE: As of react-native-tvos targeting 0.86 / Expo SDK 57, the below issue seems to have been fixed,
+  but leaving this solution for now until it's more stable
+
   When autofocus is false, the modal requires an extra press to start interacting
   with its content/actions. This is because when using onLongPress(), in my testing,
   an extra press is registered, which would otherwise automatically press the first 
@@ -38,6 +41,8 @@ export function ContextModal({
   onClose: () => void;
   autoFocus?: boolean;
 }) {
+  // autofocus doesn't seem to be necessary anymore, remove soon
+  autoFocus = true;
   const [tvPressedOnce, setTvPressedOnce] = useState(autoFocus ?? false);
   useEffect(() => {
     if (!visible) {
