@@ -59,14 +59,12 @@ export default function LiveTV() {
   }
   return (
     <SafeAreaView className="flex-1 bg-black">
-      {Platform.isTV ? (
-        <IPTVScreenTV
-          iptvProviders={providers}
-          selectedProvider={selectedProvider}
-          setIPTVProviderID={setIPTVProviderID}
-          categories={xtreamCategories}
-        />
-      ) : null}
+      <IPTVScreenTV
+        iptvProviders={providers}
+        selectedProvider={selectedProvider}
+        setIPTVProviderID={setIPTVProviderID}
+        categories={xtreamCategories}
+      />
     </SafeAreaView>
   );
 }

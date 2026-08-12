@@ -91,6 +91,20 @@ export default function TabLayoutMobile() {
         }}
       />
       <Tabs.Screen
+        name="live_tv"
+        options={{
+          title: "Live TV",
+          headerShown: false,
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons
+              size={24}
+              name={focused ? "tv" : "tv-outline"}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
