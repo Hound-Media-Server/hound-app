@@ -1,24 +1,30 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { Orientation } from "expo-screen-orientation";
 
 export default function TabLayoutMobile() {
   return (
     <Tabs
+      safeAreaInsets={{ bottom: 0 }}
       initialRouteName="index"
       screenOptions={{
+        tabBarShowLabel: true,
         tabBarActiveTintColor: "#FF3B30",
         tabBarInactiveTintColor: "#8E8E93",
         tabBarItemStyle: {
+          flex: 1,
+          height: "100%",
           justifyContent: "center",
           alignItems: "center",
-          paddingTop: 4,
+          paddingTop: 0,
+          paddingBottom: 0,
         },
         tabBarStyle: {
-          display: "flex",
           position: "absolute",
           overflow: "hidden",
           marginHorizontal: 20,
           marginBottom: 20,
+          padding: 0,
           elevation: 2,
           backgroundColor: "#1C1C1E",
           borderRadius: 40,

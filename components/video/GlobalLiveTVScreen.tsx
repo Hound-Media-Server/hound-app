@@ -3,6 +3,7 @@ import { useLiveTVStore } from "@/stores/livePlayerStore";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { ThemedText } from "../ThemedText";
+import { StatusBar } from "expo-status-bar";
 
 export default function GlobalLiveTVPlayer() {
   const videoRef = useRef<MpvPlayerViewRef>(null);
@@ -16,7 +17,6 @@ export default function GlobalLiveTVPlayer() {
     prevSource.current = sourceURL;
   }, [sourceURL]);
   if (!rect) return null;
-
   return (
     <>
       {!sourceURL && (
@@ -56,6 +56,7 @@ export default function GlobalLiveTVPlayer() {
           </ThemedText>
         </View>
       )}
+      {rect.x === 0 && rect.y === 0 && <StatusBar hidden />}
       <MpvPlayerView
         ref={videoRef}
         source={{

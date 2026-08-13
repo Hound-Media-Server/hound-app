@@ -28,6 +28,7 @@ type ModalState =
         mediaItem: any;
         modalTitle: string;
         autoFocus?: boolean;
+        showRewatch?: boolean;
       };
     }
   | {

@@ -17,7 +17,6 @@ import {
   BackHandler,
   Platform,
   Pressable,
-  TVFocusGuideView,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -240,7 +239,7 @@ export default function IPTVScreenTV({
           ))}
         </Animated.View>
       </TVFocusGuideViewWrapper>
-      <View className="flex-1 flex-row gap-1 justify-between">
+      <View className="flex-1 flex-row gap-3 justify-between">
         <TVFocusGuideViewWrapper autoFocus className="w-[25%]">
           <View className="flex-1">
             <ThemedText className="text-white text-2xl font-semibold ml-2 mb-4">

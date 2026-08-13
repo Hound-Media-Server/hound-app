@@ -1,9 +1,13 @@
 import { RelativePathString, useRouter } from "expo-router";
 import { ContextModal, ModalAction } from "./Modal";
 import { getSelectStreamUrl, StreamUrlParams } from "@/utils/navigation";
-import { useAddWatchHistory } from "@/services/watchDataService";
+import {
+  useAddWatchHistory,
+  useCreateRewatch,
+} from "@/services/watchDataService";
 import { Toast } from "toastify-react-native";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
+import { useModalStore } from "@/stores/modalStore";
 
 export default function PlayOptionsModal({
   mediaItem,
@@ -11,16 +15,21 @@ export default function PlayOptionsModal({
   visible,
   onClose,
   autoFocus,
+  showRewatch = false,
 }: {
   mediaItem: any;
   modalTitle: string;
   visible: boolean;
   onClose: () => void;
   autoFocus?: boolean;
+  showRewatch?: boolean;
 }) {
   const router = useRouter();
+  const openModal = useModalStore((s) => s.open);
   const { mutate: addHistory, isPending: isAddingHistory } =
     useAddWatchHistory();
+  const { mutateAsync: rewatchMutation, isPending: isCreatingRewatch } =
+    useCreateRewatch();
 
   if (!mediaItem) return null;
   const targetSeason =
@@ -35,8 +44,8 @@ export default function PlayOptionsModal({
     1;
 
   async function handleMarkAsWatched() {
+    if (isAddingHistory) return;
     const mediaType = mediaItem.media_type || "";
-
     const mediaSourceID = mediaItem.media_source + "-" + mediaItem.source_id;
     const payload: any = {
       action_type: "watch",
@@ -102,6 +111,22 @@ export default function PlayOptionsModal({
     onClose();
   }
 
+  async function handleRewatch() {
+    if (isCreatingRewatch) return;
+    const mediaSourceID = mediaItem?.media_source + "-" + mediaItem?.source_id;
+    try {
+      await rewatchMutation({ id: mediaSourceID });
+      Toast.success("New Rewatch Started");
+    } catch (e: any) {
+      if (e?.status === 400) {
+        Toast.error("Your current rewatch is already empty!");
+      } else {
+        Toast.error("Error creating rewatch");
+      }
+    }
+    onClose();
+  }
+
   return (
     <ContextModal
       visible={visible}
@@ -131,11 +156,26 @@ export default function PlayOptionsModal({
       <ModalAction
         label={"Mark as Watched"}
         onPress={() => {
-          if (!isAddingHistory) {
-            handleMarkAsWatched();
-          }
+          handleMarkAsWatched();
         }}
       />
+      {showRewatch && mediaItem?.media_type === MediaTypeTVShow && (
+        <ModalAction
+          label={"Rewatch Show"}
+          onPress={() => {
+            openModal({
+              type: "confirm",
+              props: {
+                modalTitle: "Rewatch Show",
+                message:
+                  "Are you sure you want to rewatch this show? This will archive your current progress.",
+                autoFocus: true,
+                onPress: handleRewatch,
+              },
+            });
+          }}
+        />
+      )}
     </ContextModal>
   );
 }
