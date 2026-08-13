@@ -90,30 +90,10 @@ export default function TVDetails({
                   )
                 }
                 activeOpacity={0.75}
-                className="p-2 mt-3 bg-white rounded-2xl w-[120px] sm:w-[150px] items-center"
+                className="p-2 mt-3 bg-gray-300 rounded-2xl w-[120px] sm:w-[150px] items-center"
               >
                 <ThemedText className="text-primary text-md sm:text-lg">
                   Add to Collection
-                </ThemedText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() =>
-                  openModal({
-                    type: "confirm",
-                    props: {
-                      modalTitle: "Rewatch Show",
-                      message:
-                        "Are you sure you want to rewatch this show? This will archive your current progress.",
-                      autoFocus: true,
-                      onPress: handleRewatch,
-                    },
-                  })
-                }
-                activeOpacity={0.75}
-                className="p-2 mt-3 bg-white rounded-2xl w-[120px] sm:w-[150px] items-center"
-              >
-                <ThemedText className="text-primary text-md sm:text-lg">
-                  Rewatch Show
                 </ThemedText>
               </TouchableOpacity>
               <TouchableOpacity
@@ -128,6 +108,7 @@ export default function TVDetails({
                       },
                       modalTitle: details?.media_title,
                       autoFocus: true,
+                      showRewatch: true,
                     },
                   })
                 }

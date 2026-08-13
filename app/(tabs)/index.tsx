@@ -128,8 +128,8 @@ export default function Index() {
   const verticalListRef = useRef<FlatList>(null);
   return (
     <SafeAreaView className="flex-1 bg-black h-full">
-      {Platform.isTV ? <HomeDetails /> : <View className="h-5" />}
-      <View className="flex-1 pb-5">
+      <HomeDetails />
+      <View className="flex-1">
         <FlatList
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -164,6 +164,9 @@ export default function Index() {
             />
           )}
           ItemSeparatorComponent={() => <View className="h-5" />}
+          ListFooterComponent={() =>
+            !Platform.isTV ? <View className="h-20" /> : null
+          }
         />
       </View>
     </SafeAreaView>

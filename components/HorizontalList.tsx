@@ -58,7 +58,7 @@ export default function HorizontalList({
       return (
         <View className="me-5 md:me-10 flex-1">
           {!!header && (
-            <ThemedText className="text-white text-2xl mb-3 ps-5 md:ps-10">
+            <ThemedText className="text-white text-2xl mb-3">
               {header}
             </ThemedText>
           )}
@@ -73,6 +73,7 @@ export default function HorizontalList({
     isLoading = queryLoading || isLoading;
     data = queryData;
   }
+
   if (isLoading) {
     return (
       <View

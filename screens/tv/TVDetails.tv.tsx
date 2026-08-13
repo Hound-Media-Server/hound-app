@@ -71,6 +71,7 @@ export default function TVDetails({
                         },
                         modalTitle: details?.media_title,
                         autoFocus: true,
+                        showRewatch: true,
                       },
                     })
                   }
@@ -95,21 +96,6 @@ export default function TVDetails({
                     )
                   }
                   label="Add to Collection"
-                />
-                <TVFocusButtonText
-                  onPress={() =>
-                    openModal({
-                      type: "confirm",
-                      props: {
-                        modalTitle: "Rewatch Show",
-                        message:
-                          "Are you sure you want to rewatch this show? This will archive your current progress.",
-                        autoFocus: true,
-                        onPress: handleRewatch,
-                      },
-                    })
-                  }
-                  label="Rewatch Show"
                 />
               </View>
             </View>

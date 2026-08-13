@@ -1,4 +1,4 @@
-import { View, Dimensions } from "react-native";
+import { View, Dimensions, Platform } from "react-native";
 import { Image } from "expo-image";
 import { ThemedText } from "../ThemedText";
 import { LinearGradient } from "expo-linear-gradient";
@@ -15,8 +15,16 @@ const SCREEN_HEIGHT = Dimensions.get("window").height;
 const HERO_HEIGHT = SCREEN_HEIGHT / 1.85;
 
 export default function HomeDetails() {
+  if (!Platform.isTV) {
+    return (
+      <View className="flex justify-center py-4 px-6">
+        <ThemedText className="text-secondary text-4xl font-extrabold">
+          HOUND
+        </ThemedText>
+      </View>
+    );
+  }
   const focusedItem = useFocusStore((s) => s.focusedItem);
-
   if (!focusedItem) {
     return <PlaceholderHero />;
   }
