@@ -65,6 +65,10 @@ const fetchAllCollections = (): Promise<any> => {
   return apiClient("/collection/all");
 };
 
+const fetchPublicCollections = (): Promise<any> => {
+  return apiClient("/collection/public");
+};
+
 const fetchCollectionContents = (
   collectionID: number | string,
   media_type?: MediaType,
@@ -122,6 +126,15 @@ export const useAllCollections = () => {
   return useQuery({
     queryKey: ["collections"],
     queryFn: fetchAllCollections,
+    staleTime: 1000 * 60 * 1,
+    select: (data: any) => data.data as CollectionMeta[],
+  });
+};
+
+export const usePublicCollections = () => {
+  return useQuery({
+    queryKey: ["public-collections"],
+    queryFn: fetchPublicCollections,
     staleTime: 1000 * 60 * 1,
     select: (data: any) => data.data as CollectionMeta[],
   });
