@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { Orientation } from "expo-screen-orientation";
 
 export default function TabLayoutMobile() {
   return (
