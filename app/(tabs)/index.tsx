@@ -165,7 +165,11 @@ export default function Index() {
           )}
           ItemSeparatorComponent={() => <View className="h-5" />}
           ListFooterComponent={() =>
-            !Platform.isTV ? <View className="h-20" /> : null
+            !Platform.isTV ? (
+              <View className="h-20" />
+            ) : (
+              <View className="h-5" />
+            )
           }
         />
       </View>
