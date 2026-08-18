@@ -65,6 +65,7 @@ export default function Index() {
       queryClient.invalidateQueries({ queryKey: ["trending-movies"] }),
       queryClient.invalidateQueries({ queryKey: ["trending-shows"] }),
       queryClient.invalidateQueries({ queryKey: ["continue-watching"] }),
+      queryClient.invalidateQueries({ queryKey: ["home-rows"] }),
     ]);
     setRefreshing(false);
   }, []);
@@ -76,6 +77,7 @@ export default function Index() {
         // queryClient.invalidateQueries({ queryKey: ["trending-movies"] }),
         // queryClient.invalidateQueries({ queryKey: ["trending-shows"] }),
         queryClient.invalidateQueries({ queryKey: ["continue-watching"] }),
+        queryClient.invalidateQueries({ queryKey: ["home-rows"] }),
       ]);
     }, []),
   );
