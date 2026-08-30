@@ -4,6 +4,7 @@ import {
   FlatList,
   Platform,
   Text,
+  useWindowDimensions,
 } from "react-native";
 import React, { useRef } from "react";
 import MediaItemCard, { MediaItemCardPlaceholder } from "./MediaItemCard";
@@ -50,6 +51,15 @@ export default function HorizontalList({
       viewPosition: 0.15,
     });
   };
+  const { width: winWidth } = useWindowDimensions();
+  let posterWidth = Platform.isTV ? 120 : winWidth / 4;
+  if (!Platform.isTV) {
+    posterWidth = Math.min(Math.max(posterWidth, 120), 150);
+  }
+  let landscapeWidth = Platform.isTV ? 120 : posterWidth * 2;
+  if (!Platform.isTV) {
+    landscapeWidth = Math.max(landscapeWidth, 200);
+  }
 
   let data = itemData;
   if (!data && useQuery) {
@@ -86,9 +96,12 @@ export default function HorizontalList({
         <View className="flex-row gap-[10px]">
           {[...Array(7)].map((_, index) =>
             itemType === "episode" ? (
-              <ContinueWatchingCardPlaceholder key={index} />
+              <ContinueWatchingCardPlaceholder
+                key={index}
+                width={landscapeWidth}
+              />
             ) : (
-              <MediaItemCardPlaceholder key={index} />
+              <MediaItemCardPlaceholder key={index} width={posterWidth} />
             ),
           )}
         </View>
@@ -130,6 +143,7 @@ export default function HorizontalList({
                   title={item.name}
                   subtitle={item.character}
                   showDescription={showDescription}
+                  width={posterWidth}
                 />
               );
             }
@@ -140,6 +154,7 @@ export default function HorizontalList({
                   title={getMediaTitle(item)}
                   imgAlt={getMediaTitle(item)}
                   showDescription={showDescription}
+                  width={posterWidth}
                 />
               );
             }
@@ -150,6 +165,7 @@ export default function HorizontalList({
                   onFocus={() => handleFocus(index)}
                   hasTVPreferredFocus={hasPreferredFocus && index === 0}
                   rowIndex={rowIndex}
+                  width={landscapeWidth}
                 />
               );
             }
@@ -175,6 +191,7 @@ export default function HorizontalList({
                   handleFocus(index);
                 }}
                 hasTVPreferredFocus={hasPreferredFocus && index === 0}
+                width={posterWidth}
               />
             );
           }}
