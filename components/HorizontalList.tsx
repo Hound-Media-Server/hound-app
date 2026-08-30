@@ -56,7 +56,7 @@ export default function HorizontalList({
   if (!Platform.isTV) {
     posterWidth = Math.min(Math.max(posterWidth, 120), 150);
   }
-  let landscapeWidth = Platform.isTV ? 120 : posterWidth * 2;
+  let landscapeWidth = Platform.isTV ? 200 : posterWidth * 2;
   if (!Platform.isTV) {
     landscapeWidth = Math.max(landscapeWidth, 200);
   }
