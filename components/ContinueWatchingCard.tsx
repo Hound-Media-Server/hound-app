@@ -20,11 +20,13 @@ export default function ContinueWatchingCard({
   onFocus,
   hasTVPreferredFocus,
   rowIndex,
+  width = 200,
 }: {
   item: any;
   onFocus: () => void;
   hasTVPreferredFocus?: boolean;
   rowIndex?: number;
+  width?: number;
 }) {
   if (!item) return;
   const router = useRouter();
@@ -136,9 +138,10 @@ export default function ContinueWatchingCard({
             {imgSource ? (
               <Image
                 className={
-                  "border-2 w-[200px] h-[112px] rounded-lg bg-zinc-800" +
+                  "border-2 rounded-lg bg-zinc-800" +
                   (Platform.isTV ? " group-focus:border-white" : "")
                 }
+                style={{ width: width, height: width * 0.56 }}
                 source={imgSource}
                 contentFit="cover"
                 transition={1000}
@@ -146,9 +149,10 @@ export default function ContinueWatchingCard({
             ) : (
               <View
                 className={
-                  "border-zinc-700 border-2 w-[200px] h-[112px] rounded-lg bg-zinc-800 items-center justify-center" +
+                  "border-zinc-700 border-2 rounded-lg bg-zinc-800 items-center justify-center" +
                   (Platform.isTV ? " group-focus:border-white" : "")
                 }
+                style={{ width: width, height: width * 0.56 }}
               >
                 <ThemedText className="text-gray-500">No Image</ThemedText>
               </View>
@@ -171,7 +175,7 @@ export default function ContinueWatchingCard({
               )}
             </View>
           </View>
-          <View className="w-[200px]">
+          <View style={{ width: width }}>
             {!!title && (
               <ThemedText
                 className="text-gray-200 mt-2 text-start"
@@ -195,7 +199,7 @@ export default function ContinueWatchingCard({
   );
 }
 
-export function ContinueWatchingCardPlaceholder({ width = 120 }) {
+export function ContinueWatchingCardPlaceholder({ width = 200 }) {
   const opacity = useSharedValue(0.8);
   // shimmer animation
   useEffect(() => {
@@ -214,24 +218,22 @@ export function ContinueWatchingCardPlaceholder({ width = 120 }) {
     <View>
       <View className="rounded-lg">
         <Animated.View
-          className={
-            "w-[200px] h-[112px] rounded-lg bg-zinc-800 items-center justify-center"
-          }
-          style={pulsingStyle}
+          className={"rounded-lg bg-zinc-800 items-center justify-center"}
+          style={[{ width: width, height: width * 0.56 }, pulsingStyle]}
         />
       </View>
-      <View className="w-[200px]">
+      <View style={{ width: width }}>
         <Animated.View
           className={
-            "mt-2 w-[80px] h-[13px] rounded-md bg-gray-700 items-center justify-center"
+            "mt-2 h-[13px] rounded-md bg-gray-700 items-center justify-center"
           }
-          style={pulsingStyle}
+          style={[{ width: width * 0.4 }, pulsingStyle]}
         />
         <Animated.View
           className={
-            "mt-1 w-[100px] h-[13px] rounded-md bg-gray-700 items-center justify-center"
+            "mt-1 h-[13px] rounded-md bg-gray-700 items-center justify-center"
           }
-          style={pulsingStyle}
+          style={[{ width: width * 0.6 }, pulsingStyle]}
         />
       </View>
     </View>
