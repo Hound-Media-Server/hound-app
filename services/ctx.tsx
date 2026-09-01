@@ -9,6 +9,7 @@ import * as SecureStore from "expo-secure-store";
 import * as Crypto from "expo-crypto";
 import { DeviceEventEmitter, Platform } from "react-native";
 import { login, logout } from "./auth";
+import { Toast } from "toastify-react-native";
 
 const SESSION_KEY = "auth-session";
 const PROFILES_KEY = "auth-profiles";
@@ -91,15 +92,21 @@ export function SessionProvider({ children }: PropsWithChildren) {
           setHasSelectedProfile(false);
         } else if (loadedProfiles.length === 1) {
           const singleProfile = loadedProfiles[0];
-          setSession(singleProfile);
-          setHasSelectedProfile(true);
-          if (Platform.OS === "web") {
-            localStorage.setItem(SESSION_KEY, JSON.stringify(singleProfile));
-          } else {
-            await SecureStore.setItemAsync(
-              SESSION_KEY,
-              JSON.stringify(singleProfile),
-            );
+          const reachable = await checkServerReachable(
+            singleProfile?.host,
+            singleProfile?.token,
+          );
+          if (reachable) {
+            setSession(singleProfile);
+            setHasSelectedProfile(true);
+            if (Platform.OS === "web") {
+              localStorage.setItem(SESSION_KEY, JSON.stringify(singleProfile));
+            } else {
+              await SecureStore.setItemAsync(
+                SESSION_KEY,
+                JSON.stringify(singleProfile),
+              );
+            }
           }
         } else {
           // If multiple profiles exist, force selection on startup
@@ -127,7 +134,13 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
   const signIn = async (host: string, username: string, password: string) => {
     const deviceId = await getDeviceID();
-    const data = await login(host, username, password, deviceId);
+    let data: any;
+    try {
+      data = await login(host, username, password, deviceId);
+    } catch (error: any) {
+      Toast.error(error.response.data.message);
+      return;
+    }
     const newSession: Session = {
       host: host.trim().replace(/\/$/, ""),
       token: data.data.token,
@@ -237,3 +250,22 @@ async function getDeviceID(): Promise<string> {
   }
   return deviceId;
 }
+
+export const checkServerReachable = async (
+  host: string,
+  token?: string,
+): Promise<boolean> => {
+  try {
+    const headers: HeadersInit = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    await fetch(`${host}/api/v1/server_info`, {
+      headers,
+      signal: AbortSignal.timeout(5000),
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};

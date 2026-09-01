@@ -13,7 +13,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSession, Session } from "../../services/ctx";
+import { useSession, Session, checkServerReachable } from "../../services/ctx";
+import { Toast } from "toastify-react-native";
 
 export default function Profiles() {
   const router = useRouter();
@@ -25,9 +26,23 @@ export default function Profiles() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState<number | null>(null);
 
-  const handleSelect = async (profile: Session) => {
+  const handleSelect = async (profile: Session, idx: number) => {
+    if (profileLoading !== null) {
+      return;
+    }
+    setProfileLoading(idx);
+    const reachable = await checkServerReachable(profile?.host, profile?.token);
+    if (!reachable) {
+      setProfileLoading(null);
+      Toast.error(
+        `Cannot reach the server at ${profile.host}, please contact your administrator.`,
+      );
+      return;
+    }
     await selectProfile(profile);
+    setProfileLoading(null);
     queryClient.clear();
     router.replace("/");
   };
@@ -43,7 +58,7 @@ export default function Profiles() {
       queryClient.clear();
       router.replace("/");
     } catch (e: any) {
-      Alert.alert("Failed to add profile", e.message);
+      Toast.error("Failed to add profile, please check your host/credentials");
     } finally {
       setLoading(false);
     }
@@ -81,12 +96,15 @@ export default function Profiles() {
                 <FocusablePressable
                   hasTVPreferredFocus={isActive}
                   key={`${profile.host}-${profile.username}-${index}`}
-                  onPress={() => handleSelect(profile)}
-                  focusable={Platform.isTV}
+                  onPress={() => handleSelect(profile, index)}
                 >
                   <View className="w-12 h-12 rounded-full bg-gray-600 justify-center items-center">
                     <Text className="text-white text-xl font-bold uppercase">
-                      {profile.username.charAt(0)}
+                      {profileLoading === index ? (
+                        <ActivityIndicator color="white" />
+                      ) : (
+                        profile.username.charAt(0)
+                      )}
                     </Text>
                   </View>
                   <View className="flex-1 ml-4">
@@ -100,10 +118,7 @@ export default function Profiles() {
                 </FocusablePressable>
               );
             })}
-            <FocusablePressable
-              onPress={() => setIsAdding(true)}
-              focusable={Platform.isTV}
-            >
+            <FocusablePressable onPress={() => setIsAdding(true)}>
               <View className="flex-1 items-center justify-center">
                 <Text className="text-white text-lg font-semibold">
                   + Add Profile
@@ -183,6 +198,7 @@ const FocusablePressable = ({ children, ...props }: any) => {
     <Pressable
       {...props}
       className="flex-row mt-3 p-3 focus:bg-white/20 rounded-full"
+      focusable={Platform.isTV}
     >
       {children}
     </Pressable>
