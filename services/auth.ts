@@ -40,8 +40,8 @@ export async function login(
         "X-Device-Id": deviceId,
       },
       body: JSON.stringify({ username, password }),
+      signal: AbortSignal.timeout(10000)
     });
-
     if (!response.ok) {
       let errorMessage = `Login failed: ${response.status}`;
       try {
@@ -56,7 +56,7 @@ export async function login(
     }
     return response.json();
   } catch (error: any) {
-    if (error.message === "Network request failed") {
+    if (error.message === "Network request failed" || error.message === "fetch failed: Fetch request has been canceled") {
       throw new Error(
         `Network error: Could not connect to ${baseUrl}. Please check your connection and host URL.`,
       );
