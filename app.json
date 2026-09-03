@@ -33,9 +33,7 @@
           }
         }
       ],
-      [
-        "./plugins/with-runtime-framework-headers.js"
-      ],
+      ["./plugins/with-runtime-framework-headers.js"],
       [
         "./plugins/withGitPod.js",
         {
@@ -69,7 +67,7 @@
       "permissions": []
     },
     "ios": {
-      "bundleIdentifier": "com.anonymous.houndapp"
+      "bundleIdentifier": "com.houndmediaserver.houndapp"
     },
     "web": {
       "bundler": "metro",
