@@ -345,7 +345,7 @@ export default function MPVVideoScreen(props: {
     }
   };
 
-  const handleError = (error: any) => {
+  const handleError = (error: any, startTime: number) => {
     console.error("MPV Video Player error:", error);
 
     let errorMessage = "An unknown MPV error occurred.";
@@ -358,11 +358,25 @@ export default function MPVVideoScreen(props: {
     } else {
       errorMessage = JSON.stringify(error);
     }
-
-    Alert.alert("MPV Player Error", `${errorMessage}`, [
+    const newTime =
+      currentTime && currentTime > startTime ? currentTime : startTime;
+    Alert.alert("MPV Error", `${errorMessage}`, [
       {
-        text: "OK",
-        onPress: () => router.back(),
+        text: "Switch to Exoplayer",
+        onPress: () => {
+          props.onChangePlayer?.("exoplayer", newTime, {
+            subtitle_language: selectedTextTrack,
+            audio_language: selectedAudioTrack,
+            resize_mode: isZoomedToFill ? "cover" : "contain",
+          });
+        },
+        style: "default",
+      },
+      {
+        text: "Exit",
+        onPress: () => {
+          router.back();
+        },
         style: "cancel",
       },
     ]);
@@ -469,7 +483,7 @@ export default function MPVVideoScreen(props: {
           onLoad={handleLoad}
           onPlaybackStateChange={handlePlaybackStateChange}
           onProgress={handleProgress}
-          onError={handleError}
+          onError={(error) => handleError(error, props.startTime || 0)}
           onTracksReady={handleTracksReady}
         />
         {Platform.isTV ? (

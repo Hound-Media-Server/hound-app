@@ -174,16 +174,6 @@ export default function VideoControls({
                 )}
                 <TouchableOpacity
                   style={styles.iconButton}
-                  onPress={() => setShowInfoModal(true)}
-                >
-                  <Ionicons
-                    name="information-circle-outline"
-                    size={24}
-                    color="white"
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconButton}
                   onPress={() => setShowSettingsModal(true)}
                 >
                   <Ionicons name="settings-outline" size={24} color="white" />
@@ -193,13 +183,18 @@ export default function VideoControls({
 
             {/* Center Controls */}
             <View style={styles.centerControls}>
+              {/* Dummy button to center buttons */}
+              {hasNextEpisode && (
+                <TouchableOpacity style={styles.placeholderButton} disabled>
+                  <Ionicons name="play-skip-forward" size={40} color="white" />
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
                 style={styles.controlButton}
                 onPress={onSeekBackward}
               >
                 <Ionicons name="play-back" size={40} color="white" />
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={[styles.controlButton, styles.playButton]}
                 onPress={onPlayPause}
@@ -210,14 +205,12 @@ export default function VideoControls({
                   color="white"
                 />
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={styles.controlButton}
                 onPress={onSeekForward}
               >
                 <Ionicons name="play-forward" size={40} color="white" />
               </TouchableOpacity>
-
               {hasNextEpisode && (
                 <TouchableOpacity
                   style={styles.controlButton}
@@ -544,8 +537,11 @@ const styles = StyleSheet.create({
   controlButton: {
     padding: 10,
   },
+  placeholderButton: {
+    padding: 10,
+    opacity: 0,
+  },
   playButton: {
-    backgroundColor: "rgba(255,255,255,0.2)",
     borderRadius: 50,
     padding: 20,
   },

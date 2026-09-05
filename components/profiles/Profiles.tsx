@@ -49,7 +49,7 @@ export default function Profiles() {
 
   const handleAddProfile = async () => {
     if (!host || !username || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+      Toast.error("Please fill in all fields");
       return;
     }
     setLoading(true);

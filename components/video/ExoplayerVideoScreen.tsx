@@ -32,6 +32,7 @@ import { getAllSettings, SettingsSchema } from "@/stores/settingsStore";
 import { get2LetterLangCode } from "@/utils/locale";
 import { MediaType } from "@/constants/MediaTypes";
 import { DisplayInfo } from "@/app/stream/[encoded_data]";
+import { Toast } from "toastify-react-native";
 
 export default function ExoplayerVideoScreen(props: {
   src: string;
@@ -276,11 +277,9 @@ export default function ExoplayerVideoScreen(props: {
     setAudioTracks(tracks);
   };
 
-  const handleError = (error: any) => {
+  const handleError = (error: any, startTime: number) => {
     console.error("ExoPlayer error:", JSON.stringify(error, null, 2));
-
     let errorMessage = "An unknown playback error occurred.";
-
     if (error?.error?.errorString) {
       errorMessage = error.error.errorString;
     } else if (error?.error?.message) {
@@ -292,14 +291,16 @@ export default function ExoplayerVideoScreen(props: {
     } else {
       errorMessage = JSON.stringify(error);
     }
-
-    Alert.alert("ExoPlayer Error", `${errorMessage}`, [
-      {
-        text: "OK",
-        onPress: () => router.back(),
-        style: "cancel",
-      },
-    ]);
+    // automatically fallback to MPV if exoplayer fails,
+    // for MPV, fallback to exoplayer is shown as a dialog which you have to confirm
+    const newTime =
+      currentTime && currentTime > startTime ? currentTime : startTime;
+    props.onChangePlayer?.("mpv", newTime, {
+      subtitle_language: selectedTextTrack,
+      audio_language: selectedAudioTrack,
+      resize_mode: isZoomedToFill ? "cover" : "contain",
+    });
+    Toast.info(`Exoplayer Error: ${errorMessage}, switching to MPV`);
   };
 
   const handlePlayPause = () => {
@@ -364,7 +365,7 @@ export default function ExoplayerVideoScreen(props: {
           onProgress={handleProgress}
           onTextTracks={handleTextTracks}
           onAudioTracks={handleAudioTracks}
-          onError={handleError}
+          onError={(error) => handleError(error, props.startTime || 0)}
           progressUpdateInterval={1000}
           subtitleStyle={{
             fontSize: appSettings?.subtitleSize || 24,

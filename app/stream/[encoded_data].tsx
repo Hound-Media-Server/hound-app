@@ -1,4 +1,4 @@
-import { Platform, View, ActivityIndicator, Alert } from "react-native";
+import { Platform, View, ActivityIndicator } from "react-native";
 import React, { useState, useMemo, useRef, useCallback } from "react";
 import { useEffect } from "react";
 import * as ScreenOrientation from "expo-screen-orientation";
@@ -30,6 +30,7 @@ import {
   MediaType,
 } from "@/constants/MediaTypes";
 import { get2LetterLangCode } from "@/utils/locale";
+import { Toast } from "toastify-react-native";
 
 export type DisplayInfo = {
   title: string;
@@ -280,7 +281,7 @@ export default function Stream() {
         }, 100);
       } else {
         if (!prefetch) {
-          Alert.alert("No streams found for the next episode.");
+          Toast.error("No streams found for the next episode.");
           console.log(
             "[NEXT_EPISODE] No main stream found in providers response",
           );
@@ -308,14 +309,18 @@ export default function Stream() {
   useEffect(() => {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
     // Load setting
-    const val = getSetting("defaultPlayer");
     const defaultResizeMode =
       mediaType === MediaTypeMovie
         ? getSetting("defaultMovieResizeMode")
         : getSetting("defaultShowResizeMode");
     // Use player from context if available, otherwise fallback to settings
-    const preferredPlayer =
-      (parsedPlayerSettings?.player as string) || val || "exoplayer";
+    // unfortunately, if you play something in app with your non-default player,
+    // this will mean it reverts back to default player when you watch on desktop, then on app again, since
+    // only the latest client is recorded
+    let preferredPlayer = parsedPlayerSettings?.player as string;
+    if (preferredPlayer === "desktop") {
+      preferredPlayer = (parsedPlayerSettings?.player as string) || "exoplayer";
+    }
     setCurrentPlayer(preferredPlayer);
     setCurrentSettings((prev: any) => ({
       ...prev,

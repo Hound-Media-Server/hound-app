@@ -169,7 +169,7 @@ export default function SelectStreamScreen() {
           });
         }}
       >
-        <View className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+        <View className="bg-gray-900 p-3 rounded-lg border border-slate-700">
           <ThemedText className="text-white text-[16px] mb-1">
             {item?.title}
           </ThemedText>
@@ -182,7 +182,7 @@ export default function SelectStreamScreen() {
   };
 
   return (
-    <View className="flex-1 bg-primary">
+    <View className="flex-1 bg-black">
       <FlatList
         ref={flatListRef}
         data={streams}

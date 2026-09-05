@@ -10,6 +10,7 @@ import {
 import { useSession } from "../services/ctx";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as SplashScreen from "expo-splash-screen";
+import { Toast } from "toastify-react-native";
 
 export default function SignIn() {
   useEffect(() => {
@@ -24,14 +25,14 @@ export default function SignIn() {
 
   const handleLogin = async () => {
     if (!host || !username || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+      Toast.error("Please fill in all fields");
       return;
     }
     setLoading(true);
     try {
       await signIn(host, username, password);
     } catch (e: any) {
-      Alert.alert("Login Failed. Check your host/credentials.", e.message);
+      Toast.error("Login Failed. Check your host/credentials.");
     } finally {
       setLoading(false);
     }
