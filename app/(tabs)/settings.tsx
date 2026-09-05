@@ -17,6 +17,7 @@ import { getSetting, setSetting } from "@/stores/settingsStore";
 import * as Updates from "expo-updates";
 import { ThemedText } from "@/components/ThemedText";
 import { useModalStore } from "@/stores/modalStore";
+import { Toast } from "toastify-react-native";
 
 export default function Settings() {
   const { signOut, session } = useSession();
@@ -51,12 +52,12 @@ export default function Settings() {
       if (update.isAvailable) {
         await Updates.fetchUpdateAsync();
         await Updates.reloadAsync();
-        Alert.alert("Update applied successfully!");
+        Toast.success("Update applied successfully!");
       } else {
-        Alert.alert("No updates found");
+        Toast.error("No updates found");
       }
     } catch (error) {
-      alert(`Error fetching latest Expo update: ${error}`);
+      Toast.error(`Error fetching latest Expo update: ${error}`);
     }
   }
 
