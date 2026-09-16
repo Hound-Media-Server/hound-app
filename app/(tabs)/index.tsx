@@ -11,16 +11,22 @@ import {
 } from "./../../services/catalogService";
 import HorizontalList from "@/components/HorizontalList";
 import HomeDetails from "@/components/home/HomeDetails";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useServerInfo } from "@/services/internalService";
 import { ServerVersionGTE } from "@/utils/version";
+import { Toast } from "toastify-react-native";
 
 export default function Index() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: serverInfo, isLoading: isServerInfoLoading } = useServerInfo();
+  const {
+    data: serverInfo,
+    isLoading: isServerInfoLoading,
+    isError: isServerInfoError,
+  } = useServerInfo();
 
   // new homerows/catalogs api starting from 0.2.0-beta
   // check for backwards compatibility
@@ -38,6 +44,7 @@ export default function Index() {
     isUserHomeRowsLoading ? 0 : (userHomeRowsList?.home_rows?.length ?? 0),
     useNewCatalogAPI,
   );
+  const verticalListRef = useRef<FlatList>(null);
 
   // hide splash screen after all queries done, this helps with focus handling as well
   let isAllReady = false;
@@ -47,17 +54,24 @@ export default function Index() {
       !isUserHomeRowsLoading &&
       !continueWatchingQuery.isLoading;
   } else {
-    isAllReady = !isServerInfoLoading;
-    !trendingMoviesQuery.isLoading &&
+    isAllReady =
+      !isServerInfoLoading &&
+      !trendingMoviesQuery.isLoading &&
       !trendingShowsQuery.isLoading &&
       !continueWatchingQuery.isLoading;
   }
 
   React.useEffect(() => {
-    if (isAllReady) {
-      SplashScreen.hide();
+    if (isAllReady || isServerInfoError) {
+      SplashScreen.hideAsync();
     }
-  }, [isAllReady]);
+  }, [isAllReady, isServerInfoError]);
+
+  // host not reachable, route to profile page
+  React.useEffect(() => {
+    if (!isServerInfoError) return;
+    router.replace("/profile-select");
+  }, [isServerInfoError, router]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -68,7 +82,7 @@ export default function Index() {
       queryClient.invalidateQueries({ queryKey: ["home-rows"] }),
     ]);
     setRefreshing(false);
-  }, []);
+  }, [queryClient]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -79,7 +93,7 @@ export default function Index() {
         queryClient.invalidateQueries({ queryKey: ["continue-watching"] }),
         queryClient.invalidateQueries({ queryKey: ["home-rows"] }),
       ]);
-    }, []),
+    }, [queryClient]),
   );
 
   let rows = [
@@ -127,7 +141,6 @@ export default function Index() {
     )?.key;
   }
 
-  const verticalListRef = useRef<FlatList>(null);
   return (
     <SafeAreaView className="flex-1 bg-black h-full">
       <HomeDetails />

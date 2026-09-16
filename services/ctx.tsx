@@ -29,6 +29,7 @@ type AuthContextType = {
   profiles: Session[];
   hasSelectedProfile: boolean;
   selectProfile: (profile: Session) => void;
+  deleteProfile: (profile: Session) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -39,6 +40,7 @@ const AuthContext = createContext<AuthContextType>({
   profiles: [],
   hasSelectedProfile: false,
   selectProfile: () => {},
+  deleteProfile: async () => {},
 });
 
 export function useSession() {
@@ -216,6 +218,31 @@ export function SessionProvider({ children }: PropsWithChildren) {
     setHasSelectedProfile(true);
   };
 
+  const deleteProfile = async (profile: Session) => {
+    const updatedProfiles = profiles.filter(
+      (p) => !(p.host === profile.host && p.username === profile.username),
+    );
+    const isActiveProfile =
+      session?.host === profile.host && session?.username === profile.username;
+    setProfiles(updatedProfiles);
+    if (Platform.OS === "web") {
+      localStorage.setItem(PROFILES_KEY, JSON.stringify(updatedProfiles));
+    } else {
+      await SecureStore.setItemAsync(
+        PROFILES_KEY,
+        JSON.stringify(updatedProfiles),
+      );
+    }
+    if (!isActiveProfile) return;
+    setSession(null);
+    setHasSelectedProfile(false);
+    if (Platform.OS === "web") {
+      localStorage.removeItem(SESSION_KEY);
+    } else {
+      await SecureStore.deleteItemAsync(SESSION_KEY);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -226,6 +253,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
         profiles,
         hasSelectedProfile,
         selectProfile,
+        deleteProfile,
       }}
     >
       {children}
