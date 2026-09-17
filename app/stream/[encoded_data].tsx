@@ -313,14 +313,12 @@ export default function Stream() {
       mediaType === MediaTypeMovie
         ? getSetting("defaultMovieResizeMode")
         : getSetting("defaultShowResizeMode");
-    // Use player from context if available, otherwise fallback to settings
-    // unfortunately, if you play something in app with your non-default player,
-    // this will mean it reverts back to default player when you watch on desktop, then on app again, since
-    // only the latest client is recorded
-    let preferredPlayer = parsedPlayerSettings?.player as string;
-    if (preferredPlayer === "desktop") {
-      preferredPlayer = (parsedPlayerSettings?.player as string) || "exoplayer";
-    }
+    // Desktop history and new streams use this device's preferred player.
+    const savedPlayer = parsedPlayerSettings?.player;
+    const preferredPlayer =
+      savedPlayer === "mpv" || savedPlayer === "exoplayer"
+        ? savedPlayer
+        : getSetting("defaultPlayer") || "mpv";
     setCurrentPlayer(preferredPlayer);
     setCurrentSettings((prev: any) => ({
       ...prev,
@@ -340,6 +338,12 @@ export default function Stream() {
     setCurrentProgress(currentTime);
     setCurrentPlayer(newPlayer);
     if (settings) {
+      if (settings.subtitle_idx != null) {
+        setActiveSubtitleIdx(settings.subtitle_idx);
+      }
+      if (settings.audio_idx != null) {
+        setActiveAudioIdx(settings.audio_idx);
+      }
       setCurrentSettings((prev: any) => ({ ...prev, ...settings }));
     }
   };

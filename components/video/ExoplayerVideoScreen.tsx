@@ -198,7 +198,10 @@ export default function ExoplayerVideoScreen(props: {
     //   };
     // });
     // const tracks = [...embeddedTracks, ...externalTracks];
-    if (!subtitleInitialized.current) {
+    if (
+      !subtitleInitialized.current &&
+      (tracks.length > 0 || props.defaultSubtitleIdx === 0)
+    ) {
       subtitleInitialized.current = true;
 
       setSelectedTextTrack((prev) => {
@@ -206,7 +209,8 @@ export default function ExoplayerVideoScreen(props: {
         if (
           props.defaultSubtitleIdx !== null &&
           props.defaultSubtitleIdx !== undefined &&
-          tracks.find((t: any) => t.id === props.defaultSubtitleIdx)
+          (props.defaultSubtitleIdx === 0 ||
+            tracks.find((t: any) => t.id === props.defaultSubtitleIdx))
         ) {
           targetSub = props.defaultSubtitleIdx;
         } else {
@@ -250,7 +254,7 @@ export default function ExoplayerVideoScreen(props: {
       selected: track.index + 1 === selectedAudioTrack,
     }));
     setSelectedAudioTrack((prev) => {
-      if (audioInitialized.current) return prev;
+      if (audioInitialized.current || tracks.length === 0) return prev;
       audioInitialized.current = true;
 
       let targetAudio = prev;
@@ -296,8 +300,8 @@ export default function ExoplayerVideoScreen(props: {
     const newTime =
       currentTime && currentTime > startTime ? currentTime : startTime;
     props.onChangePlayer?.("mpv", newTime, {
-      subtitle_language: selectedTextTrack,
-      audio_language: selectedAudioTrack,
+      subtitle_idx: subtitleInitialized.current ? selectedTextTrack : undefined,
+      audio_idx: audioInitialized.current ? selectedAudioTrack : undefined,
       resize_mode: isZoomedToFill ? "cover" : "contain",
     });
     Toast.info(`Exoplayer Error: ${errorMessage}, switching to MPV`);
