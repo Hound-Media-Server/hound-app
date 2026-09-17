@@ -15,11 +15,15 @@ import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession, Session, checkServerReachable } from "../../services/ctx";
 import { Toast } from "toastify-react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useModalStore } from "@/stores/modalStore";
 
 export default function Profiles() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { session, profiles, selectProfile, signIn } = useSession();
+  const { session, profiles, selectProfile, signIn, deleteProfile } =
+    useSession();
+  const openModal = useModalStore((s) => s.open);
 
   const [isAdding, setIsAdding] = useState(false);
   const [host, setHost] = useState(session?.host || profiles[0]?.host || "");
@@ -45,6 +49,21 @@ export default function Profiles() {
     setProfileLoading(null);
     queryClient.clear();
     router.replace("/");
+  };
+
+  const handleDelete = (profile: Session) => {
+    openModal({
+      type: "confirm",
+      props: {
+        modalTitle: "Delete Profile",
+        message: `Delete ${profile.username} at ${profile.host}?`,
+        onPress: async () => {
+          await deleteProfile(profile);
+          queryClient.clear();
+          Toast.success("Profile deleted");
+        },
+      },
+    });
   };
 
   const handleAddProfile = async () => {
@@ -93,32 +112,47 @@ export default function Profiles() {
             {profiles.map((profile, index) => {
               const isActive = activeProfileIdx === index;
               return (
-                <FocusablePressable
-                  hasTVPreferredFocus={isActive}
+                <View
+                  className="flex-row mt-3 items-center"
                   key={`${profile.host}-${profile.username}-${index}`}
-                  onPress={() => handleSelect(profile, index)}
                 >
-                  <View className="w-12 h-12 rounded-full bg-gray-600 justify-center items-center">
-                    <Text className="text-white text-xl font-bold uppercase">
-                      {profileLoading === index ? (
-                        <ActivityIndicator color="white" />
-                      ) : (
-                        profile.username.charAt(0)
-                      )}
-                    </Text>
-                  </View>
-                  <View className="flex-1 ml-4">
-                    <Text className="text-white text-lg font-semibold">
-                      {profile.username}
-                    </Text>
-                    <Text className="text-gray-400 text-sm">
-                      {profile.host}
-                    </Text>
-                  </View>
-                </FocusablePressable>
+                  <FocusablePressable
+                    hasTVPreferredFocus={isActive}
+                    className="flex-1"
+                    onPress={() => handleSelect(profile, index)}
+                  >
+                    <View className="w-12 h-12 rounded-full bg-gray-600 justify-center items-center">
+                      <Text className="text-white text-xl font-bold uppercase">
+                        {profileLoading === index ? (
+                          <ActivityIndicator color="white" />
+                        ) : (
+                          profile.username.charAt(0)
+                        )}
+                      </Text>
+                    </View>
+                    <View className="flex-1 ml-4">
+                      <Text className="text-white text-lg font-semibold">
+                        {profile.username}
+                      </Text>
+                      <Text className="text-gray-400 text-sm">
+                        {profile.host}
+                      </Text>
+                    </View>
+                  </FocusablePressable>
+                  <Pressable
+                    className="ml-2 p-3 rounded-full focus:bg-white/20 active:bg-white/10"
+                    focusable={Platform.isTV}
+                    onPress={() => handleDelete(profile)}
+                  >
+                    <Ionicons name="trash-outline" size={24} color="white" />
+                  </Pressable>
+                </View>
               );
             })}
-            <FocusablePressable onPress={() => setIsAdding(true)}>
+            <FocusablePressable
+              className="mt-3"
+              onPress={() => setIsAdding(true)}
+            >
               <View className="flex-1 items-center justify-center">
                 <Text className="text-white text-lg font-semibold">
                   + Add Profile
@@ -194,10 +228,11 @@ export default function Profiles() {
 }
 
 const FocusablePressable = ({ children, ...props }: any) => {
+  const className = props.className ?? "";
   return (
     <Pressable
       {...props}
-      className="flex-row mt-3 p-3 focus:bg-white/20 rounded-full"
+      className={`flex-row p-3 focus:bg-white/20 rounded-full ${className}`}
       focusable={Platform.isTV}
     >
       {children}

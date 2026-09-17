@@ -65,7 +65,32 @@ export default function MPVVideoScreen(props: {
   const [appSettings] = useState<SettingsSchema>(getAllSettings());
   const defaultAudioSelected = useRef(false);
   const defaultSubtitleSelected = useRef(false);
-  const embeddedTracksCount = useRef<number | null>(null);
+  const selectedTracks = useRef({ subtitle: 0, audio: 1 });
+  const trackUpdates = useRef<Promise<void>>(Promise.resolve());
+  const mounted = useRef(true);
+
+  // if events overlap, use manual selections rather than a callback's older render state.
+  const queueTrackUpdate = (update: () => Promise<void>) => {
+    trackUpdates.current = trackUpdates.current
+      .then(async () => {
+        if (mounted.current) await update();
+      })
+      .catch((error) => console.error("Error updating tracks:", error));
+    return trackUpdates.current;
+  };
+
+  const reportTrackSelection = () => {
+    if (
+      mounted.current &&
+      defaultAudioSelected.current &&
+      defaultSubtitleSelected.current
+    ) {
+      props.onTrackChange?.(
+        selectedTracks.current.subtitle,
+        selectedTracks.current.audio,
+      );
+    }
+  };
 
   const handleNextEpisode = () => {
     if (props.onNextEpisode) {
@@ -153,13 +178,11 @@ export default function MPVVideoScreen(props: {
   }, [isReady, isZoomedToFill]);
 
   useEffect(() => {
-    if (
-      props.onTrackChange &&
-      (defaultAudioSelected.current || defaultSubtitleSelected.current)
-    ) {
-      props.onTrackChange(selectedTextTrack, selectedAudioTrack);
-    }
-  }, [selectedTextTrack, selectedAudioTrack]);
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!isReady) return;
@@ -180,138 +203,148 @@ export default function MPVVideoScreen(props: {
     // don't seem to need this yet
   };
 
-  /*
-    If external subs are loaded, handleTracksReady() seems to be called twice:
-    once with just the embedded subs, second with all subs, including external subs.
-    We want to set the subtitle track on the second run or it seems like the first
-    subtitle call is ignored/overwritten.
+  // Reapply committed selections after FILE_LOADED or external track additions.
+  const handleTracksReady = () =>
+    queueTrackUpdate(async () => {
+      try {
+        const subtitles = await videoRef.current?.getSubtitleTracks();
+        const audio = await videoRef.current?.getAudioTracks();
+        if (!mounted.current) return;
+        const convertedSubtitles = subtitles?.map((track) => {
+          let lang = track.lang;
+          let title = track.title;
+          if (track.external) {
+            const extSub = props.externalSubtitles?.find(
+              (sub) => sub.url === track.externalFilename,
+            );
+            if (extSub) {
+              lang = extSub.lang;
+              title = extSub.title;
+            }
+          }
+          return {
+            ...track,
+            lang: lang ? get2LetterLangCode(lang) : undefined,
+            title: title,
+          };
+        });
 
-    Tested on Android, need to test on iOS.
-  */
-  const handleTracksReady = async () => {
-    try {
-      const subtitles = await videoRef.current?.getSubtitleTracks();
-      const audio = await videoRef.current?.getAudioTracks();
-      if (subtitles && embeddedTracksCount.current === null) {
-        embeddedTracksCount.current = subtitles.length;
-      }
-      const convertedSubtitles = subtitles?.map((track, index) => {
-        let lang = track.lang;
-        let title = track.title;
-        // If it's an external track, should be at end of list
-        const embeddedCount = embeddedTracksCount.current ?? 0;
-        if (props.externalSubtitles && index >= embeddedCount) {
-          const extSub = props.externalSubtitles[index - embeddedCount];
-          if (extSub) {
-            lang = extSub.lang;
-            title = extSub.title;
+        const convertedAudio = audio?.map((track) => ({
+          ...track,
+          lang: track.lang ? get2LetterLangCode(track.lang) : undefined,
+        }));
+
+        if (convertedSubtitles) setTextTracks(convertedSubtitles);
+        if (convertedAudio) setAudioTracks(convertedAudio);
+
+        // Handle Subtitle tracks
+        const currentSub = await videoRef.current?.getCurrentSubtitleTrack();
+        if (!mounted.current) return;
+        let targetSub: number | undefined = selectedTracks.current.subtitle;
+
+        // check if this is the final call after external subs are loaded (if there are any)
+        // there might be an issue where props.externalSubtitles have a certain amount of tracks
+        // but not all of them are successfully read by mpv, but impact should be minor.
+        const externalCount = props.externalSubtitles?.length || 0;
+        const hasExternalTracks = subtitles?.some((track) => track.external);
+        const isComplete = externalCount === 0 || hasExternalTracks;
+
+        if (!defaultSubtitleSelected.current) {
+          targetSub = currentSub;
+          if (
+            props.defaultSubtitleIdx !== null &&
+            props.defaultSubtitleIdx !== undefined
+          ) {
+            targetSub = props.defaultSubtitleIdx;
+          } else {
+            // Fallback, match by language from playerSettings or app defaults
+            const targetLang =
+              props.playerSettings?.subtitle_lang ||
+              appSettings?.defaultSubtitleLanguage;
+            const matchByLang = convertedSubtitles?.find(
+              (t: any) => t.lang === targetLang,
+            );
+            if (matchByLang) targetSub = matchByLang.id;
           }
         }
-        return {
-          ...track,
-          lang: lang ? get2LetterLangCode(lang) : undefined,
-          title: title,
-        };
-      });
 
-      const convertedAudio = audio?.map((track) => ({
-        ...track,
-        lang: track.lang ? get2LetterLangCode(track.lang) : undefined,
-      }));
-
-      if (convertedSubtitles) setTextTracks(convertedSubtitles);
-      if (convertedAudio) setAudioTracks(convertedAudio);
-
-      // Handle Subtitle tracks
-      const currentSub = await videoRef.current?.getCurrentSubtitleTrack();
-      let targetSub: number | undefined = selectedTextTrack;
-
-      // check if this is the final call after external subs are loaded (if there are any)
-      // there might be an issue where props.externalSubtitles have a certain amount of tracks
-      // but not all of them are successfully read by mpv, but impact should be minor.
-      const externalCount = props.externalSubtitles?.length || 0;
-      const hasExternalTracks =
-        externalCount > 0 &&
-        subtitles &&
-        subtitles.length > (embeddedTracksCount.current ?? 0);
-      const isComplete = externalCount === 0 || hasExternalTracks;
-
-      if (!defaultSubtitleSelected.current) {
-        targetSub = currentSub;
-        if (
-          props.defaultSubtitleIdx !== null &&
-          props.defaultSubtitleIdx !== undefined
+        // in first handleTracksReady() call, it's possible we try to set
+        // embedded subs but they're overwritten/not shown, we want to re-apply
+        // on second run
+        if (targetSub !== undefined && targetSub !== currentSub) {
+          const exists =
+            convertedSubtitles?.find((t: any) => t.id === targetSub) ||
+            targetSub === 0;
+          if (exists) {
+            if (targetSub === 0) await videoRef.current?.disableSubtitles();
+            else await videoRef.current?.setSubtitleTrack(targetSub);
+            if (!mounted.current) return;
+            selectedTracks.current.subtitle = targetSub;
+            setSelectedTextTrack(targetSub);
+            if (isComplete) defaultSubtitleSelected.current = true;
+          }
+        } else if (
+          currentSub !== undefined &&
+          !defaultSubtitleSelected.current
         ) {
-          targetSub = props.defaultSubtitleIdx;
-        } else {
-          // Fallback, match by language from playerSettings or app defaults
-          const targetLang =
-            props.playerSettings?.subtitle_lang ||
-            appSettings?.defaultSubtitleLanguage;
-          const matchByLang = convertedSubtitles?.find(
-            (t: any) => t.lang === targetLang,
-          );
-          if (matchByLang) targetSub = matchByLang.id;
+          selectedTracks.current.subtitle = currentSub;
+          setSelectedTextTrack(currentSub);
+          if (
+            isComplete &&
+            (subtitles?.length || props.defaultSubtitleIdx === 0)
+          ) {
+            defaultSubtitleSelected.current = true;
+          }
         }
-      }
 
-      // in first handleTracksReady() call, it's possible we try to set
-      // embedded subs but they're overwritten/not shown, we want to re-apply
-      // on second run
-      if (targetSub !== undefined && targetSub !== currentSub) {
-        const exists =
-          convertedSubtitles?.find((t: any) => t.id === targetSub) ||
-          targetSub === 0;
-        if (exists) {
-          if (targetSub === 0) await videoRef.current?.disableSubtitles();
-          else await videoRef.current?.setSubtitleTrack(targetSub);
-          setSelectedTextTrack(targetSub);
-          if (isComplete) defaultSubtitleSelected.current = true;
+        // Handle audio tracks
+        const currentAudio = await videoRef.current?.getCurrentAudioTrack();
+        if (!mounted.current) return;
+        let targetAudio: number | undefined = selectedTracks.current.audio;
+        if (!defaultAudioSelected.current) {
+          targetAudio = currentAudio;
+          if (
+            props.defaultAudioIdx !== null &&
+            props.defaultAudioIdx !== undefined &&
+            convertedAudio?.find((t: any) => t.id === props.defaultAudioIdx)
+          ) {
+            targetAudio = props.defaultAudioIdx;
+          } else {
+            const targetLang =
+              props.playerSettings?.audio_lang || props.defaultAudioLang;
+            const matchByLang = convertedAudio?.find(
+              (t: any) => t.lang === targetLang,
+            );
+            if (matchByLang) targetAudio = matchByLang.id;
+          }
         }
-      } else if (currentSub !== undefined && !defaultSubtitleSelected.current) {
-        setSelectedTextTrack(currentSub);
-        if (isComplete) defaultSubtitleSelected.current = true;
-      }
 
-      // Handle audio tracks
-      const currentAudio = await videoRef.current?.getCurrentAudioTrack();
-      let targetAudio: number | undefined = selectedAudioTrack;
-      if (!defaultAudioSelected.current) {
-        targetAudio = currentAudio;
-        if (
-          props.defaultAudioIdx !== null &&
-          props.defaultAudioIdx !== undefined &&
-          convertedAudio?.find((t: any) => t.id === props.defaultAudioIdx)
+        if (targetAudio !== undefined && targetAudio !== currentAudio) {
+          const exists = convertedAudio?.find((t: any) => t.id === targetAudio);
+          if (exists) {
+            await videoRef.current?.setAudioTrack(targetAudio);
+            if (!mounted.current) return;
+            selectedTracks.current.audio = targetAudio;
+            setSelectedAudioTrack(targetAudio);
+            defaultAudioSelected.current = true;
+          }
+        } else if (
+          currentAudio !== undefined &&
+          convertedAudio?.some((track) => track.id === currentAudio) &&
+          !defaultAudioSelected.current
         ) {
-          targetAudio = props.defaultAudioIdx;
-        } else {
-          const targetLang =
-            props.playerSettings?.audio_lang || props.defaultAudioLang;
-          const matchByLang = convertedAudio?.find(
-            (t: any) => t.lang === targetLang,
-          );
-          if (matchByLang) targetAudio = matchByLang.id;
-        }
-      }
-
-      if (targetAudio !== undefined && targetAudio !== currentAudio) {
-        const exists = convertedAudio?.find((t: any) => t.id === targetAudio);
-        if (exists) {
-          await videoRef.current?.setAudioTrack(targetAudio);
-          setSelectedAudioTrack(targetAudio);
+          selectedTracks.current.audio = currentAudio;
+          setSelectedAudioTrack(currentAudio);
           defaultAudioSelected.current = true;
         }
-      } else if (currentAudio !== undefined && !defaultAudioSelected.current) {
-        setSelectedAudioTrack(currentAudio);
-        defaultAudioSelected.current = true;
+        reportTrackSelection();
+      } catch (error) {
+        console.error("Error getting tracks:", error);
       }
-    } catch (error) {
-      console.error("Error getting tracks:", error);
-    }
-    if (!isReady) {
-      setIsReady(true);
-    }
-  };
+      if (mounted.current && !isReady) {
+        setIsReady(true);
+      }
+    });
 
   const handlePlaybackStateChange = async (event: any) => {
     const { isPaused, isReadyToSeek } = event.nativeEvent;
@@ -365,8 +398,12 @@ export default function MPVVideoScreen(props: {
         text: "Switch to Exoplayer",
         onPress: () => {
           props.onChangePlayer?.("exoplayer", newTime, {
-            subtitle_language: selectedTextTrack,
-            audio_language: selectedAudioTrack,
+            subtitle_idx: defaultSubtitleSelected.current
+              ? selectedTracks.current.subtitle
+              : undefined,
+            audio_idx: defaultAudioSelected.current
+              ? selectedTracks.current.audio
+              : undefined,
             resize_mode: isZoomedToFill ? "cover" : "contain",
           });
         },
@@ -420,29 +457,37 @@ export default function MPVVideoScreen(props: {
     }
   };
 
-  const handleSelectTextTrack = async (id: number) => {
-    try {
-      if (id === 0) {
-        await videoRef.current?.disableSubtitles();
-      } else {
-        await videoRef.current?.setSubtitleTrack(id);
+  const handleSelectTextTrack = (id: number) =>
+    queueTrackUpdate(async () => {
+      try {
+        if (id === 0) {
+          await videoRef.current?.disableSubtitles();
+        } else {
+          await videoRef.current?.setSubtitleTrack(id);
+        }
+        if (!mounted.current) return;
+        selectedTracks.current.subtitle = id;
+        defaultSubtitleSelected.current = true;
+        setSelectedTextTrack(id);
+        reportTrackSelection();
+      } catch (error) {
+        console.error("Error selecting text track:", error);
       }
-      setSelectedTextTrack(id);
-      props.onTrackChange?.(id, selectedAudioTrack);
-    } catch (error) {
-      console.error("Error selecting text track:", error);
-    }
-  };
+    });
 
-  const handleSelectAudioTrack = async (id: number) => {
-    try {
-      await videoRef.current?.setAudioTrack(id);
-      setSelectedAudioTrack(id);
-      props.onTrackChange?.(selectedTextTrack, id);
-    } catch (error) {
-      console.error("Error selecting audio track:", error);
-    }
-  };
+  const handleSelectAudioTrack = (id: number) =>
+    queueTrackUpdate(async () => {
+      try {
+        await videoRef.current?.setAudioTrack(id);
+        if (!mounted.current) return;
+        selectedTracks.current.audio = id;
+        defaultAudioSelected.current = true;
+        setSelectedAudioTrack(id);
+        reportTrackSelection();
+      } catch (error) {
+        console.error("Error selecting audio track:", error);
+      }
+    });
 
   const handleChangeResizeMode = async () => {
     try {

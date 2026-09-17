@@ -2,7 +2,7 @@ import { apiClient } from "./apiClient";
 import { useQuery } from "@tanstack/react-query";
 
 export const fetchSearch = (query: string): Promise<any> => {
-  return apiClient(`/search/?q=${encodeURIComponent(query)}`);
+  return apiClient(`/search?q=${encodeURIComponent(query)}`);
 };
 
 export const useSearch = (query: string, enabled: boolean = true) => {

@@ -25,12 +25,33 @@ export type OnErrorEventPayload = {
 
 export type OnTracksReadyEventPayload = Record<string, never>;
 
+export type OnPictureInPictureChangePayload = {
+  isActive: boolean;
+};
+
+export type NowPlayingMetadata = {
+  title?: string;
+  artist?: string;
+  albumTitle?: string;
+  artworkUri?: string;
+  /** Custom proxy auth headers for fetching the artwork. */
+  artworkHeaders?: Record<string, string>;
+};
+
 export type MpvPlayerModuleEvents = {
   onChange: (params: ChangeEventPayload) => void;
+  /** A line from the native player's Logger (iOS/tvOS only). */
+  onNativeLog: (params: NativeLogEventPayload) => void;
 };
 
 export type ChangeEventPayload = {
   value: string;
+};
+
+export type NativeLogEventPayload = {
+  message: string;
+  /** Native Logger type: "Error" | "Warn" | "Info" | "General" | ... */
+  type: string;
 };
 
 export type VideoSource = {
@@ -39,15 +60,32 @@ export type VideoSource = {
   externalSubtitles?: string[];
   startPosition?: number;
   autoplay?: boolean;
+  /** Whether to loop the video indefinitely */
+  loop?: boolean;
   /** MPV subtitle track ID to select on start (1-based, -1 to disable) */
   initialSubtitleId?: number;
   /** MPV audio track ID to select on start (1-based) */
   initialAudioId?: number;
+  /** MPV cache/buffer configuration */
+  cacheConfig?: {
+    /** Whether caching is enabled: "auto" (default), "yes", or "no" */
+    enabled?: "auto" | "yes" | "no";
+    /** Seconds of video to buffer (default: 10, range: 5-120) */
+    cacheSeconds?: number;
+    /** Maximum cache size in MB (default: 150, range: 50-500) */
+    maxBytes?: number;
+    /** Maximum backward cache size in MB (default: 50, range: 25-200) */
+    maxBackBytes?: number;
+  };
+  /** MPV video output driver (Android only) */
+  voDriver?: "gpu-next" | "gpu";
 };
 
 export type MpvPlayerViewProps = {
   source?: VideoSource;
   style?: StyleProp<ViewStyle>;
+  /** Metadata for iOS Control Center and Lock Screen now playing info */
+  nowPlayingMetadata?: NowPlayingMetadata;
   onLoad?: (event: { nativeEvent: OnLoadEventPayload }) => void;
   onPlaybackStateChange?: (event: {
     nativeEvent: OnPlaybackStateChangePayload;
@@ -55,15 +93,39 @@ export type MpvPlayerViewProps = {
   onProgress?: (event: { nativeEvent: OnProgressEventPayload }) => void;
   onError?: (event: { nativeEvent: OnErrorEventPayload }) => void;
   onTracksReady?: (event: { nativeEvent: OnTracksReadyEventPayload }) => void;
+  onPictureInPictureChange?: (event: {
+    nativeEvent: OnPictureInPictureChangePayload;
+  }) => void;
 };
+
+export interface SubtitleStyleConfig {
+  fontSize?: number;
+  color?: string;
+  font?: string;
+  background?: string; // hex color with alpha
+  backgroundPadding?: number;
+}
 
 export interface MpvPlayerViewRef {
   play: () => Promise<void>;
   pause: () => Promise<void>;
+  /**
+   * Synchronously destroy the mpv instance + decoder + surface buffers.
+   * Call before navigating away from the player screen so memory is
+   * freed before the next screen mounts. Safe to call multiple times.
+   */
+  destroy: () => Promise<void>;
+  // Pre-libmpv-1.0 alias (kept for source-history reference):
+  // stop: () => Promise<void>;
   seekTo: (position: number) => Promise<void>;
   seekBy: (offset: number) => Promise<void>;
   setSpeed: (speed: number) => Promise<void>;
   getSpeed: () => Promise<number>;
+  /**
+   * Mute the player itself, leaving the device volume untouched. The boolean
+   * state is owned by the caller: there is deliberately no getter.
+   */
+  setMute: (muted: boolean) => Promise<void>;
   isPaused: () => Promise<boolean>;
   getCurrentPosition: () => Promise<number>;
   getDuration: () => Promise<number>;
@@ -80,10 +142,18 @@ export interface MpvPlayerViewRef {
   // Subtitle positioning
   setSubtitlePosition: (position: number) => Promise<void>;
   setSubtitleScale: (scale: number) => Promise<void>;
+  /** MPV-only subtitle timing offset in seconds; positive delays subtitles. */
+  setSubtitleDelay?: (seconds: number) => Promise<void>;
   setSubtitleMarginY: (margin: number) => Promise<void>;
   setSubtitleAlignX: (alignment: "left" | "center" | "right") => Promise<void>;
   setSubtitleAlignY: (alignment: "top" | "center" | "bottom") => Promise<void>;
+  setSubtitleStyle: (style: SubtitleStyleConfig) => Promise<void>;
   setSubtitleFontSize: (size: number) => Promise<void>;
+  setSubtitleBackgroundColor: (color: string) => Promise<void>;
+  setSubtitleBorderStyle: (
+    style: "outline-and-shadow" | "background-box",
+  ) => Promise<void>;
+  setSubtitleAssOverride: (mode: "no" | "force") => Promise<void>;
   // Audio controls
   getAudioTracks: () => Promise<AudioTrack[]>;
   setAudioTrack: (trackId: number) => Promise<void>;
@@ -99,6 +169,14 @@ export type SubtitleTrack = {
   id: number;
   title?: string;
   lang?: string;
+  /** Subtitle codec (mpv `codec`), e.g. "subrip", "ass", "hdmv_pgs_subtitle". */
+  codec?: string;
+  /** True if loaded from a separate file via `sub-add` (mpv `external`). */
+  external?: boolean;
+  /** For external tracks: the exact URL/path it was loaded from (mpv `external-filename`). */
+  externalFilename?: string;
+  /** FFmpeg stream index (mpv `ff-index`); not guaranteed for non-lavf demuxers. */
+  ffIndex?: number;
   selected?: boolean;
 };
 
@@ -120,5 +198,41 @@ export type TechnicalInfo = {
   videoBitrate?: number;
   audioBitrate?: number;
   cacheSeconds?: number;
+  /** Configured demuxer forward cache cap (MiB), read back from mpv */
+  demuxerMaxBytes?: number;
+  /** Configured demuxer backward cache cap (MiB), read back from mpv */
+  demuxerMaxBackBytes?: number;
+  /** Configured cache-secs floor, read back from mpv */
+  cacheSecsLimit?: number;
   droppedFrames?: number;
+  /** Active video output driver (read from MPV at runtime) */
+  voDriver?: string;
+  /** Active hardware decoder (read from MPV at runtime) */
+  hwdec?: string;
+  /** Estimated video output fps (mpv "estimated-vf-fps") */
+  estimatedVfFps?: number;
+  // ---- Extended fields (primarily ExoPlayer-backed; MPV may fill some) ----
+  /** Derived HDR format: "SDR" | "HDR10" | "HDR10+" | "HLG" | null */
+  hdrFormat?: string;
+  /** Color space, e.g. "BT.709" / "BT.2020" */
+  colorSpace?: string;
+  /** Color range: "Limited" / "Full" */
+  colorRange?: string;
+  /** Color transfer: "SDR" / "ST2084 (PQ)" / "HLG" */
+  colorTransfer?: string;
+  /** Decoder path: "hardware" (MediaCodec) or "software" (FFmpeg extension) */
+  decoderType?: string;
+  /** Instantiated decoder name, e.g. "c2.amlogic.hevc.decoder" */
+  decoderName?: string;
+  /** Active audio channel count (2 = stereo, 6 = 5.1, 8 = 7.1) */
+  audioChannels?: number;
+  /** Active audio sample rate in Hz */
+  audioSampleRate?: number;
+  /**
+   * Raw codec tag from the container, e.g. "hev1.2.4.L153.B0". Encodes
+   * profile / tier / level / constraint bytes per ISO/IEC 14496-15. Power
+   * users can decode this manually; it's how Jellyfin's HEVC level cap
+   * (153 = Level 5.1) is checked against the file.
+   */
+  videoCodecs?: string;
 };

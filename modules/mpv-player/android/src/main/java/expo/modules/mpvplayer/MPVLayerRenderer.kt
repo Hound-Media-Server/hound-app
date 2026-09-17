@@ -1,15 +1,39 @@
 package expo.modules.mpvplayer
 
-import android.app.UiModeManager
 import android.content.Context
 import android.content.res.AssetManager
-import android.content.res.Configuration
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.system.Os
 import android.util.Log
 import android.view.Surface
 import java.io.File
 import java.io.FileOutputStream
+import java.util.Locale
+
+internal fun normalizeVideoDimensions(width: Int, height: Int, rotation: Int): Pair<Int, Int> {
+    val normalizedRotation = ((rotation % 360) + 360) % 360
+    return if (normalizedRotation == 90 || normalizedRotation == 270) {
+        height to width
+    } else {
+        width to height
+    }
+}
+
+/**
+ * mpv `sub-font` for a subtitle font setting. "System" names mpv's own default
+ * rather than writing an empty family: an empty `sub-font` drops the default
+ * and leaves libass to pick a face glyph by glyph.
+ */
+internal fun mpvSubtitleFont(font: String): String = when (font) {
+    "System" -> "sans-serif"
+    "sans-serif" -> "Roboto"
+    "serif" -> "Noto Serif"
+    "monospace" -> "Droid Sans Mono"
+    "opendyslexic" -> "OpenDyslexic"
+    else -> font
+}
 
 /**
  * MPV renderer that wraps libmpv for video playback.
@@ -28,18 +52,36 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         const val MPV_FORMAT_INT64 = 4
         const val MPV_FORMAT_DOUBLE = 5
         const val MPV_FORMAT_NODE = 6
-        
-        /**
-         * Detect if the device is an Android TV.
-         * Android TVs need different mpv settings (e.g., hwdec=mediacodec instead of mediacodec-copy)
-         * to avoid stuttering caused by the extra frame copy overhead.
-         */
-        fun isAndroidTV(context: Context): Boolean {
-            val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as? UiModeManager
-            return uiModeManager?.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
-        }
     }
-    
+
+    private fun isTvDevice(): Boolean {
+        return DeviceKind.isTelevision(context)
+    }
+
+    /**
+     * True only on the Android emulator. Its goldfish/ranchu MediaCodec can't bind a
+     * decode output surface (decode opens with surface 0x0): HEVC then fails cleanly and
+     * mpv auto-falls-back to software, but H.264 "opens" deceptively and wedges the core
+     * (no fallback) — black video, then any command (seek/pause) deadlocks the UI thread
+     * → ANR. We force software decoding here.
+     *
+     * Only QEMU/SDK-exclusive signals are checked so a real device can never match — a
+     * false positive would needlessly drop shipping hardware to software decoding. The
+     * emulator reports ro.hardware=goldfish|ranchu, an sdk_* product, or a generic/
+     * emulator build fingerprint, none of which appear on real devices.
+     */
+    private fun isEmulator(): Boolean {
+        val hardware = Build.HARDWARE.lowercase()
+        if (hardware == "goldfish" || hardware == "ranchu") return true
+
+        val product = Build.PRODUCT
+        if (product == "sdk" || product.startsWith("sdk_")) return true
+
+        val fingerprint = Build.FINGERPRINT
+        return fingerprint.startsWith("generic") ||
+            fingerprint.contains("emulator", ignoreCase = true)
+    }
+
     interface Delegate {
         fun onPositionChanged(position: Double, duration: Double, cacheSeconds: Double)
         fun onPauseChanged(isPaused: Boolean)
@@ -48,6 +90,9 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         fun onTracksReady()
         fun onError(message: String)
         fun onVideoDimensionsChanged(width: Int, height: Int)
+        fun onPlaybackEnded() {}
+        fun onChaptersChanged(chapters: List<Map<String, Any>>) {}
+        fun onHDRModeDetected(isHdr: Boolean, fps: Double) {}
     }
     
     var delegate: Delegate? = null
@@ -55,15 +100,31 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
     private val mainHandler = Handler(Looper.getMainLooper())
     
     private var surface: Surface? = null
-    private var isRunning = false
-    private var isStopping = false
-    
+    @Volatile private var isRunning = false
+    @Volatile private var pendingOwnershipToken: Any? = null
+    @Volatile private var activeOwnershipToken: Any? = null
+
+    // This renderer's own mpv handle. Per-instance (not singleton) — each
+    // player screen gets a fresh mpv handle and drops the reference on stop.
+    // We intentionally do NOT call a destroy() equivalent: libmpv 1.0's
+    // nativeDestroy has an internal use-after-free we can't fix from Kotlin,
+    // so we mirror Findroid and let the JVM GC + native finalization path
+    // reclaim resources. Only one player is alive at a time in this app.
+    private var mpv: MPVLib? = null
+
+    /** Retained across mpv re-creation; see setMute. */
+    private var isMuted = false
+
     // Cached state
     private var cachedPosition: Double = 0.0
     private var cachedDuration: Double = 0.0
     private var cachedCacheSeconds: Double = 0.0
     private var _isPaused: Boolean = true
     private var _isLoading: Boolean = false
+    // Whether playback was intended to be running when recovery kicked in.
+    // Set by recoverVideoOutput's caller so the post-reload state follows the
+    // user's intent (resume) instead of assuming paused.
+    internal var playbackResumeIntent: Boolean = false
     private var _playbackSpeed: Double = 1.0
     private var isReadyToSeek: Boolean = false
 
@@ -87,6 +148,7 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
     // Video dimensions
     private var _videoWidth: Int = 0
     private var _videoHeight: Int = 0
+    private var _videoRotation: Int = 0
     
     val videoWidth: Int
         get() = _videoWidth
@@ -98,9 +160,17 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
     private var currentUrl: String? = null
     private var currentHeaders: Map<String, String>? = null
     private var pendingExternalSubtitles: List<String> = emptyList()
+    // Persistent record of the external subtitle URLs attached to the
+    // current item. pendingExternalSubtitles above is a one-shot staging
+    // list: load() fills it and the FILE_LOADED handler drains it via
+    // sub-add, so it is always empty by the time a resume-recovery reload
+    // runs. This copy survives that drain so recoverVideoOutput() can hand
+    // the same sidecar URLs back to load() and the tracks re-attach after
+    // the decoder reset.
+    private var activeExternalSubtitles: List<String> = emptyList()
     private var initialSubtitleId: Int? = null
     private var initialAudioId: Int? = null
-    private var addedExternalSubtitles = mutableSetOf<String>()
+    private var currentLoop: Boolean = false
     
     val isPausedState: Boolean
         get() = _isPaused
@@ -111,169 +181,326 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
     val duration: Double
         get() = cachedDuration
     
-    fun start() {
-        if (isRunning) return
-        
-        try {
-            MPVLib.create(context)
-            MPVLib.addObserver(this)
-            
-            /**
-             * Create mpv config directory and copy font files to ensure SubRip subtitles load properly on Android.
-             *
-             * Technical Background:
-             * ====================
-             * On Android, mpv requires access to a font file to render text-based subtitles, particularly SubRip (.srt)
-             * format subtitles. Without an available font in the config directory, mpv will fail to display subtitles
-             * even when subtitle tracks are properly detected and loaded.
-             *
-             * Why This Is Necessary:
-             * =====================
-             * 1. Android's font system is isolated from native libraries like mpv. While Android has system fonts,
-             *    mpv cannot access them directly due to sandboxing and library isolation.
-             *
-             * 2. SubRip subtitles require a font to render text overlay on video. When no font is available in the
-             *    configured directory, mpv either:
-             *    - Fails silently (subtitles don't appear)
-             *    - Falls back to a default font that may not support the required character set
-             *    - Crashes or produces rendering errors
-             *
-             * 3. By placing a font file (font.ttf) in mpv's config directory and setting that directory via
-             *    MPVLib.setOptionString("config-dir", ...), we ensure mpv has a known, accessible font source.
-             *
-             * Reference:
-             * =========
-             * This workaround is documented in the mpv-android project:
-             * https://github.com/mpv-android/mpv-android/issues/96
-             *
-             * The issue discusses that without a font in the config directory, SubRip subtitles fail to load
-             * properly on Android, and the solution is to copy a font file to a known location that mpv can access.
-             */
-            // Create mpv config directory and copy font files
-            val mpvDir = File(context.getExternalFilesDir(null) ?: context.filesDir, "mpv")
-            //Log.i(TAG, "mpv config dir: $mpvDir")
-            if (!mpvDir.exists()) mpvDir.mkdirs()
-            // This needs to be named `subfont.ttf` else it won't work
-            arrayOf("subfont.ttf").forEach { fileName ->
-                val file = File(mpvDir, fileName)
-                if (file.exists()) return@forEach
-                context.assets
-                    .open(fileName, AssetManager.ACCESS_STREAMING)
-                    .copyTo(FileOutputStream(file))
+    /**
+     * The VO driver to use. Stored so attachSurface can re-enable the same driver.
+     */
+    private var voDriver: String = "gpu-next"
+
+    /**
+     * True on Android TV form-factor devices. Drives both the hwdec selection
+     * in [start] and the TV-only resume-recovery gating in [MpvPlayerView].
+     * Computed once from the system UI mode.
+     */
+    val isTv: Boolean = isTvDevice()
+
+    fun start(
+        voDriver: String = "gpu-next",
+        owner: MpvOwnership.Owner = MpvOwnership.Owner.EMBEDDED_VIEW,
+        onStarted: () -> Unit = {},
+    ) {
+        if (isRunning || pendingOwnershipToken != null) return
+        val ownershipToken = Any()
+        pendingOwnershipToken = ownershipToken
+
+        MpvOwnership.claim(owner, ownershipToken) {
+            val startAction = Runnable {
+                if (pendingOwnershipToken !== ownershipToken) {
+                    MpvOwnership.release(ownershipToken)
+                    return@Runnable
+                }
+                pendingOwnershipToken = null
+                activeOwnershipToken = ownershipToken
+                startOwned(voDriver, owner, onStarted)
             }
-            MPVLib.setOptionString("config", "yes")
-            MPVLib.setOptionString("config-dir", mpvDir.path)
+            if (Looper.myLooper() == Looper.getMainLooper()) {
+                startAction.run()
+            } else {
+                mainHandler.post(startAction)
+            }
+        }
+    }
+
+    private fun startOwned(
+        voDriver: String,
+        owner: MpvOwnership.Owner,
+        onStarted: () -> Unit,
+    ) {
+        try {
+            // Per-instance handle — see class-level comment. Each player gets
+            // its own mpv; we drop the reference in stop().
+            val mpv = MPVLib.create(context)
+            this.mpv = mpv
+            mpv.addObserver(this)
+
+            // mpv config directory — used by the config-dir option below and
+            // as XDG_CONFIG_HOME for fontconfig.
+            val mpvDir = File(context.getExternalFilesDir(null) ?: context.filesDir, "mpv")
+            if (!mpvDir.exists()) mpvDir.mkdirs()
+
+            // Point fontconfig (new in libmpv 1.0) at writable app dirs so it
+            // persists its font index across runs instead of re-walking
+            // /system/fonts on every subtitle/seek event. Each rebuild costs
+            // ~1-2 s and ~10-30 MB of scudo:primary memory that scudo then
+            // holds onto. Without this we see "No usable fontconfig
+            // configuration file found, using fallback" on every re-init.
+            try {
+                val cacheDir = context.cacheDir.absolutePath
+                val configDir = (context.getExternalFilesDir(null) ?: context.filesDir).absolutePath
+                Os.setenv("XDG_CACHE_HOME", cacheDir, true)
+                Os.setenv("XDG_CONFIG_HOME", configDir, true)
+                Os.setenv("HOME", configDir, true)
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not set XDG/HOME env for fontconfig: ${e.message}")
+            }
+
+            copyFontsToConfigDir(mpvDir)
+
+            mpv?.setOptionString("config", "yes")
+            mpv?.setOptionString("config-dir", mpvDir.path)
             
             // Configure mpv options before initialization (based on Findroid)
-            MPVLib.setOptionString("vo", "gpu")
-            MPVLib.setOptionString("gpu-context", "android")
-            MPVLib.setOptionString("opengl-es", "yes")
+            this.voDriver = voDriver
+            mpv?.setOptionString("vo", voDriver)
+            mpv?.setOptionString("gpu-context", "android")
+            mpv?.setOptionString("opengl-es", "yes")
             
-            // Hardware video decoding
-            // Android TV: Use "mediacodec" (direct rendering) to avoid copy overhead that causes stuttering
-            // Mobile: Use "mediacodec-copy" which is more compatible but involves frame copying
-            val isTV = isAndroidTV(context)
-            if (isTV) {
-                MPVLib.setOptionString("hwdec", "mediacodec")
-                // TV-specific: Allow frame drops to maintain A/V sync (important for fixed 60Hz displays)
-                MPVLib.setOptionString("framedrop", "decoder+vo")
-                // TV-specific: Use larger video buffer for smoother playback
-                MPVLib.setOptionString("video-latency-hacks", "no")
-                // Fast profile for TV, probably want to add a switch for more performant devices
-                // In my testing, chromecast 4k needs this to avoid stutters >1080p
-                MPVLib.setOptionString("profile", "fast")
-                Log.i(TAG, "Android TV detected - using mediacodec direct rendering")
-            } else {
-                MPVLib.setOptionString("hwdec", "mediacodec-copy")
+            // Hardware decoder codecs (shared)
+            mpv?.setOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
+
+            // Pause on initial cache fill (shared default). The actual
+            // cache mode, cache-secs, and demuxer cache sizes come from
+            // user preferences and are applied per-load in load().
+            mpv?.setOptionString("cache-pause-initial", "yes")
+
+            // Hardware decode path + TV-only memory options. Demuxer cache
+            // sizes and cache-secs are NOT set here — they come from user
+            // preferences via load().
+            //  - Emulator: software decode. Its MediaCodec can't bind an
+            //    output surface (surface 0x0); HEVC then fails cleanly and
+            //    mpv auto-falls-back to software, but H.264 "opens"
+            //    deceptively and wedges the core with no fallback (black
+            //    video, then any command — seek/pause — deadlocks the UI
+            //    thread → ANR). hwdec=no makes every codec render via the
+            //    gpu-next VO. Real devices unaffected.
+            //  - Real TV hardware: zero-copy `mediacodec` (fastest on
+            //    low-power devices) + fast profile.
+            //  - Real phone: `mediacodec-copy` (broadest compatibility).
+            when {
+                isEmulator() -> mpv?.setOptionString("hwdec", "no")
+                isTv -> {
+                    mpv?.setOptionString("hwdec", "mediacodec")
+                    mpv?.setOptionString("profile", "fast")
+                    // Don't retain already-played content for backward
+                    // seeking over a network source — Jellyfin can re-fetch
+                    // on demand. Saves up to ~30 MiB on long seeks and
+                    // reduces swap pressure.
+                    mpv?.setOptionString("demuxer-seekable-cache", "no")
+                    // Larger audio buffer to absorb page-fault stalls
+                    // (default ~0.2s). Cheap insurance against the audio
+                    // underruns that happen when the kernel is swap-thrashing.
+                    mpv?.setOptionString("audio-buffer", "0.5")
+                }
+                else -> mpv?.setOptionString("hwdec", "mediacodec-copy")
             }
-            MPVLib.setOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
-            
-            // Cache settings for better network streaming
-            MPVLib.setOptionString("cache", "yes")
-            MPVLib.setOptionString("cache-pause-initial", "yes")
-            MPVLib.setOptionString("demuxer-max-bytes", "150MiB")
-            MPVLib.setOptionString("demuxer-max-back-bytes", "75MiB")
-            MPVLib.setOptionString("demuxer-readahead-secs", "20")
             
             // Seeking optimization - faster seeking at the cost of less precision
             // Use keyframe seeking by default (much faster for network streams)
-            MPVLib.setOptionString("hr-seek", "no")
+            mpv?.setOptionString("hr-seek", "no")
             // Drop frames during seeking for faster response
-            MPVLib.setOptionString("hr-seek-framedrop", "yes")
+            mpv?.setOptionString("hr-seek-framedrop", "yes")
             
             // Subtitle settings
-            MPVLib.setOptionString("sub-scale-with-window", "no")
-            MPVLib.setOptionString("sub-use-margins", "yes")
-            MPVLib.setOptionString("subs-match-os-language", "yes")
-            MPVLib.setOptionString("subs-fallback", "yes")
+            mpv?.setOptionString("sub-scale-with-window", "no")
+            // Portrait/PiP-safe default; MpvPlayerView enables margins in landscape.
+            mpv?.setOptionString("sub-use-margins", "no")
+            mpv?.setOptionString("subs-match-os-language", "yes")
+            mpv?.setOptionString("subs-fallback", "yes")
+            mpv?.setOptionString("sub-vsfilter-bidi-compat", "yes")
             
             // Important: Start with force-window=no, will be set to yes when surface is attached
-            MPVLib.setOptionString("force-window", "no")
-            MPVLib.setOptionString("keep-open", "always")
-            
-            MPVLib.initialize()
-            
+            mpv?.setOptionString("force-window", "no")
+            mpv?.setOptionString("keep-open", "always")
+
+            mpv.initialize()
+
+            // Re-apply the retained mute flag: a fresh instance always starts
+            // audible, which would contradict the state JS still holds.
+            if (isMuted) mpv.setPropertyBoolean("mute", true)
+
             // Observe properties
             observeProperties()
-            
+
             isRunning = true
-            Log.i(TAG, "MPV renderer started")
+            Log.i(TAG, "MPV renderer started (owner=$owner)")
+            onStarted()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start MPV renderer: ${e.message}")
             delegate?.onError("Failed to start renderer: ${e.message}")
+            if (mpv != null) {
+                isRunning = true
+                stop()
+            } else {
+                activeOwnershipToken?.let(MpvOwnership::release)
+                activeOwnershipToken = null
+            }
         }
-    }
-    
-    fun stop() {
-        if (isStopping) return
-        if (!isRunning) return
-        
-        isStopping = true
-        isRunning = false
-        
-        try {
-            MPVLib.removeObserver(this)
-            MPVLib.detachSurface()
-            MPVLib.destroy()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error stopping MPV: ${e.message}")
-        }
-        
-        isStopping = false
     }
     
     /**
-     * Attach surface and re-enable video output.
-     * Based on Findroid's implementation.
+     * Copies bundled custom fonts to the MPV config directory.
+     * libmpv/libass can access Android system fonts directly, but still cannot
+     * read bundled React Native assets without copying them to a filesystem path.
+     */
+    private fun copyFontsToConfigDir(mpvDir: File) {
+        val fontsDir = File(mpvDir, "fonts")
+        if (!fontsDir.exists()) fontsDir.mkdirs()
+
+        val customFonts = arrayOf(
+            "OpenDyslexic-Regular.otf",
+            "OpenDyslexic-Bold.otf",
+            "OpenDyslexic-Italic.otf",
+            "OpenDyslexic-BoldItalic.otf"
+        )
+        customFonts.forEach { fileName ->
+            val file = File(fontsDir, fileName)
+            if (file.exists() && file.length() > 0) return@forEach
+
+            val tempFile = File(fontsDir, "$fileName.tmp")
+            try {
+                if (file.exists()) file.delete()
+                if (tempFile.exists()) tempFile.delete()
+
+                context.assets.open("fonts/$fileName", AssetManager.ACCESS_STREAMING).use { input ->
+                    FileOutputStream(tempFile).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+
+                if (!tempFile.renameTo(file)) {
+                    throw IllegalStateException("Failed to rename ${tempFile.name} to ${file.name}")
+                }
+            } catch (e: Exception) {
+                tempFile.delete()
+                Log.w(TAG, "Failed to copy custom font $fileName: ${e.message}")
+            }
+        }
+    }
+
+    fun stop() {
+        val pendingToken = pendingOwnershipToken
+        val activeToken = activeOwnershipToken
+        if (!isRunning && pendingToken == null && activeToken == null) return
+
+        pendingOwnershipToken = null
+        pendingToken?.let(MpvOwnership::cancel)
+        activeOwnershipToken = null
+
+        val m = mpv
+        mpv = null
+        isRunning = false
+
+        // Clear cached media state on the main thread so the next player
+        // screen doesn't observe stale position/duration values during the
+        // (async) teardown below.
+        currentUrl = null
+        currentHeaders = null
+        pendingExternalSubtitles = emptyList()
+        activeExternalSubtitles = emptyList()
+        initialSubtitleId = null
+        initialAudioId = null
+        cachedPosition = 0.0
+        cachedDuration = 0.0
+        cachedCacheSeconds = 0.0
+
+        if (m == null) {
+            activeToken?.let(MpvOwnership::release)
+            return
+        }
+
+        // Teardown runs on a background daemon thread. mpv's "stop" command
+        // flushes the demuxer queue and releases the MediaCodec hardware
+        // decoder — synchronous JNI work that can block for hundreds of ms
+        // on TV hardware. Running it on the main thread produced a visible
+        // delay/stutter between pressing "exit" and the confirm alert
+        // appearing. The local `m` keeps the MPVLib instance alive for the
+        // lifetime of this thread even though we've already nulled `mpv`.
+        Thread {
+            // Drop force-window BEFORE issuing stop. With keep-open=always +
+            // force-window=yes, mpv tears down the decoder at stop time but
+            // tries to keep the VO alive — which fires an internal
+            // video-reconfig. On libmpv 1.0's gpu-next/android backend that
+            // reconfig path crashes with "Missing surface pointer" because we
+            // detach the Surface below before mpv's worker reaches the
+            // reconfig step (command() is async). Setting force-window=no
+            // first makes mpv tear VO down cleanly instead of attempting a
+            // doomed re-init, eliminating the fatal VO error and the
+            // "playback won't restart" aftermath.
+            try {
+                m.setOptionString("force-window", "no")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error clearing force-window: ${e.message}")
+            }
+            try {
+                // Stop playback — flushes demuxer queue and signals MediaCodec
+                // to release its hardware decoders. This is the bulk of what
+                // we can reclaim without calling destroy().
+                m.command(arrayOf("stop"))
+            } catch (e: Exception) {
+                Log.e(TAG, "Error stopping mpv playback: ${e.message}")
+            }
+            try {
+                m.removeObserver(this)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error removing mpv observer: ${e.message}")
+            }
+            try {
+                m.detachSurface()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error detaching mpv surface: ${e.message}")
+            } finally {
+                activeToken?.let(MpvOwnership::release)
+            }
+        }.also { it.isDaemon = true }.start()
+    }
+    
+    /**
+     * Attach surface and ensure video output is active.
+     *
+     * During PiP transitions, the surface is destroyed and recreated by Android.
+     * We keep the VO pipeline alive (not killed with vo=null) so that rendering
+     * resumes immediately when the new surface is attached — avoiding the black
+     * screen that occurs when the VO is fully re-initialized via setOptionString.
      */
     fun attachSurface(surface: Surface) {
         this.surface = surface
+        Log.i(TAG, "[PiP] attachSurface — isRunning=$isRunning, vo=$voDriver, surface=${surface.hashCode()}")
         if (isRunning) {
-            MPVLib.attachSurface(surface)
-            // Re-enable video output after attaching surface (Findroid approach)
-            MPVLib.setOptionString("force-window", "yes")
-            MPVLib.setOptionString("vo", "gpu")
-            Log.i(TAG, "Surface attached, video output re-enabled")
+            mpv?.attachSurface(surface)
+            mpv?.setOptionString("force-window", "yes")
+            // Read back vo to confirm it's still active
+            val activeVo = try { mpv?.getPropertyString("vo") } catch (e: Exception) { null }
+            Log.i(TAG, "[PiP] attachSurface — attached, activeVo=$activeVo")
         }
     }
-    
+
     /**
-     * Detach surface and disable video output.
-     * Based on Findroid's implementation.
+     * Detach surface without killing the VO pipeline.
+     *
+     * The previous approach (vo=null / force-window=no) destroyed the entire video
+     * output pipeline on every surface transition. During PiP mode, the rapid
+     * destroy/recreate cycle caused a black screen because setOptionString("vo", ...)
+     * did not properly re-initialize rendering into the new PiP surface.
+     *
+     * By keeping the VO alive, frames are simply dropped while no surface is
+     * attached, and rendering resumes immediately when the new surface arrives.
      */
     fun detachSurface() {
         this.surface = null
+        Log.i(TAG, "[PiP] detachSurface — isRunning=$isRunning, vo=$voDriver")
         if (isRunning) {
-            try {
-                // Disable video output before detaching surface (Findroid approach)
-                MPVLib.setOptionString("vo", "null")
-                MPVLib.setOptionString("force-window", "no")
-                Log.i(TAG, "Video output disabled before surface detach")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to disable video output: ${e.message}")
-            }
-            
-            MPVLib.detachSurface()
+            mpv?.detachSurface()
+            val activeVo = try { mpv?.getPropertyString("vo") } catch (e: Exception) { null }
+            Log.i(TAG, "[PiP] detachSurface — detached, activeVo=$activeVo (should still be $voDriver)")
         }
     }
     
@@ -283,8 +510,112 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
      */
     fun updateSurfaceSize(width: Int, height: Int) {
         if (isRunning) {
-            MPVLib.setPropertyString("android-surface-size", "${width}x$height")
-            Log.i(TAG, "Surface size updated: ${width}x$height")
+            mpv?.setPropertyString("android-surface-size", "${width}x$height")
+            Log.i(TAG, "[PiP] updateSurfaceSize — ${width}x${height}")
+        } else {
+            Log.w(TAG, "[PiP] updateSurfaceSize — called but renderer not running")
+        }
+    }
+
+    /**
+     * Restore video after a system-initiated surface loss (Android TV
+     * screensaver / app background while paused). Triggered from the host
+     * activity's onResume via [MpvPlayerView.runResumeRecovery].
+     *
+     * On TV, `hwdec=mediacodec` (zero-copy) binds MediaCodec directly to the
+     * display surface. When the screensaver invalidates that surface, the
+     * decoder is left bound to dead buffers and mpv auto-disables the video
+     * track (vid=no). Re-attaching the surface + cycling hwdec + re-selecting
+     * vid + seeking rebuilds the pipeline but leaves the video chain at EOF
+     * ("video=eof" in playback-restart) — the recreated MediaCodec produces no
+     * frames. Only a fresh `loadfile` deterministically recreates the decoder
+     * against the live surface, so we reload at the cached position.
+     *
+     * This is the Android counterpart to iOS's `performDecoderReset()`, which
+     * can get away with a `hwdec` cycle because VideoToolbox reinitializes
+     * cleanly; zero-copy MediaCodec bound to a lost surface does not.
+     */
+    fun recoverVideoOutput(surface: Surface?) {
+        if (!isRunning) {
+            Log.w(TAG, "[Recover] recoverVideoOutput — renderer not running, skipping")
+            return
+        }
+        val url = currentUrl ?: run {
+            Log.w(TAG, "[Recover] recoverVideoOutput — no URL loaded, skipping")
+            return
+        }
+
+        // Re-attach the surface first (covers the case where the surface
+        // survived and surfaceCreated never fired). The reload below fully
+        // rebuilds the pipeline anyway, but this keeps the VO target current
+        // while the load is in flight.
+        surface?.takeIf { it.isValid }?.let { mpv?.attachSurface(it) }
+
+        Log.i(
+            TAG,
+            "[Recover] reload recovery — pos=$cachedPosition, aid=${getCurrentAudioTrack()}, sid=${getCurrentSubtitleTrack()}"
+        )
+
+        // Preserve the user's current audio/subtitle selection across the
+        // reload — pass them INTO load() (not via the field: load() overwrites
+        // the initial IDs from its parameters). They're re-applied when
+        // FILE_LOADED fires. (0 / "no" means "off", which setSubtitleTrack /
+        // setAudioTrack handle correctly.)
+        val savedAid = getCurrentAudioTrack()
+        val savedSid = getCurrentSubtitleTrack()
+
+        // Full reload at the cached position. With keep-open=always +
+        // cache-pause-initial=yes, mpv seeks to the position and holds on the
+        // first decoded frame, so a paused frame reappears.
+        load(
+            url = url,
+            headers = currentHeaders,
+            startPosition = cachedPosition,
+            initialAudioId = savedAid,
+            initialSubtitleId = savedSid,
+            loop = currentLoop,
+            externalSubtitles = activeExternalSubtitles
+        )
+
+        // Hold the intended state explicitly — load() doesn't touch the pause
+        // property. Recovery can now run while playing (screensaver during
+        // playback with FLAG_KEEP_SCREEN_ON released, or a decoder that died
+        // mid-play), in which case playback resumes rather than staying paused.
+        if (playbackResumeIntent) play() else pause()
+    }
+
+    /**
+     * Whether the video output is actually rendering. mpv auto-disables the
+     * video track (vid=no) when the decoder dies against a lost surface (TV
+     * zero-copy mediacodec) or when the VO never re-initialized after a
+     * surface transition — audio keeps playing either way. Used to decide
+     * whether resume-recovery needs to rebuild the pipeline.
+     */
+    fun isVideoOutputBroken(): Boolean {
+        if (!isRunning) return false
+        return try {
+            // Audio-only media legitimately has vid=no — only declare broken
+            // when the file actually has a video track that isn't rendering.
+            val hasVideoTrack = run {
+                val trackCount = mpv?.getPropertyInt("track-list/count") ?: 0
+                (0 until trackCount).any {
+                    mpv?.getPropertyString("track-list/$it/type") == "video"
+                }
+            }
+            if (!hasVideoTrack) {
+                Log.i(TAG, "[Recover] isVideoOutputBroken — no video track (audio-only), healthy")
+                return false
+            }
+            val vid = mpv?.getPropertyString("vid")
+            val voConfigured = mpv?.getPropertyBoolean("vo-configured") ?: false
+            val broken = vid == "no" || !voConfigured
+            Log.i(TAG, "[Recover] isVideoOutputBroken — vid=$vid, vo-configured=$voConfigured, broken=$broken")
+            broken
+        } catch (e: Exception) {
+            // Property read failed — assume healthy rather than forcing a
+            // reload on every resume.
+            Log.w(TAG, "[Recover] isVideoOutputBroken — property read failed", e)
+            false
         }
     }
     
@@ -294,30 +625,52 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         startPosition: Double? = null,
         externalSubtitles: List<String>? = null,
         initialSubtitleId: Int? = null,
-        initialAudioId: Int? = null
+        initialAudioId: Int? = null,
+        loop: Boolean = false,
+        cacheEnabled: String? = null,
+        cacheSeconds: Int? = null,
+        demuxerMaxBytes: Int? = null,
+        demuxerMaxBackBytes: Int? = null
     ) {
         currentUrl = url
         currentHeaders = headers
         pendingExternalSubtitles = externalSubtitles ?: emptyList()
-        addedExternalSubtitles.clear()
+        activeExternalSubtitles = pendingExternalSubtitles
         this.initialSubtitleId = initialSubtitleId
         this.initialAudioId = initialAudioId
-        
+        this.currentLoop = loop
+        _videoWidth = 0
+        _videoHeight = 0
+        _videoRotation = 0
+
         _isLoading = true
         isReadyToSeek = false
         mainHandler.post { delegate?.onLoadingChanged(true) }
-        
+
         // Stop previous playback
-        MPVLib.command(arrayOf("stop"))
-        
+        mpv?.command(arrayOf("stop"))
+
         // Set HTTP headers if provided
         updateHttpHeaders(headers)
+
+        // Set looping
+        mpv?.setPropertyString("loop-file", if (loop) "inf" else "no")
+
+        // Apply cache/buffer settings from user preferences (mirrors iOS).
+        // These override the conservative defaults applied in start() so the
+        // TV/mobile settings screen actually takes effect on Android.
+        cacheEnabled?.let { mpv?.setOptionString("cache", it) }
+        cacheSeconds?.let { mpv?.setOptionString("cache-secs", it.toString()) }
+        demuxerMaxBytes?.let { mpv?.setOptionString("demuxer-max-bytes", "${it}MiB") }
+        demuxerMaxBackBytes?.let { mpv?.setOptionString("demuxer-max-back-bytes", "${it}MiB") }
         
-        // Set start position
+        // Set start position. mpv's time parser requires '.' as the decimal
+        // separator; use Locale.US so devices with other default locales
+        // (e.g. ',' as decimal separator) don't break resume-from-position.
         if (startPosition != null && startPosition > 0) {
-            MPVLib.setPropertyString("start", String.format("%.2f", startPosition))
+            mpv?.setPropertyString("start", String.format(Locale.US, "%.2f", startPosition))
         } else {
-            MPVLib.setPropertyString("start", "0")
+            mpv?.setPropertyString("start", "0")
         }
         
         // Set initial audio track if specified
@@ -337,62 +690,54 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         }
         
         // Load the file
-        MPVLib.command(arrayOf("loadfile", url, "replace"))
+        mpv?.command(arrayOf("loadfile", url, "replace"))
     }
     
     fun reloadCurrentItem() {
         currentUrl?.let { url ->
-            load(url, currentHeaders)
-        }
-    }
-
-    fun updateExternalSubtitles(subtitles: List<String>) {
-        if (!isRunning) return
-        
-        if (!isReadyToSeek) {
-            pendingExternalSubtitles = subtitles
-            return
-        }
-
-        subtitles.forEach { subUrl ->
-            if (!addedExternalSubtitles.contains(subUrl)) {
-                Log.d(TAG, "Dynamically adding external subtitle: $subUrl")
-                addSubtitleFile(subUrl, false)
-                addedExternalSubtitles.add(subUrl)
-            }
+            load(url, currentHeaders, loop = currentLoop)
         }
     }
     
     private fun updateHttpHeaders(headers: Map<String, String>?) {
-        if (headers.isNullOrEmpty()) {
-            // Clear headers
-            return
-        }
-        
-        val headerString = headers.entries.joinToString("\r\n") { "${it.key}: ${it.value}" }
-        MPVLib.setPropertyString("http-header-fields", headerString)
+        // mpv properties survive a loadfile, so headers set for a previous
+        // item would otherwise be sent to the next one (possibly a remote
+        // stream that must not see the proxy credentials).
+        mpv?.setPropertyString("http-header-fields", "")
+        if (headers.isNullOrEmpty()) return
+
+        // http-header-fields is an mpv string *list*, and through the property
+        // interface only the plain comma-separated form is understood: the
+        // %<len>% escape arrives at the server as part of the field name, and
+        // the -append modifier is ignored outright. A header value containing a
+        // comma therefore cannot be expressed here (it would split into two).
+        val headerString = headers.entries.joinToString(",") { "${it.key}: ${it.value}" }
+        mpv?.setPropertyString("http-header-fields", headerString)
     }
     
     private fun observeProperties() {
-        MPVLib.observeProperty("duration", MPV_FORMAT_DOUBLE)
-        MPVLib.observeProperty("time-pos", MPV_FORMAT_DOUBLE)
-        MPVLib.observeProperty("pause", MPV_FORMAT_FLAG)
-        MPVLib.observeProperty("track-list/count", MPV_FORMAT_INT64)
-        MPVLib.observeProperty("paused-for-cache", MPV_FORMAT_FLAG)
-        MPVLib.observeProperty("demuxer-cache-duration", MPV_FORMAT_DOUBLE)
+        mpv?.observeProperty("duration", MPV_FORMAT_DOUBLE)
+        mpv?.observeProperty("time-pos", MPV_FORMAT_DOUBLE)
+        mpv?.observeProperty("pause", MPV_FORMAT_FLAG)
+        mpv?.observeProperty("track-list/count", MPV_FORMAT_INT64)
+        mpv?.observeProperty("chapter-list/count", MPV_FORMAT_INT64)
+        mpv?.observeProperty("paused-for-cache", MPV_FORMAT_FLAG)
+        mpv?.observeProperty("demuxer-cache-duration", MPV_FORMAT_DOUBLE)
+        mpv?.observeProperty("eof-reached", MPV_FORMAT_FLAG)
         // Video dimensions for PiP aspect ratio
-        MPVLib.observeProperty("video-params/w", MPV_FORMAT_INT64)
-        MPVLib.observeProperty("video-params/h", MPV_FORMAT_INT64)
+        mpv?.observeProperty("video-params/w", MPV_FORMAT_INT64)
+        mpv?.observeProperty("video-params/h", MPV_FORMAT_INT64)
+        mpv?.observeProperty("video-params/rotate", MPV_FORMAT_INT64)
     }
-    
+
     // MARK: - Playback Controls
     
     fun play() {
-        MPVLib.setPropertyBoolean("pause", false)
+        mpv?.setPropertyBoolean("pause", false)
     }
     
     fun pause() {
-        MPVLib.setPropertyBoolean("pause", true)
+        mpv?.setPropertyBoolean("pause", true)
     }
     
     fun togglePause() {
@@ -402,22 +747,45 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
     fun seekTo(seconds: Double) {
         val clamped = maxOf(0.0, seconds)
         cachedPosition = clamped
-        MPVLib.command(arrayOf("seek", clamped.toString(), "absolute"))
+        mpv?.command(arrayOf("seek", clamped.toString(), "absolute"))
     }
     
     fun seekBy(seconds: Double) {
         val newPosition = maxOf(0.0, cachedPosition + seconds)
         cachedPosition = newPosition
-        MPVLib.command(arrayOf("seek", seconds.toString(), "relative"))
+        mpv?.command(arrayOf("seek", seconds.toString(), "relative"))
     }
     
     fun setSpeed(speed: Double) {
         _playbackSpeed = speed
-        MPVLib.setPropertyDouble("speed", speed)
+        mpv?.setPropertyDouble("speed", speed)
+    }
+
+    /**
+     * Mute the player itself; the device output volume is left untouched.
+     *
+     * The flag is retained so it survives mpv re-creation (next episode,
+     * bitrate change, track re-negotiation). Without it the new instance would
+     * come back audible while JS still believes playback is muted.
+     */
+    fun setMute(muted: Boolean) {
+        isMuted = muted
+        mpv?.setPropertyBoolean("mute", muted)
     }
     
     fun getSpeed(): Double {
-        return MPVLib.getPropertyDouble("speed") ?: _playbackSpeed
+        return mpv?.getPropertyDouble("speed") ?: _playbackSpeed
+    }
+
+    fun getChapters(): List<Map<String, Any>> {
+        val chapters = mutableListOf<Map<String, Any>>()
+        val count = mpv?.getPropertyInt("chapter-list/count") ?: 0
+        for (i in 0 until count) {
+            val title = mpv?.getPropertyString("chapter-list/$i/title") ?: ""
+            val time = mpv?.getPropertyDouble("chapter-list/$i/time") ?: 0.0
+            chapters.add(mapOf("name" to title, "startSec" to time))
+        }
+        return chapters
     }
     
     // MARK: - Subtitle Controls
@@ -425,99 +793,195 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
     fun getSubtitleTracks(): List<Map<String, Any>> {
         val tracks = mutableListOf<Map<String, Any>>()
         
-        val trackCount = MPVLib.getPropertyInt("track-list/count") ?: 0
+        val trackCount = mpv?.getPropertyInt("track-list/count") ?: 0
         
         for (i in 0 until trackCount) {
-            val trackType = MPVLib.getPropertyString("track-list/$i/type") ?: continue
+            val trackType = mpv?.getPropertyString("track-list/$i/type") ?: continue
             if (trackType != "sub") continue
             
-            val trackId = MPVLib.getPropertyInt("track-list/$i/id") ?: continue
+            val trackId = mpv?.getPropertyInt("track-list/$i/id") ?: continue
             val track = mutableMapOf<String, Any>("id" to trackId)
-            
-            MPVLib.getPropertyString("track-list/$i/title")?.let { track["title"] = it }
-            MPVLib.getPropertyString("track-list/$i/lang")?.let { track["lang"] = it }
-            
-            val selected = MPVLib.getPropertyBoolean("track-list/$i/selected") ?: false
+
+            mpv?.getPropertyString("track-list/$i/title")?.let { track["title"] = it }
+            mpv?.getPropertyString("track-list/$i/lang")?.let { track["lang"] = it }
+            mpv?.getPropertyString("track-list/$i/codec")?.let { track["codec"] = it }
+
+            // Identity fields used to map a Jellyfin subtitle to the real track
+            // (instead of fragile positional counting). `external` + `external-filename`
+            // uniquely identify a sub-added sidecar. `ff-index` is exposed for
+            // diagnostics / potential future exact-index matching; the current
+            // resolver matches embedded tracks by language/title, not ff-index.
+            val external = mpv?.getPropertyBoolean("track-list/$i/external") ?: false
+            track["external"] = external
+            mpv?.getPropertyString("track-list/$i/external-filename")?.let {
+                track["externalFilename"] = it
+            }
+            mpv?.getPropertyInt("track-list/$i/ff-index")?.let { track["ffIndex"] = it }
+
+            val selected = mpv?.getPropertyBoolean("track-list/$i/selected") ?: false
             track["selected"] = selected
-            
+
             tracks.add(track)
         }
-        
+
         return tracks
     }
     
     fun setSubtitleTrack(trackId: Int) {
         Log.i(TAG, "setSubtitleTrack: setting sid to $trackId")
         if (trackId < 0) {
-            MPVLib.setPropertyString("sid", "no")
+            mpv?.setPropertyString("sid", "no")
         } else {
-            MPVLib.setPropertyInt("sid", trackId)
+            mpv?.setPropertyInt("sid", trackId)
         }
+        applyBidiModeFor(trackId)
+    }
+
+    private fun applyBidiModeFor(trackId: Int) {
+        val isAss = trackId >= 0 && subtitleCodecFor(trackId).let { it == "ass" || it == "ssa" }
+        mpv?.setPropertyString("sub-ass-style-overrides", if (isAss) "Encoding=-1" else "")
+    }
+
+    private fun subtitleCodecFor(trackId: Int): String? {
+        val trackCount = mpv?.getPropertyInt("track-list/count") ?: 0
+        for (i in 0 until trackCount) {
+            if (mpv?.getPropertyString("track-list/$i/type") != "sub") continue
+            if (mpv?.getPropertyInt("track-list/$i/id") != trackId) continue
+            return mpv?.getPropertyString("track-list/$i/codec")
+        }
+        return null
     }
     
     fun disableSubtitles() {
-        MPVLib.setPropertyString("sid", "no")
+        mpv?.setPropertyString("sid", "no")
+        applyBidiModeFor(-1)
     }
     
     fun getCurrentSubtitleTrack(): Int {
-        return MPVLib.getPropertyInt("sid") ?: 0
+        return mpv?.getPropertyInt("sid") ?: 0
     }
     
     fun addSubtitleFile(url: String, select: Boolean = true) {
         val flag = if (select) "select" else "cached"
-        MPVLib.command(arrayOf("sub-add", url, flag))
+        mpv?.command(arrayOf("sub-add", url, flag))
+        if (select) applyBidiModeFor(mpv?.getPropertyInt("sid") ?: -1)
+        // Track runtime side-loads too, so they survive a resume-recovery
+        // reload just like external subs passed to load().
+        if (url.isNotEmpty() && url !in activeExternalSubtitles) {
+            activeExternalSubtitles = activeExternalSubtitles + url
+        }
     }
     
     // MARK: - Subtitle Positioning
     
     fun setSubtitlePosition(position: Int) {
-        MPVLib.setPropertyInt("sub-pos", position)
+        mpv?.setPropertyInt("sub-pos", position)
     }
     
     fun setSubtitleScale(scale: Double) {
-        MPVLib.setPropertyDouble("sub-scale", scale)
+        mpv?.setPropertyDouble("sub-scale", scale)
+    }
+
+    fun setSubtitleDelay(seconds: Double) {
+        mpv?.setPropertyDouble("sub-delay", seconds)
     }
     
     fun setSubtitleMarginY(margin: Int) {
-        MPVLib.setPropertyInt("sub-margin-y", margin)
+        mpv?.setPropertyInt("sub-margin-y", margin)
+    }
+
+    fun setSubtitleUseMargins(useMargins: Boolean) {
+        if (isRunning) {
+            mpv?.setPropertyString("sub-use-margins", if (useMargins) "yes" else "no")
+        }
+    }
+
+    fun setSubtitleScaleWithWindow(enabled: Boolean) {
+        if (isRunning) {
+            mpv?.setPropertyString("sub-scale-with-window", if (enabled) "yes" else "no")
+        }
     }
     
     fun setSubtitleAlignX(alignment: String) {
-        MPVLib.setPropertyString("sub-align-x", alignment)
+        mpv?.setPropertyString("sub-align-x", alignment)
     }
     
     fun setSubtitleAlignY(alignment: String) {
-        MPVLib.setPropertyString("sub-align-y", alignment)
+        mpv?.setPropertyString("sub-align-y", alignment)
     }
-    
+
+    fun setSubtitleStyle(config: Map<String, Any>) {
+        val isDyslexic = (config["font"] as? String) == "opendyslexic"
+
+        (config["fontSize"] as? Number)?.let {
+            val size = if (isDyslexic) it.toInt() + 20 else it.toInt()
+            mpv?.setPropertyInt("sub-font-size", size)
+        }
+
+        (config["color"] as? String)?.let {
+            mpv?.setPropertyString("sub-color", it)
+        }
+
+        (config["font"] as? String)?.let { font ->
+            mpv?.setPropertyString("sub-font", mpvSubtitleFont(font))
+        }
+
+        (config["background"] as? String)?.let { background ->
+            if (background.isEmpty()) {
+                mpv?.setPropertyString("sub-border-style", "outline-and-shadow")
+                mpv?.setPropertyString("sub-shadow-offset", "1")
+                mpv?.setPropertyString("sub-border-size", "3")
+            } else {
+                mpv?.setPropertyString("sub-back-color", background)
+                mpv?.setPropertyString("sub-border-style", "background-box")
+                val padding = (config["backgroundPadding"] as? Number)?.toInt() ?: 12
+                val finalPadding = if (isDyslexic) padding / 2 else padding
+                mpv?.setPropertyString("sub-shadow-offset", finalPadding.toString())
+                mpv?.setPropertyString("sub-border-size", "0")
+            }
+        }
+    }
+
     fun setSubtitleFontSize(size: Int) {
-        MPVLib.setPropertyInt("sub-font-size", size)
+        mpv?.setPropertyInt("sub-font-size", size)
     }
-    
+
+    fun setSubtitleBorderStyle(style: String) {
+        mpv?.setPropertyString("sub-border-style", style)
+    }
+
+    fun setSubtitleBackgroundColor(color: String) {
+        mpv?.setPropertyString("sub-back-color", color)
+    }
+
+    fun setSubtitleAssOverride(mode: String) {
+        mpv?.setPropertyString("sub-ass-override", if (mode == "no") "scale" else mode)
+    }
+
     // MARK: - Audio Track Controls
     
     fun getAudioTracks(): List<Map<String, Any>> {
         val tracks = mutableListOf<Map<String, Any>>()
         
-        val trackCount = MPVLib.getPropertyInt("track-list/count") ?: 0
+        val trackCount = mpv?.getPropertyInt("track-list/count") ?: 0
         
         for (i in 0 until trackCount) {
-            val trackType = MPVLib.getPropertyString("track-list/$i/type") ?: continue
+            val trackType = mpv?.getPropertyString("track-list/$i/type") ?: continue
             if (trackType != "audio") continue
             
-            val trackId = MPVLib.getPropertyInt("track-list/$i/id") ?: continue
+            val trackId = mpv?.getPropertyInt("track-list/$i/id") ?: continue
             val track = mutableMapOf<String, Any>("id" to trackId)
             
-            MPVLib.getPropertyString("track-list/$i/title")?.let { track["title"] = it }
-            MPVLib.getPropertyString("track-list/$i/lang")?.let { track["lang"] = it }
-            MPVLib.getPropertyString("track-list/$i/codec")?.let { track["codec"] = it }
+            mpv?.getPropertyString("track-list/$i/title")?.let { track["title"] = it }
+            mpv?.getPropertyString("track-list/$i/lang")?.let { track["lang"] = it }
+            mpv?.getPropertyString("track-list/$i/codec")?.let { track["codec"] = it }
             
-            val channels = MPVLib.getPropertyInt("track-list/$i/audio-channels")
+            val channels = mpv?.getPropertyInt("track-list/$i/audio-channels")
             if (channels != null && channels > 0) {
                 track["channels"] = channels
             }
             
-            val selected = MPVLib.getPropertyBoolean("track-list/$i/selected") ?: false
+            val selected = mpv?.getPropertyBoolean("track-list/$i/selected") ?: false
             track["selected"] = selected
             
             tracks.add(track)
@@ -528,11 +992,35 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
     
     fun setAudioTrack(trackId: Int) {
         Log.i(TAG, "setAudioTrack: setting aid to $trackId")
-        MPVLib.setPropertyInt("aid", trackId)
+        mpv?.setPropertyInt("aid", trackId)
+    }
+
+    fun setAudioDelay(seconds: Double) {
+        mpv?.setPropertyDouble("audio-delay", seconds)
+    }
+
+    fun setVolumeBoost(percent: Int) {
+        mpv?.setPropertyInt("volume-max", 200)
+        mpv?.setPropertyInt("volume", percent)
+    }
+
+    fun setDialogueBoost(enabled: Boolean) {
+        if (enabled) {
+            mpv?.setPropertyString(
+                "af",
+                "lavfi=[equalizer=f=100:t=q:w=1.2:g=-6,equalizer=f=2800:t=q:w=1.2:g=5]"
+            )
+        } else {
+            mpv?.setPropertyString("af", "")
+        }
+    }
+
+    fun setMonoDownmix(enabled: Boolean) {
+        mpv?.setPropertyString("audio-channels", if (enabled) "mono" else "auto-safe")
     }
     
     fun getCurrentAudioTrack(): Int {
-        return MPVLib.getPropertyInt("aid") ?: 0
+        return mpv?.getPropertyInt("aid") ?: 0
     }
 
     // MARK: - Video Scaling
@@ -541,7 +1029,7 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         // panscan: 0.0 = fit (letterbox), 1.0 = fill (crop)
         val panscanValue = if (zoomed) 1.0 else 0.0
         Log.i(TAG, "setZoomedToFill: setting panscan to $panscanValue")
-        MPVLib.setPropertyDouble("panscan", panscanValue)
+        mpv?.setPropertyDouble("panscan", panscanValue)
     }
 
     // MARK: - Technical Info
@@ -550,47 +1038,85 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         val info = mutableMapOf<String, Any>()
 
         // Video dimensions
-        MPVLib.getPropertyInt("video-params/w")?.takeIf { it > 0 }?.let {
+        mpv?.getPropertyInt("video-params/w")?.takeIf { it > 0 }?.let {
             info["videoWidth"] = it
         }
-        MPVLib.getPropertyInt("video-params/h")?.takeIf { it > 0 }?.let {
+        mpv?.getPropertyInt("video-params/h")?.takeIf { it > 0 }?.let {
             info["videoHeight"] = it
         }
 
         // Video codec
-        MPVLib.getPropertyString("video-format")?.let {
+        mpv?.getPropertyString("video-format")?.let {
             info["videoCodec"] = it
         }
 
         // Audio codec
-        MPVLib.getPropertyString("audio-codec-name")?.let {
+        mpv?.getPropertyString("audio-codec-name")?.let {
             info["audioCodec"] = it
         }
 
         // FPS (container fps)
-        MPVLib.getPropertyDouble("container-fps")?.takeIf { it > 0 }?.let {
+        mpv?.getPropertyDouble("container-fps")?.takeIf { it > 0 }?.let {
             info["fps"] = it
         }
 
         // Video bitrate (bits per second)
-        MPVLib.getPropertyInt("video-bitrate")?.takeIf { it > 0 }?.let {
+        mpv?.getPropertyInt("video-bitrate")?.takeIf { it > 0 }?.let {
             info["videoBitrate"] = it
         }
 
         // Audio bitrate (bits per second)
-        MPVLib.getPropertyInt("audio-bitrate")?.takeIf { it > 0 }?.let {
+        mpv?.getPropertyInt("audio-bitrate")?.takeIf { it > 0 }?.let {
             info["audioBitrate"] = it
         }
 
         // Demuxer cache duration (seconds of video buffered)
-        MPVLib.getPropertyDouble("demuxer-cache-duration")?.let {
+        mpv?.getPropertyDouble("demuxer-cache-duration")?.let {
             info["cacheSeconds"] = it
         }
 
+        // Configured cache limits — read back from mpv to confirm user
+        // settings actually took effect. mpv stores byte sizes as int64
+        // (bytes); convert to MiB for display.
+        mpv?.getPropertyInt("demuxer-max-bytes")?.let { bytes ->
+            info["demuxerMaxBytes"] = bytes / (1024 * 1024)
+        }
+        mpv?.getPropertyInt("demuxer-max-back-bytes")?.let { bytes ->
+            info["demuxerMaxBackBytes"] = bytes / (1024 * 1024)
+        }
+        mpv?.getPropertyDouble("cache-secs")?.let { secs ->
+            info["cacheSecsLimit"] = secs
+        }
+
         // Dropped frames
-        MPVLib.getPropertyInt("frame-drop-count")?.let {
+        mpv?.getPropertyInt("frame-drop-count")?.let {
             info["droppedFrames"] = it
         }
+
+        // Active video output driver (read from MPV to confirm what's actually applied)
+        mpv?.getPropertyString("vo")?.let {
+            info["voDriver"] = it
+        }
+
+        // Active hardware decoder.
+        // hwdec-current yields e.g. "mediacodec",
+        // "mediacodec-copy", "auto-copy" or empty when SW decoding.
+        mpv?.getPropertyString("hwdec-current")?.let {
+            info["hwdec"] = it
+        }
+
+        // Estimated video output fps (renderer-side, after filtering).
+        // Useful for diagnosing display/pipeline drops vs container fps.
+        mpv?.getPropertyDouble("estimated-vf-fps")?.takeIf { it > 0 }?.let {
+            info["estimatedVfFps"] = it
+        }
+
+        // Color metadata / HDR detection properties
+        mpv?.getPropertyString("video-params/gamma")?.let { info["gamma"] = it }
+        mpv?.getPropertyString("video-params/primaries")?.let { info["primaries"] = it }
+        mpv?.getPropertyString("video-params/colormatrix")?.let { info["colormatrix"] = it }
+        mpv?.getPropertyString("video-params/colorlevels")?.let { info["colorlevels"] = it }
+        mpv?.getPropertyString("video-params/pixelformat")?.let { info["pixelformat"] = it }
 
         return info
     }
@@ -609,6 +1135,10 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
                     mainHandler.post { delegate?.onTracksReady() }
                 }
             }
+            "chapter-list/count" -> {
+                val chapters = getChapters()
+                mainHandler.post { delegate?.onChaptersChanged(chapters) }
+            }
             "video-params/w" -> {
                 val width = value.toInt()
                 if (width > 0 && width != _videoWidth) {
@@ -623,14 +1153,21 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
                     notifyVideoDimensionsIfReady()
                 }
             }
+            "video-params/rotate" -> {
+                val rotation = value.toInt()
+                if (rotation != _videoRotation) {
+                    _videoRotation = rotation
+                    notifyVideoDimensionsIfReady()
+                }
+            }
         }
     }
     
     private fun notifyVideoDimensionsIfReady() {
-        if (_videoWidth > 0 && _videoHeight > 0) {
-            Log.i(TAG, "Video dimensions: ${_videoWidth}x${_videoHeight}")
-            mainHandler.post { delegate?.onVideoDimensionsChanged(_videoWidth, _videoHeight) }
-        }
+        if (_videoWidth <= 0 || _videoHeight <= 0) return
+        val (width, height) = normalizeVideoDimensions(_videoWidth, _videoHeight, _videoRotation)
+        Log.i(TAG, "Video dimensions: ${width}x${height} (rotation=$_videoRotation)")
+        mainHandler.post { delegate?.onVideoDimensionsChanged(width, height) }
     }
     
     override fun eventProperty(property: String, value: Boolean) {
@@ -645,6 +1182,12 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
                 if (value != _isLoading) {
                     _isLoading = value
                     mainHandler.post { delegate?.onLoadingChanged(value) }
+                }
+            }
+            "eof-reached" -> {
+                if (value) {
+                    Log.i(TAG, "EOF reached (property)")
+                    mainHandler.post { delegate?.onPlaybackEnded() }
                 }
             }
         }
@@ -680,17 +1223,31 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         when (eventId) {
             MPVLib.MPV_EVENT_FILE_LOADED -> {
                 // Add external subtitles now that file is loaded
-                pendingExternalSubtitles.forEachIndexed { index, subUrl ->
-                    Log.d(TAG, "Adding external subtitle [$index]: $subUrl")
-                    // "auto" flag = add without auto-selecting (order preserved, MPVLib.command is sync)
-                    MPVLib.command(arrayOf("sub-add", subUrl, "auto"))
-                    addedExternalSubtitles.add(subUrl)
+                if (pendingExternalSubtitles.isNotEmpty()) {
+                    pendingExternalSubtitles.forEachIndexed { index, subUrl ->
+                        android.util.Log.d("MPVRenderer", "Adding external subtitle [$index]: $subUrl")
+                        // "auto" flag = add without auto-selecting (order preserved, MPVLib.command is sync)
+                        mpv?.command(arrayOf("sub-add", subUrl, "auto"))
+                    }
+                    pendingExternalSubtitles = emptyList()
                 }
-                pendingExternalSubtitles = emptyList()
-                
-                // Set subtitle after external subs are added
+
+                // Apply the initial audio/subtitle selection now that the file's
+                // tracks are enumerated. Setting sid/aid before `loadfile` does not
+                // reliably stick for embedded tracks (the selection is silently
+                // dropped), so we (re)apply here for embedded and external alike.
+                // This is what makes a carried-over subtitle show up on the next
+                // episode without a manual re-selection.
+                initialAudioId?.let { if (it > 0) setAudioTrack(it) }
                 initialSubtitleId?.let { setSubtitleTrack(it) } ?: disableSubtitles()
-                
+
+                // The disable above can race a JS-side identity selection that
+                // landed before FILE_LOADED (JS no longer passes an initial sid).
+                // Re-emit tracksReady so the idempotent JS re-apply always runs
+                // after it — for embedded-only files this is the only
+                // post-FILE_LOADED fire.
+                mainHandler.post { delegate?.onTracksReady() }
+
                 if (!isReadyToSeek) {
                     isReadyToSeek = true
                     mainHandler.post { delegate?.onReadyToSeek() }
@@ -718,7 +1275,11 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
                 }
             }
             MPVLib.MPV_EVENT_END_FILE -> {
-                Log.i(TAG, "Playback ended")
+                Log.i(TAG, "Playback ended (MPV_EVENT_END_FILE)")
+                val eof = mpv?.getPropertyBoolean("eof-reached") ?: false
+                if (eof) {
+                    mainHandler.post { delegate?.onPlaybackEnded() }
+                }
             }
             MPVLib.MPV_EVENT_SHUTDOWN -> {
                 Log.w(TAG, "MPV shutdown")
@@ -726,4 +1287,3 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         }
     }
 }
-

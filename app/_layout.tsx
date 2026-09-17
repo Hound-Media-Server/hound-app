@@ -69,6 +69,16 @@ function RootLayoutNav() {
       }
     }
   }, [session, profiles, segments, isLoading]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    const inSignIn = segments[0] === "sign-in";
+    const inProfileSelect = segments[0] === "profile-select";
+    if (!session || inSignIn || inProfileSelect) {
+      SplashScreen.hideAsync();
+    }
+  }, [session, segments, isLoading]);
+
   const isLiveTV = segments?.[0] === "(tabs)" && segments?.[1] === "live_tv";
   return (
     <QueryClientProvider client={queryClient}>

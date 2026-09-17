@@ -53,7 +53,7 @@ export const useXtreamCategories = (iptvProviderID: number | undefined, iptvProv
 };
 
 const fetchChannels = (iptvProviderID: number, categoryID: number | undefined): Promise<any> => {
-    return apiClient(`/live/${iptvProviderID}/channels/${categoryID ? "?category_id=" + categoryID : ""}`)
+    return apiClient(`/live/${iptvProviderID}/channels${categoryID ? "?category_id=" + categoryID : ""}`)
 }
 
 export const useChannels = (iptvProviderID: number | undefined, iptvProviderType: string | undefined, categoryID: number | null) => {

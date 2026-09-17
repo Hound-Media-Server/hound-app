@@ -12,13 +12,16 @@ interface ServerInfoResponse {
 }
 
 export const fetchServerInfo = (): Promise<ServerInfoResponse> => {
-  return apiClient(`/server_info`);
+  return apiClient(`/server_info`, {
+    signal: AbortSignal.timeout(5000),
+  });
 };
 
 export const useServerInfo = () => {
   return useQuery({
     queryKey: ["server-info"],
     queryFn: fetchServerInfo,
+    retry: false,
     staleTime: 1000 * 60 * 10, // 10 mins
   });
 };
