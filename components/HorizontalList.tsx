@@ -109,6 +109,10 @@ export default function HorizontalList({
     );
   }
 
+  if (!data?.length) {
+    return null;
+  }
+
   // only wrap tv focus guide view if platform is tv
   // prevents errors on other platforms (web)
   return wrapTVFocusGuideView(
