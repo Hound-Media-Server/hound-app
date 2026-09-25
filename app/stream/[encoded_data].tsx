@@ -1,7 +1,7 @@
 import { Platform, View, ActivityIndicator } from "react-native";
 import React, { useState, useMemo, useRef, useCallback } from "react";
 import { useEffect } from "react";
-import * as ScreenOrientation from "expo-screen-orientation";
+import { lockLandscape, unlockOrientation } from "@/utils/screenOrientation";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSession } from "@/services/ctx";
 import MPVVideoScreen from "@/components/video/MPVVideoScreen";
@@ -307,7 +307,7 @@ export default function Stream() {
   }, [isNearEnd, nextEpisodeInfo, id, autoplayEnabled, currentSettings]);
 
   useEffect(() => {
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+    lockLandscape();
     // Load setting
     const defaultResizeMode =
       mediaType === MediaTypeMovie
@@ -326,7 +326,7 @@ export default function Stream() {
     }));
 
     return () => {
-      ScreenOrientation.unlockAsync();
+      unlockOrientation();
     };
   }, [mediaType]);
 

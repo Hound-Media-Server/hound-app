@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getName as getLanguageName } from "@cospired/i18n-iso-languages";
-import Slider from "@react-native-community/slider";
 import {
   MpvPlayerViewRef,
   SubtitleTrack,
@@ -85,7 +84,6 @@ export default function VideoControlsTV({
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [sliderFocused, setSliderFocused] = useState(false);
-  const [isSeeking, setIsSeeking] = useState(false);
   const [autoplayCanceled, setAutoplayCanceled] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -187,15 +185,6 @@ export default function VideoControlsTV({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleSliderChange = (value: number) => {
-    setIsSeeking(true);
-    onSeek(value);
-  };
-
-  const handleSliderComplete = () => {
-    setIsSeeking(false);
-  };
-
   const isModalOpen =
     showSubtitlesModal || showAudioModal || showInfoModal || showSettingsModal;
 
@@ -240,25 +229,17 @@ export default function VideoControlsTV({
               style={styles.slider}
               className="rounded-full focus:bg-black/20"
             >
-              <Slider
-                className="h-10"
-                minimumValue={0}
-                maximumValue={duration || 1}
-                value={currentTime}
-                onValueChange={handleSliderChange}
-                onSlidingComplete={handleSliderComplete}
-                minimumTrackTintColor={
-                  sliderFocused ? "#FF6B6B" : "rgba(255,255,255,0.5)"
-                }
-                maximumTrackTintColor={
-                  sliderFocused
-                    ? "rgba(255,255,255,1)"
-                    : "rgba(255,255,255,0.5)"
-                }
-                thumbTintColor={
-                  sliderFocused ? "#FF6B6B" : "rgba(255,255,255,1)"
-                }
-              />
+              <View style={styles.progressTrack}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: `${Math.max(0, Math.min(100, (currentTime / (duration || 1)) * 100))}%`,
+                      backgroundColor: sliderFocused ? "#FF6B6B" : "rgba(255,255,255,0.5)",
+                    },
+                  ]}
+                />
+              </View>
             </View>
             <Text style={styles.timeText}>{formatTime(duration)}</Text>
           </TVFocusGuideView>
@@ -613,6 +594,17 @@ const styles = StyleSheet.create({
   slider: {
     flex: 1,
     marginHorizontal: 10,
+    justifyContent: "center",
+    height: 40,
+  },
+  progressTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.5)",
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
   },
   timeText: {
     color: "white",

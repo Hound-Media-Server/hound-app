@@ -70,7 +70,8 @@
       "permissions": []
     },
     "ios": {
-      "bundleIdentifier": "com.houndmediaserver.houndapp"
+      "bundleIdentifier": "com.houndmediaserver.houndapp",
+      "supportsTablet": true
     },
     "web": {
       "bundler": "metro",

@@ -4,7 +4,7 @@ import React, {
   useLayoutEffect,
   useState,
 } from "react";
-import * as ScreenOrientation from "expo-screen-orientation";
+import { lockLandscape, unlockOrientation } from "@/utils/screenOrientation";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/ThemedText";
 import {
@@ -38,9 +38,9 @@ export default function LiveTV() {
   useFocusEffect(
     useCallback(() => {
       if (Platform.isTV) return;
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+      lockLandscape();
       return () => {
-        ScreenOrientation.unlockAsync();
+        unlockOrientation();
       };
     }, []),
   );
