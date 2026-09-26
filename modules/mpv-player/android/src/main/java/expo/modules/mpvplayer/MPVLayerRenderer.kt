@@ -22,12 +22,10 @@ internal fun normalizeVideoDimensions(width: Int, height: Int, rotation: Int): P
 }
 
 /**
- * mpv `sub-font` for a subtitle font setting. "System" names mpv's own default
- * rather than writing an empty family: an empty `sub-font` drops the default
- * and leaves libass to pick a face glyph by glyph.
+ * Maps app subtitle-font choices to Android/libass font family names.
  */
 internal fun mpvSubtitleFont(font: String): String = when (font) {
-    "System" -> "sans-serif"
+    "System" -> "Droid Sans Fallback"
     "sans-serif" -> "Roboto"
     "serif" -> "Noto Serif"
     "monospace" -> "Droid Sans Mono"
@@ -257,6 +255,8 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
 
             mpv?.setOptionString("config", "yes")
             mpv?.setOptionString("config-dir", mpvDir.path)
+            // Use the bundled font as MPV's default for plain-text subtitles
+            mpv?.setOptionString("sub-font", "Droid Sans Fallback")
             
             // Configure mpv options before initialization (based on Findroid)
             this.voDriver = voDriver
@@ -358,6 +358,7 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
 
         val fontsDir = File(mpvDir, "fonts")
         if (!fontsDir.exists()) fontsDir.mkdirs()
+        copyFontAssetIfMissing("subfont.ttf", File(fontsDir, "subfont.ttf"))
 
         val customFonts = arrayOf(
             "OpenDyslexic-Regular.otf",
