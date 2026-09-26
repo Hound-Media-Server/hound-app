@@ -347,11 +347,15 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
     }
     
     /**
-     * Copies bundled custom fonts to the MPV config directory.
+     * Copies bundled subtitle fonts to the MPV config directory.
      * libmpv/libass can access Android system fonts directly, but still cannot
      * read bundled React Native assets without copying them to a filesystem path.
      */
     private fun copyFontsToConfigDir(mpvDir: File) {
+        // MPV uses this exact path as libass' last-resort font fallback.
+        // Keep system font discovery enabled; this does not force an ASS font.
+        copyFontAssetIfMissing("subfont.ttf", File(mpvDir, "subfont.ttf"))
+
         val fontsDir = File(mpvDir, "fonts")
         if (!fontsDir.exists()) fontsDir.mkdirs()
 
@@ -362,27 +366,30 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
             "OpenDyslexic-BoldItalic.otf"
         )
         customFonts.forEach { fileName ->
-            val file = File(fontsDir, fileName)
-            if (file.exists() && file.length() > 0) return@forEach
+            copyFontAssetIfMissing("fonts/$fileName", File(fontsDir, fileName))
+        }
+    }
 
-            val tempFile = File(fontsDir, "$fileName.tmp")
-            try {
-                if (file.exists()) file.delete()
-                if (tempFile.exists()) tempFile.delete()
+    private fun copyFontAssetIfMissing(assetPath: String, file: File) {
+        if (file.exists() && file.length() > 0) return
 
-                context.assets.open("fonts/$fileName", AssetManager.ACCESS_STREAMING).use { input ->
-                    FileOutputStream(tempFile).use { output ->
-                        input.copyTo(output)
-                    }
+        val tempFile = File(file.parentFile, "${file.name}.tmp")
+        try {
+            if (file.exists()) file.delete()
+            if (tempFile.exists()) tempFile.delete()
+
+            context.assets.open(assetPath, AssetManager.ACCESS_STREAMING).use { input ->
+                FileOutputStream(tempFile).use { output ->
+                    input.copyTo(output)
                 }
-
-                if (!tempFile.renameTo(file)) {
-                    throw IllegalStateException("Failed to rename ${tempFile.name} to ${file.name}")
-                }
-            } catch (e: Exception) {
-                tempFile.delete()
-                Log.w(TAG, "Failed to copy custom font $fileName: ${e.message}")
             }
+
+            if (!tempFile.renameTo(file)) {
+                throw IllegalStateException("Failed to rename ${tempFile.name} to ${file.name}")
+            }
+        } catch (e: Exception) {
+            tempFile.delete()
+            Log.w(TAG, "Failed to copy bundled font $assetPath: ${e.message}")
         }
     }
 
