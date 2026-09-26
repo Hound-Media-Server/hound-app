@@ -20,18 +20,22 @@ export function normalizeSegments(data: VideoSegments, duration: number) {
   for (const type of ["intro", "recap", "credits", "preview"] as const) {
     if (!Array.isArray(data[type])) continue;
     for (const range of data[type]) {
+      const endMs =
+        (type === "credits" || type === "preview") && range?.end_ms === 0
+          ? duration * 1000
+          : range?.end_ms;
       if (
         !range ||
         !Number.isFinite(range.start_ms) ||
-        !Number.isFinite(range.end_ms) ||
+        !Number.isFinite(endMs) ||
         range.start_ms < 0 ||
-        range.end_ms <= range.start_ms ||
-        range.end_ms > duration * 1000 + 1000
+        endMs <= range.start_ms ||
+        endMs > duration * 1000 + 1000
       ) {
         continue;
       }
       const start = range.start_ms / 1000;
-      const end = Math.min(range.end_ms / 1000, duration);
+      const end = Math.min(endMs / 1000, duration);
       if (end > start) segments.push({ start, end, type });
     }
   }

@@ -155,7 +155,11 @@ export default function VideoControls({
   const isModalOpen =
     showSubtitlesModal || showAudioModal || showInfoModal || showSettingsModal;
   const showSkip =
-    !!skipSegment && !playbackBusy && !isSeeking && !isModalOpen && !showAutoplay;
+    !!skipSegment &&
+    !playbackBusy &&
+    !isSeeking &&
+    !isModalOpen &&
+    !showAutoplay;
 
   return (
     <>
@@ -297,6 +301,7 @@ export default function VideoControls({
           className="absolute top-[80px] right-[15px] bg-black/40 py-3 px-4 rounded-full"
           accessibilityRole="button"
           onPress={() => {
+            if (!skipSegment) return;
             if (skipSegment.nextEpisode) onNextEpisode?.();
             else onSeek(skipSegment.end);
           }}

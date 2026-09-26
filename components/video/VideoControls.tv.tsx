@@ -389,6 +389,7 @@ export default function VideoControlsTV({
             accessibilityRole="button"
             onFocus={() => setSliderFocused(false)}
             onPress={() => {
+              if (!skipSegment) return;
               if (skipSegment.nextEpisode) onNextEpisode?.();
               else onSeek(skipSegment.end);
             }}
@@ -690,7 +691,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 10,
     justifyContent: "center",
-    height: 40,
+    height: 30,
   },
   progressTrack: {
     height: 8,
