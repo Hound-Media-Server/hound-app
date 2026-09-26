@@ -21,6 +21,7 @@ import { getAllSettings, SettingsSchema } from "@/stores/settingsStore";
 import { get2LetterLangCode } from "@/utils/locale";
 import { MediaType } from "@/constants/MediaTypes";
 import { DisplayInfo } from "@/app/stream/[encoded_data]";
+import { useVideoSegments } from "@/services/segmentService";
 
 export default function MPVVideoScreen(props: {
   src: string;
@@ -62,12 +63,14 @@ export default function MPVVideoScreen(props: {
     props.playerSettings?.resize_mode === "cover",
   );
   const [isReady, setIsReady] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
   const [appSettings] = useState<SettingsSchema>(getAllSettings());
   const defaultAudioSelected = useRef(false);
   const defaultSubtitleSelected = useRef(false);
   const selectedTracks = useRef({ subtitle: 0, audio: 1 });
   const trackUpdates = useRef<Promise<void>>(Promise.resolve());
   const mounted = useRef(true);
+  const skipSegment = useVideoSegments(props, duration, currentTime);
 
   // if events overlap, use manual selections rather than a callback's older render state.
   const queueTrackUpdate = (update: () => Promise<void>) => {
@@ -105,14 +108,15 @@ export default function MPVVideoScreen(props: {
   };
 
   useEffect(() => {
-    if (!isReady || paused) return;
+    if (!isReady || paused || isBuffering) return;
+    let canceled = false;
     const interval = setInterval(async () => {
       try {
         const position = await videoRef.current?.getCurrentPosition();
         const dur = await videoRef.current?.getDuration();
 
-        if (position !== undefined) setCurrentTime(position);
-        if (dur !== undefined) setDuration(dur);
+        // Ignore a poll that started before a seek or source change.
+        if (canceled) return;
 
         // don't set playback progress if below 2 minutes
         if (position && position > 120) {
@@ -145,10 +149,14 @@ export default function MPVVideoScreen(props: {
       }
     }, 5000);
 
-    return () => clearInterval(interval);
+    return () => {
+      canceled = true;
+      clearInterval(interval);
+    };
   }, [
     isReady,
     paused,
+    isBuffering,
     props.id,
     props.mediaType,
     props.seasonNumber,
@@ -347,7 +355,8 @@ export default function MPVVideoScreen(props: {
     });
 
   const handlePlaybackStateChange = async (event: any) => {
-    const { isPaused, isReadyToSeek } = event.nativeEvent;
+    const { isPaused, isReadyToSeek, isLoading } = event.nativeEvent;
+    if (isLoading !== undefined) setIsBuffering(isLoading);
     if (isPaused !== undefined) {
       setPaused(isPaused);
     }
@@ -433,10 +442,12 @@ export default function MPVVideoScreen(props: {
   };
 
   const handleSeek = async (time: number) => {
+    if (!videoRef.current) return;
+    setIsBuffering(true);
     try {
       await videoRef.current?.seekTo(time);
-      setCurrentTime(time);
     } catch (error) {
+      setIsBuffering(false);
       console.error("Error seeking:", error);
     }
   };
@@ -555,6 +566,8 @@ export default function MPVVideoScreen(props: {
             hasNextEpisode={props.hasNextEpisode}
             onNextEpisode={handleNextEpisode}
             autoplayEnabled={props.autoplayEnabled}
+            skipSegment={skipSegment}
+            playbackBusy={!isReady || isBuffering}
             streamData={props.streamData}
           />
         ) : (
@@ -581,6 +594,8 @@ export default function MPVVideoScreen(props: {
             hasNextEpisode={props.hasNextEpisode}
             onNextEpisode={handleNextEpisode}
             autoplayEnabled={props.autoplayEnabled}
+            skipSegment={skipSegment}
+            playbackBusy={!isReady || isBuffering}
             streamData={props.streamData}
           />
         )}

@@ -33,6 +33,7 @@ import { get2LetterLangCode } from "@/utils/locale";
 import { MediaType } from "@/constants/MediaTypes";
 import { DisplayInfo } from "@/app/stream/[encoded_data]";
 import { Toast } from "toastify-react-native";
+import { useVideoSegments } from "@/services/segmentService";
 
 export default function ExoplayerVideoScreen(props: {
   src: string;
@@ -76,10 +77,14 @@ export default function ExoplayerVideoScreen(props: {
     props.playerSettings?.resize_mode === "cover",
   );
   const [isReady, setIsReady] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
+  const [isSeeking, setIsSeeking] = useState(false);
+  const seekingRef = useRef(false);
   const initialSeekDone = useRef(false);
   const audioInitialized = useRef(false);
   const subtitleInitialized = useRef(false);
   const [appSettings] = useState<SettingsSchema>(getAllSettings());
+  const skipSegment = useVideoSegments(props, duration, currentTime);
 
   const handleNextEpisode = () => {
     if (props.onNextEpisode) {
@@ -98,7 +103,7 @@ export default function ExoplayerVideoScreen(props: {
     if (!isReady || paused) return;
     const interval = setInterval(() => {
       // Don't set playback progress if below 2 minutes
-      if (currentTimeRef.current > 120) {
+      if (!seekingRef.current && currentTimeRef.current > 120) {
         updatePlaybackProgress.mutate({
           id: props.id,
           mediaType: props.mediaType,
@@ -155,8 +160,7 @@ export default function ExoplayerVideoScreen(props: {
   const handleLoad = (data: OnLoadData) => {
     // Seek to start time if provided
     if (props.startTime && !initialSeekDone.current) {
-      videoRef.current?.seek(props.startTime);
-      currentTimeRef.current = props.startTime;
+      handleSeek(props.startTime);
       initialSeekDone.current = true;
     }
     setIsReady(true);
@@ -165,6 +169,7 @@ export default function ExoplayerVideoScreen(props: {
   };
 
   const handleProgress = (data: OnProgressData) => {
+    if (seekingRef.current) return;
     setCurrentTime(data.currentTime);
     currentTimeRef.current = data.currentTime;
     if (props.onProgress) {
@@ -312,8 +317,10 @@ export default function ExoplayerVideoScreen(props: {
   };
 
   const handleSeek = (time: number) => {
+    if (!videoRef.current) return;
+    seekingRef.current = true;
+    setIsSeeking(true);
     videoRef.current?.seek(time);
-    setCurrentTime(time);
   };
 
   const handleSeekForward = () => {
@@ -367,6 +374,13 @@ export default function ExoplayerVideoScreen(props: {
           resizeMode={isZoomedToFill ? ResizeMode.COVER : ResizeMode.CONTAIN}
           onLoad={handleLoad}
           onProgress={handleProgress}
+          onBuffer={({ isBuffering }) => setIsBuffering(isBuffering)}
+          onSeek={({ currentTime }) => {
+            currentTimeRef.current = currentTime;
+            setCurrentTime(currentTime);
+            seekingRef.current = false;
+            setIsSeeking(false);
+          }}
           onTextTracks={handleTextTracks}
           onAudioTracks={handleAudioTracks}
           onError={(error) => handleError(error, props.startTime || 0)}
@@ -411,6 +425,8 @@ export default function ExoplayerVideoScreen(props: {
             hasNextEpisode={props.hasNextEpisode}
             onNextEpisode={handleNextEpisode}
             autoplayEnabled={props.autoplayEnabled}
+            skipSegment={skipSegment}
+            playbackBusy={!isReady || isBuffering || isSeeking}
             streamData={props.streamData}
           />
         ) : (
@@ -437,6 +453,8 @@ export default function ExoplayerVideoScreen(props: {
             hasNextEpisode={props.hasNextEpisode}
             onNextEpisode={handleNextEpisode}
             autoplayEnabled={props.autoplayEnabled}
+            skipSegment={skipSegment}
+            playbackBusy={!isReady || isBuffering || isSeeking}
             streamData={props.streamData}
           />
         )}

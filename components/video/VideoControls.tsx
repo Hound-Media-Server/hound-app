@@ -21,6 +21,7 @@ import {
 } from "@/modules/mpv-player";
 import { ThemedText } from "../ThemedText";
 import { DisplayInfo } from "@/app/stream/[encoded_data]";
+import { SegmentAction } from "@/utils/videoSegments";
 
 interface VideoControlsProps {
   videoRef: React.RefObject<MpvPlayerViewRef | null>;
@@ -49,6 +50,8 @@ interface VideoControlsProps {
   hasNextEpisode?: boolean;
   onNextEpisode?: () => void;
   autoplayEnabled?: boolean;
+  skipSegment?: SegmentAction | null;
+  playbackBusy?: boolean;
   streamData?: any;
 }
 
@@ -75,6 +78,8 @@ export default function VideoControls({
   hasNextEpisode,
   onNextEpisode,
   autoplayEnabled,
+  skipSegment,
+  playbackBusy,
   streamData,
 }: VideoControlsProps) {
   const [showControls, setShowControls] = useState(true);
@@ -84,6 +89,7 @@ export default function VideoControls({
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
   const [autoplayCanceled, setAutoplayCanceled] = useState(false);
+  const autoplayStarted = useRef(false);
   const router = useRouter();
   const hideControlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -109,11 +115,16 @@ export default function VideoControls({
     autoplayEnabled &&
     hasNextEpisode &&
     !autoplayCanceled &&
+    !paused &&
+    !playbackBusy &&
+    !isSeeking &&
     remainingTime <= 5 &&
     remainingTime > 0;
 
   useEffect(() => {
-    if (showAutoplay && remainingTime <= 1) {
+    if (remainingTime > 5) autoplayStarted.current = false;
+    if (showAutoplay && remainingTime <= 1 && !autoplayStarted.current) {
+      autoplayStarted.current = true;
       onNextEpisode?.();
     }
   }, [showAutoplay, remainingTime, onNextEpisode]);
@@ -141,6 +152,10 @@ export default function VideoControls({
   const handleSliderComplete = () => {
     setIsSeeking(false);
   };
+  const isModalOpen =
+    showSubtitlesModal || showAudioModal || showInfoModal || showSettingsModal;
+  const showSkip =
+    !!skipSegment && !playbackBusy && !isSeeking && !isModalOpen && !showAutoplay;
 
   return (
     <>
@@ -224,7 +239,9 @@ export default function VideoControls({
             {/* Bottom Bar */}
             <View style={styles.bottomBar}>
               <View style={styles.progressContainer}>
-                <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
+                <Text style={[styles.timeText, styles.currentTimeText]}>
+                  {formatTime(currentTime)}
+                </Text>
                 <Slider
                   style={styles.slider}
                   minimumValue={0}
@@ -236,7 +253,9 @@ export default function VideoControls({
                   maximumTrackTintColor="rgba(255,255,255,0.3)"
                   thumbTintColor="#FF6B6B"
                 />
-                <Text style={styles.timeText}>{formatTime(duration)}</Text>
+                <Text style={[styles.timeText, styles.durationTimeText]}>
+                  {formatTime(duration)}
+                </Text>
               </View>
 
               <View style={styles.bottomButtons}>
@@ -272,6 +291,19 @@ export default function VideoControls({
           </View>
         )}
       </Pressable>
+
+      {showSkip && skipSegment && (
+        <TouchableOpacity
+          className="absolute top-[80px] right-[15px] bg-black/40 py-3 px-4 rounded-full"
+          accessibilityRole="button"
+          onPress={() => {
+            if (skipSegment.nextEpisode) onNextEpisode?.();
+            else onSeek(skipSegment.end);
+          }}
+        >
+          <ThemedText className="text-white">{skipSegment.label}</ThemedText>
+        </TouchableOpacity>
+      )}
 
       {/* Autoplay Overlay */}
       {showAutoplay && (
@@ -452,6 +484,20 @@ export default function VideoControls({
               <Text style={styles.modalTitle}>Settings</Text>
               <Text style={styles.modalItemText}>Player: {player}</Text>
               <ScrollView>
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => {
+                    onSeek(0);
+                    setShowSettingsModal(false);
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.modalItemText}>
+                      Start From Beginning
+                    </Text>
+                  </View>
+                  <Ionicons name="play-skip-back" size={24} color="white" />
+                </TouchableOpacity>
                 {onChangePlayer && (
                   <TouchableOpacity
                     style={styles.modalItem}
@@ -528,6 +574,13 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 14,
     fontWeight: "600",
+    width: 50,
+  },
+  currentTimeText: {
+    textAlign: "right",
+  },
+  durationTimeText: {
+    textAlign: "left",
   },
   bottomButtons: {
     flexDirection: "row",
