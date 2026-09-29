@@ -160,6 +160,20 @@ export default function VideoControls({
     !isSeeking &&
     !isModalOpen &&
     !showAutoplay;
+  const skipButton = showSkip && skipSegment && (
+    <Pressable
+      className="bg-black/40 py-3 px-4 rounded-full"
+      style={showControls ? styles.skipButtonInline : styles.skipButtonFloating}
+      accessibilityRole="button"
+      onPress={() => {
+        if (skipSegment.nextEpisode) onNextEpisode?.();
+        else onSeek(skipSegment.end);
+      }}
+      focusable
+    >
+      <ThemedText className="text-white">{skipSegment.label}</ThemedText>
+    </Pressable>
+  );
 
   return (
     <>
@@ -242,6 +256,7 @@ export default function VideoControls({
 
             {/* Bottom Bar */}
             <View style={styles.bottomBar}>
+              {skipButton}
               <View style={styles.progressContainer}>
                 <Text style={[styles.timeText, styles.currentTimeText]}>
                   {formatTime(currentTime)}
@@ -296,20 +311,7 @@ export default function VideoControls({
         )}
       </Pressable>
 
-      {showSkip && skipSegment && (
-        <Pressable
-          className="absolute top-[80px] right-[15px] bg-black/40 py-3 px-4 rounded-full"
-          accessibilityRole="button"
-          onPress={() => {
-            if (!skipSegment) return;
-            if (skipSegment.nextEpisode) onNextEpisode?.();
-            else onSeek(skipSegment.end);
-          }}
-          focusable
-        >
-          <ThemedText className="text-white">{skipSegment.label}</ThemedText>
-        </Pressable>
-      )}
+      {!showControls && skipButton}
 
       {/* Autoplay Overlay */}
       {showAutoplay && (
@@ -566,6 +568,15 @@ const styles = StyleSheet.create({
   bottomBar: {
     padding: 20,
     paddingBottom: Platform.OS === "ios" ? 40 : 20,
+  },
+  skipButtonInline: {
+    alignSelf: "flex-end",
+    marginBottom: 12,
+  },
+  skipButtonFloating: {
+    position: "absolute",
+    right: 20,
+    bottom: Platform.OS === "ios" ? 40 : 20,
   },
   progressContainer: {
     flexDirection: "row",

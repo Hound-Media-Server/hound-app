@@ -206,6 +206,27 @@ export default function VideoControlsTV({
   useEffect(() => {
     if (showSkip && !controlsVisible) skipButtonRef.current?.requestTVFocus();
   }, [showSkip, controlsVisible, skipSegment?.start, skipSegment?.end]);
+  const skipButton = showSkip && skipSegment && (
+    <Pressable
+      key={`${skipSegment.start}-${skipSegment.end}`}
+      ref={skipButtonRef}
+      className="bg-black/50 py-2 px-3 rounded-full focus:bg-white group"
+      style={
+        controlsVisible ? styles.skipButtonInline : styles.skipButtonFloating
+      }
+      focusable
+      hasTVPreferredFocus={!controlsVisible}
+      accessibilityRole="button"
+      onPress={() => {
+        if (skipSegment.nextEpisode) onNextEpisode?.();
+        else onSeek(skipSegment.end);
+      }}
+    >
+      <ThemedText className="text-white group-focus:text-black text-lg">
+        {skipSegment.label}
+      </ThemedText>
+    </Pressable>
+  );
 
   return (
     <View style={styles.overlay}>
@@ -235,6 +256,7 @@ export default function VideoControlsTV({
           </View>
         )}
         <View style={styles.bottomBar}>
+          {controlsVisible && skipButton}
           {/* Slider */}
           <TVFocusGuideView
             style={styles.progressContainer}
@@ -258,8 +280,8 @@ export default function VideoControlsTV({
                   styles.progressTrack,
                   {
                     backgroundColor: sliderFocused
-                      ? "rgba(255,255,255,0.7)"
-                      : "rgba(255,255,255,0.5)",
+                      ? "rgba(255,255,255,0.65)"
+                      : "rgba(255,255,255,0.4)",
                   },
                 ]}
               >
@@ -270,7 +292,7 @@ export default function VideoControlsTV({
                       width: `${Math.max(0, Math.min(100, (currentTime / (duration || 1)) * 100))}%`,
                       backgroundColor: sliderFocused
                         ? "#ff3a3a"
-                        : "rgba(255,255,255,0.5)",
+                        : "rgba(255,255,255,0.7)",
                     },
                   ]}
                 />
@@ -379,25 +401,7 @@ export default function VideoControlsTV({
         </View>
       </Animated.View>
 
-      {showSkip && skipSegment && (
-        <Pressable
-          key={`${skipSegment.start}-${skipSegment.end}`}
-          ref={skipButtonRef}
-          className="absolute top-[15px] right-[15px] bg-black/50 py-2 px-3 rounded-full focus:bg-white group"
-          focusable
-          hasTVPreferredFocus={!controlsVisible}
-          accessibilityRole="button"
-          onPress={() => {
-            if (!skipSegment) return;
-            if (skipSegment.nextEpisode) onNextEpisode?.();
-            else onSeek(skipSegment.end);
-          }}
-        >
-          <ThemedText className="text-white group-focus:text-black text-lg">
-            {skipSegment.label}
-          </ThemedText>
-        </Pressable>
-      )}
+      {!controlsVisible && skipButton}
 
       {/* Autoplay Overlay */}
       {showAutoplay && (
@@ -679,6 +683,15 @@ const styles = StyleSheet.create({
   bottomBar: {
     padding: 20,
     paddingBottom: Platform.OS === "ios" ? 40 : 20,
+  },
+  skipButtonInline: {
+    alignSelf: "flex-end",
+    marginBottom: 12,
+  },
+  skipButtonFloating: {
+    position: "absolute",
+    right: 20,
+    bottom: Platform.OS === "ios" ? 40 : 20,
   },
   progressContainer: {
     flexDirection: "row",
