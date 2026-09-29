@@ -98,6 +98,7 @@ export default function Stream() {
     duration: number;
   }>({ time: 0, duration: 0 });
   const cachedNextEpisodeData = useRef<any>(null);
+  const nextEpisodePending = useRef(false);
   const cacheWarmStarted = useRef(false);
 
   // Fetch show details if it is a tv show to handle next episode
@@ -222,6 +223,9 @@ export default function Stream() {
   // media files query.
   const handleNextEpisode = async (nextSettings: any, prefetch = false) => {
     if (!nextEpisodeInfo || !id) return;
+    if (!prefetch && nextEpisodePending.current) return;
+    if (!prefetch) nextEpisodePending.current = true;
+    let navigating = false;
     try {
       let topStream = cachedNextEpisodeData.current;
       if (!topStream) {
@@ -274,6 +278,7 @@ export default function Stream() {
           }),
         });
         setIsNavigating(true);
+        navigating = true;
         // Give React time to unmount the player component
         // not ideal, but I haven't found a better solution
         setTimeout(() => {
@@ -289,6 +294,8 @@ export default function Stream() {
       }
     } catch (error) {
       console.error("Error fetching next episode providers:", error);
+    } finally {
+      if (!prefetch && !navigating) nextEpisodePending.current = false;
     }
   };
 
@@ -370,6 +377,7 @@ export default function Stream() {
         </View>
       ) : currentPlayer === "mpv" || Platform.OS === "ios" ? (
         <MPVVideoScreen
+          key={url}
           src={url}
           startTime={currentProgress}
           id={id as string}
@@ -393,6 +401,7 @@ export default function Stream() {
         />
       ) : (
         <VideoScreen
+          key={url}
           src={url}
           startTime={currentProgress}
           id={id as string}

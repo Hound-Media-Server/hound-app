@@ -22,6 +22,7 @@ import {
 } from "@/modules/mpv-player";
 import { ThemedText } from "../ThemedText";
 import { DisplayInfo } from "@/app/stream/[encoded_data]";
+import { SegmentAction } from "@/utils/videoSegments";
 
 interface VideoControlsProps {
   videoRef: React.RefObject<MpvPlayerViewRef | null>;
@@ -50,6 +51,8 @@ interface VideoControlsProps {
   hasNextEpisode?: boolean;
   onNextEpisode?: () => void;
   autoplayEnabled?: boolean;
+  skipSegment?: SegmentAction | null;
+  playbackBusy?: boolean;
   streamData?: any;
 }
 
@@ -76,6 +79,8 @@ export default function VideoControlsTV({
   hasNextEpisode,
   onNextEpisode,
   autoplayEnabled,
+  skipSegment,
+  playbackBusy,
   streamData,
 }: VideoControlsProps) {
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -85,6 +90,8 @@ export default function VideoControlsTV({
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [sliderFocused, setSliderFocused] = useState(false);
   const [autoplayCanceled, setAutoplayCanceled] = useState(false);
+  const autoplayStarted = useRef(false);
+  const skipButtonRef = useRef<View>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const hideControlsTimeoutRef = useRef<any>(null);
@@ -102,6 +109,7 @@ export default function VideoControlsTV({
 
   useEffect(() => {
     controlsOpenTimer();
+    return () => clearTimeout(hideControlsTimeoutRef.current);
   }, [controlsOpenTimer]);
 
   // Animate fade in/out
@@ -116,6 +124,8 @@ export default function VideoControlsTV({
   // detect d-pad input
   const myTVEventHandler = (evt: HWEvent) => {
     const { eventType } = evt;
+    // Let the skip button handle Select without opening the hidden controls.
+    if (eventType === "select" && !controlsVisible && showSkip) return;
     if (eventType === "playPause") {
       onPlayPause();
     }
@@ -165,11 +175,15 @@ export default function VideoControlsTV({
     autoplayEnabled &&
     hasNextEpisode &&
     !autoplayCanceled &&
+    !paused &&
+    !playbackBusy &&
     remainingTime <= 5 &&
     remainingTime > 0;
 
   useEffect(() => {
-    if (showAutoplay && remainingTime <= 1) {
+    if (remainingTime > 5) autoplayStarted.current = false;
+    if (showAutoplay && remainingTime <= 1 && !autoplayStarted.current) {
+      autoplayStarted.current = true;
       onNextEpisode?.();
     }
   }, [showAutoplay, remainingTime, onNextEpisode]);
@@ -187,10 +201,36 @@ export default function VideoControlsTV({
 
   const isModalOpen =
     showSubtitlesModal || showAudioModal || showInfoModal || showSettingsModal;
+  const showSkip =
+    !!skipSegment && !playbackBusy && !isModalOpen && !showAutoplay;
+  useEffect(() => {
+    if (showSkip && !controlsVisible) skipButtonRef.current?.requestTVFocus();
+  }, [showSkip, controlsVisible, skipSegment?.start, skipSegment?.end]);
+  const skipButton = showSkip && skipSegment && (
+    <Pressable
+      key={`${skipSegment.start}-${skipSegment.end}`}
+      ref={skipButtonRef}
+      className="bg-black/50 py-2 px-3 rounded-full focus:bg-white group"
+      style={
+        controlsVisible ? styles.skipButtonInline : styles.skipButtonFloating
+      }
+      focusable
+      hasTVPreferredFocus={!controlsVisible}
+      accessibilityRole="button"
+      onPress={() => {
+        if (skipSegment.nextEpisode) onNextEpisode?.();
+        else onSeek(skipSegment.end);
+      }}
+    >
+      <ThemedText className="text-white group-focus:text-black text-lg">
+        {skipSegment.label}
+      </ThemedText>
+    </Pressable>
+  );
 
   return (
     <View style={styles.overlay}>
-      {!controlsVisible && (
+      {!controlsVisible && !showSkip && !isModalOpen && (
         <View
           focusable
           hasTVPreferredFocus={!controlsVisible && !isModalOpen}
@@ -200,6 +240,9 @@ export default function VideoControlsTV({
       <Animated.View
         style={[styles.controlsContainer, { opacity: fadeAnim }]}
         pointerEvents={controlsVisible ? "auto" : "none"}
+        importantForAccessibility={
+          controlsVisible ? "auto" : "no-hide-descendants"
+        }
       >
         {/* Display Info (title) */}
         {displayInfo && (
@@ -213,35 +256,51 @@ export default function VideoControlsTV({
           </View>
         )}
         <View style={styles.bottomBar}>
+          {controlsVisible && skipButton}
           {/* Slider */}
           <TVFocusGuideView
             style={styles.progressContainer}
             autoFocus
-            trapFocusUp
+            trapFocusUp={!showSkip}
             trapFocusLeft
             trapFocusRight
           >
-            <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
+            <Text style={[styles.timeText, styles.currentTimeText]}>
+              {formatTime(currentTime)}
+            </Text>
             <View
-              focusable
+              focusable={controlsVisible && !isModalOpen}
               onFocus={() => setSliderFocused(true)}
               onBlur={() => setSliderFocused(false)}
               style={styles.slider}
-              className="rounded-full focus:bg-black/20"
+              className="rounded-full focus:bg-black/30 px-3"
             >
-              <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressTrack,
+                  {
+                    backgroundColor: sliderFocused
+                      ? "rgba(255,255,255,0.65)"
+                      : "rgba(255,255,255,0.4)",
+                  },
+                ]}
+              >
                 <View
                   style={[
                     styles.progressFill,
                     {
                       width: `${Math.max(0, Math.min(100, (currentTime / (duration || 1)) * 100))}%`,
-                      backgroundColor: sliderFocused ? "#FF6B6B" : "rgba(255,255,255,0.5)",
+                      backgroundColor: sliderFocused
+                        ? "#ff3a3a"
+                        : "rgba(255,255,255,0.7)",
                     },
                   ]}
                 />
               </View>
             </View>
-            <Text style={styles.timeText}>{formatTime(duration)}</Text>
+            <Text style={[styles.timeText, styles.durationTimeText]}>
+              {formatTime(duration)}
+            </Text>
           </TVFocusGuideView>
           {/* Control Buttons */}
           <TVFocusGuideView
@@ -252,11 +311,14 @@ export default function VideoControlsTV({
             trapFocusDown
           >
             <View className="flex-row items-center gap-2">
-              <FocusablePressable focusable onPress={onSeekBackward}>
+              <FocusablePressable
+                focusable={controlsVisible && !isModalOpen}
+                onPress={onSeekBackward}
+              >
                 <Ionicons name="play-back" size={25} color="white" />
               </FocusablePressable>
               <FocusablePressable
-                focusable
+                focusable={controlsVisible && !isModalOpen}
                 onPress={onPlayPause}
                 hasTVPreferredFocus={controlsVisible && !isModalOpen}
               >
@@ -266,11 +328,17 @@ export default function VideoControlsTV({
                   color="white"
                 />
               </FocusablePressable>
-              <FocusablePressable focusable onPress={onSeekForward}>
+              <FocusablePressable
+                focusable={controlsVisible && !isModalOpen}
+                onPress={onSeekForward}
+              >
                 <Ionicons name="play-forward" size={25} color="white" />
               </FocusablePressable>
               {hasNextEpisode && (
-                <FocusablePressable focusable onPress={onNextEpisode}>
+                <FocusablePressable
+                  focusable={controlsVisible && !isModalOpen}
+                  onPress={onNextEpisode}
+                >
                   <Ionicons name="play-skip-forward" size={25} color="white" />
                 </FocusablePressable>
               )}
@@ -279,7 +347,7 @@ export default function VideoControlsTV({
             <View className="flex flex-row items-center gap-2">
               {textTracks.length > 0 && (
                 <FocusablePressable
-                  focusable
+                  focusable={controlsVisible && !isModalOpen}
                   onPress={() => setShowSubtitlesModal(true)}
                 >
                   <Ionicons name="chatbox-outline" size={24} color="white" />
@@ -288,7 +356,7 @@ export default function VideoControlsTV({
 
               {audioTracks.length > 0 && (
                 <FocusablePressable
-                  focusable
+                  focusable={controlsVisible && !isModalOpen}
                   onPress={() => setShowAudioModal(true)}
                 >
                   <Ionicons name="volume-high" size={24} color="white" />
@@ -296,7 +364,7 @@ export default function VideoControlsTV({
               )}
 
               <FocusablePressable
-                focusable
+                focusable={controlsVisible && !isModalOpen}
                 style={styles.iconButton}
                 onPress={onChangeResizeMode}
               >
@@ -309,7 +377,7 @@ export default function VideoControlsTV({
 
               {streamData && (
                 <FocusablePressable
-                  focusable
+                  focusable={controlsVisible && !isModalOpen}
                   style={styles.iconButton}
                   onPress={() => setShowInfoModal(true)}
                 >
@@ -322,7 +390,7 @@ export default function VideoControlsTV({
               )}
 
               <FocusablePressable
-                focusable
+                focusable={controlsVisible && !isModalOpen}
                 style={styles.iconButton}
                 onPress={() => setShowSettingsModal(true)}
               >
@@ -332,6 +400,8 @@ export default function VideoControlsTV({
           </TVFocusGuideView>
         </View>
       </Animated.View>
+
+      {!controlsVisible && skipButton}
 
       {/* Autoplay Overlay */}
       {showAutoplay && (
@@ -521,11 +591,29 @@ export default function VideoControlsTV({
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Settings</Text>
             <ScrollView>
+              <FocusableMenuItem
+                style={styles.modalItem}
+                focusable
+                hasTVPreferredFocus={showSettingsModal}
+                onPress={() => {
+                  onSeek(0);
+                  setShowSettingsModal(false);
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text
+                    className="px-5 group-focus:text-black"
+                    style={styles.modalItemText}
+                  >
+                    Start From Beginning
+                  </Text>
+                </View>
+              </FocusableMenuItem>
               {onChangePlayer && (
-                <TouchableOpacity
+                <FocusableMenuItem
+                  className="px-5"
                   style={styles.modalItem}
                   focusable
-                  hasTVPreferredFocus={showSettingsModal}
                   onPress={() => {
                     const otherPlayer = player === "mpv" ? "exoplayer" : "mpv";
                     onChangePlayer(otherPlayer, currentTime, {
@@ -537,12 +625,14 @@ export default function VideoControlsTV({
                   }}
                 >
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.modalItemText}>
+                    <Text
+                      className="px-5 group-focus:text-black"
+                      style={styles.modalItemText}
+                    >
                       Switch to {player === "mpv" ? "ExoPlayer" : "MPV"}
                     </Text>
                   </View>
-                  <Ionicons name="swap-horizontal" size={24} color="white" />
-                </TouchableOpacity>
+                </FocusableMenuItem>
               )}
             </ScrollView>
           </View>
@@ -555,6 +645,14 @@ export default function VideoControlsTV({
 const FocusablePressable = ({ children, ...props }: any) => {
   return (
     <Pressable {...props} className="p-2 focus:bg-white/20 rounded-full">
+      {children}
+    </Pressable>
+  );
+};
+
+const FocusableMenuItem = ({ children, ...props }: any) => {
+  return (
+    <Pressable {...props} className="p-2 group focus:bg-white/20 rounded-lg">
       {children}
     </Pressable>
   );
@@ -586,6 +684,15 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: Platform.OS === "ios" ? 40 : 20,
   },
+  skipButtonInline: {
+    alignSelf: "flex-end",
+    marginBottom: 12,
+  },
+  skipButtonFloating: {
+    position: "absolute",
+    right: 20,
+    bottom: Platform.OS === "ios" ? 40 : 20,
+  },
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -595,12 +702,11 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 10,
     justifyContent: "center",
-    height: 40,
+    height: 30,
   },
   progressTrack: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: "rgba(255,255,255,0.5)",
     overflow: "hidden",
   },
   progressFill: {
@@ -610,6 +716,13 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 14,
     fontWeight: "600",
+    width: 50,
+  },
+  currentTimeText: {
+    textAlign: "right",
+  },
+  durationTimeText: {
+    textAlign: "left",
   },
   bottomButtons: {
     flexDirection: "row",
