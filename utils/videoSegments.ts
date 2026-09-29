@@ -91,10 +91,17 @@ export function getSkipSegment(
   ) {
     return null;
   }
+  const labels: Record<SkipSegment["type"], string> = {
+    intro: "Skip Intro",
+    recap: "Skip Recap",
+    "intro & recap": "Skip Recap",
+    credits: "Skip Credits",
+    preview: "Skip Preview",
+  };
   return {
     ...segment,
     nextEpisode: terminal,
-    label: terminal ? "Next episode" : `Skip ${segment.type}`,
+    label: terminal ? "Next Episode" : labels[segment.type],
   };
 }
 

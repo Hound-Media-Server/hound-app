@@ -297,7 +297,7 @@ export default function VideoControls({
       </Pressable>
 
       {showSkip && skipSegment && (
-        <TouchableOpacity
+        <Pressable
           className="absolute top-[80px] right-[15px] bg-black/40 py-3 px-4 rounded-full"
           accessibilityRole="button"
           onPress={() => {
@@ -305,9 +305,10 @@ export default function VideoControls({
             if (skipSegment.nextEpisode) onNextEpisode?.();
             else onSeek(skipSegment.end);
           }}
+          focusable
         >
           <ThemedText className="text-white">{skipSegment.label}</ThemedText>
-        </TouchableOpacity>
+        </Pressable>
       )}
 
       {/* Autoplay Overlay */}

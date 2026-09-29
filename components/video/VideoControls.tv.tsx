@@ -124,7 +124,7 @@ export default function VideoControlsTV({
   // detect d-pad input
   const myTVEventHandler = (evt: HWEvent) => {
     const { eventType } = evt;
-    // Let the focused skip button handle Select without opening the controls.
+    // Let the skip button handle Select without opening the hidden controls.
     if (eventType === "select" && !controlsVisible && showSkip) return;
     if (eventType === "playPause") {
       onPlayPause();
@@ -380,25 +380,23 @@ export default function VideoControlsTV({
       </Animated.View>
 
       {showSkip && skipSegment && (
-        <View className="absolute top-[15px] right-[15px] bg-black/50 py-2 px-3 rounded-full focus:bg-white group">
-          <Pressable
-            key={`${skipSegment.start}-${skipSegment.end}`}
-            ref={skipButtonRef}
-            focusable
-            hasTVPreferredFocus={!controlsVisible}
-            accessibilityRole="button"
-            onFocus={() => setSliderFocused(false)}
-            onPress={() => {
-              if (!skipSegment) return;
-              if (skipSegment.nextEpisode) onNextEpisode?.();
-              else onSeek(skipSegment.end);
-            }}
-          >
-            <ThemedText className="text-white group-focus:text-black text-lg">
-              {skipSegment.label}
-            </ThemedText>
-          </Pressable>
-        </View>
+        <Pressable
+          key={`${skipSegment.start}-${skipSegment.end}`}
+          ref={skipButtonRef}
+          className="absolute top-[15px] right-[15px] bg-black/50 py-2 px-3 rounded-full focus:bg-white group"
+          focusable
+          hasTVPreferredFocus={!controlsVisible}
+          accessibilityRole="button"
+          onPress={() => {
+            if (!skipSegment) return;
+            if (skipSegment.nextEpisode) onNextEpisode?.();
+            else onSeek(skipSegment.end);
+          }}
+        >
+          <ThemedText className="text-white group-focus:text-black text-lg">
+            {skipSegment.label}
+          </ThemedText>
+        </Pressable>
       )}
 
       {/* Autoplay Overlay */}
