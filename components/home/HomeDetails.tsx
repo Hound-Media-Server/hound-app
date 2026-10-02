@@ -12,7 +12,7 @@ import Animated, {
 import { useEffect } from "react";
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
-const HERO_HEIGHT = SCREEN_HEIGHT / 1.85;
+const HERO_HEIGHT = SCREEN_HEIGHT / 1.8;
 
 export default function HomeDetails() {
   if (!Platform.isTV) {

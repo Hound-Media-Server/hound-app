@@ -1,13 +1,11 @@
 import {
   View,
-  Text,
   TextInput,
-  TouchableOpacity,
-  ScrollView,
+  FlatList,
   RefreshControl,
   Platform,
 } from "react-native";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
@@ -23,6 +21,7 @@ export default function Search() {
   );
 
   const [refreshing, setRefreshing] = useState(false);
+  const verticalListRef = useRef<FlatList>(null);
   const queryClient = useQueryClient();
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -53,6 +52,10 @@ export default function Search() {
   const isSearching =
     isLoading ||
     (searchQuery.length > 0 && searchQuery !== debouncedSearchQuery);
+  const rows = [
+    { key: "tv", header: "TV Shows", itemData: data?.tv_results },
+    { key: "movies", header: "Movies", itemData: data?.movie_results },
+  ].filter((row) => row.itemData?.length > 0);
 
   return (
     <SafeAreaView className="flex-1 bg-black items-center">
@@ -75,53 +78,45 @@ export default function Search() {
               </ThemedText>
             </View>
           )}
-          <ScrollView
-            className="flex-1"
+          <FlatList
+            ref={verticalListRef}
+            data={rows}
+            keyExtractor={(item) => item.key}
+            scrollEnabled={!Platform.isTV}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingBottom: 10,
-            }}
+            removeClippedSubviews={false}
+            contentContainerStyle={{ paddingBottom: 100 }}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
-          >
-            {data?.tv_results?.length > 0 && (
-              <>
-                <HorizontalList
-                  isLoading={isSearching}
-                  itemData={data?.tv_results}
-                  itemType="search"
-                  header="TV Shows"
-                  rowIndex={1}
-                  showDescription
-                  hasPreferredFocus={!isSearching}
-                />
-                <View className="mb-5" />
-              </>
-            )}
-            {data?.movie_results?.length > 0 && (
+            renderItem={({ item, index }) => (
               <HorizontalList
                 isLoading={isSearching}
-                itemData={data?.movie_results}
+                itemData={item.itemData}
                 itemType="search"
-                header="Movies"
-                rowIndex={2}
+                header={item.header}
+                rowIndex={index}
                 showDescription
-                hasPreferredFocus={
-                  !isSearching && !(data?.tv_results?.length > 0)
-                }
+                hasPreferredFocus={!isSearching && index === 0}
+                onRowFocus={(rowIndex) => {
+                  if (!Platform.isTV) return;
+                  verticalListRef.current?.scrollToIndex({
+                    index: rowIndex,
+                    viewPosition: 0.5,
+                    animated: true,
+                  });
+                }}
               />
             )}
-            {!(data?.tv_results?.length > 0) &&
-              !(data?.movie_results?.length > 0) && (
-                <View className="flex-1 items-center justify-center mt-10">
-                  <ThemedText className="text-white text-lg">
-                    No results found.
-                  </ThemedText>
-                </View>
-              )}
-            <View className="mb-[100px]" />
-          </ScrollView>
+            ItemSeparatorComponent={() => <View className="h-5" />}
+            ListEmptyComponent={() => (
+              <View className="flex-1 items-center justify-center mt-10">
+                <ThemedText className="text-white text-lg">
+                  No results found.
+                </ThemedText>
+              </View>
+            )}
+          />
         </View>
       )}
     </SafeAreaView>
