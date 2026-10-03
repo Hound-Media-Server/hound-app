@@ -21,6 +21,7 @@ import { GlobalModalHost } from "@/components/modals/GlobalModalHost";
 import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import GlobalLiveTVPlayer from "@/components/video/GlobalLiveTVScreen";
+import { TVScaleProvider } from "@/components/TVScaleProvider";
 
 SplashScreen.setOptions({
   duration: 1000,
@@ -151,12 +152,14 @@ export default function RootLayout() {
     return null;
   }
   return (
-    <SafeAreaProvider>
-      <SessionProvider>
-        <StatusBar style="light" translucent backgroundColor="transparent" />
-        <RootLayoutNav />
-        <ToastManager theme="dark" showProgressBar={false} useModal={false} />
-      </SessionProvider>
-    </SafeAreaProvider>
+    <TVScaleProvider>
+      <SafeAreaProvider>
+        <SessionProvider>
+          <StatusBar style="light" translucent backgroundColor="transparent" />
+          <RootLayoutNav />
+          <ToastManager theme="dark" showProgressBar={false} useModal={false} />
+        </SessionProvider>
+      </SafeAreaProvider>
+    </TVScaleProvider>
   );
 }

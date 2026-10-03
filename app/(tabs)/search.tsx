@@ -1,3 +1,4 @@
+import { useTVScale } from "@/hooks/useTVScale";
 import {
   View,
   TextInput,
@@ -15,6 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useMobileTabContentPadding } from "@/hooks/useMobileTabContentPadding";
 
 export default function Search() {
+  const scale = useTVScale();
   const bottomPadding = useMobileTabContentPadding();
   const { query } = useLocalSearchParams();
   const [searchQuery, setSearchQuery] = useState((query as string) || "");
@@ -66,6 +68,7 @@ export default function Search() {
       >
         <TextInput
           className="w-full bg-zinc-800 text-white p-4 rounded-md border border-zinc-700 focus:border-indigo-500 focus:outline-none"
+          style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
           placeholder="Search..."
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -88,7 +91,7 @@ export default function Search() {
             showsVerticalScrollIndicator={false}
             removeClippedSubviews={false}
             contentContainerStyle={{
-              paddingBottom: Platform.isTV ? 100 : bottomPadding,
+              paddingBottom: Platform.isTV ? 100 * scale : bottomPadding,
             }}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

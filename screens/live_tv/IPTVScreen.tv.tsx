@@ -1,3 +1,4 @@
+import { useTVScale } from "@/hooks/useTVScale";
 import { LiveTVProps } from "@/app/(tabs)/live_tv";
 import { ThemedText } from "@/components/ThemedText";
 import { TVFocusGuideViewWrapper } from "@/components/TVFocusGuideViewWrapper";
@@ -72,6 +73,7 @@ export default function IPTVScreenTV({
   setIPTVProviderID,
   categories,
 }: LiveTVProps) {
+  const scale = useTVScale();
   const bottomPadding = useMobileTabContentPadding();
   const videoPlayerRef = useRef<View>(null);
   const resizePlayer = useLiveTVStore((s) => s.setRect);
@@ -369,8 +371,8 @@ export default function IPTVScreenTV({
                         <Image
                           source={{ uri: item.thumbnail_url }}
                           style={{
-                            width: 30,
-                            height: 30,
+                            width: 30 * scale,
+                            height: 30 * scale,
                             objectFit: "contain",
                           }}
                           contentFit="contain"
@@ -426,7 +428,7 @@ export default function IPTVScreenTV({
               setFullscreen();
             }}
             style={{
-              padding: 3,
+              padding: 3 * scale,
               aspectRatio: 16 / 9,
             }}
           >

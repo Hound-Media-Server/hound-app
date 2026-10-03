@@ -1,3 +1,4 @@
+import { useTVScale } from "@/hooks/useTVScale";
 import { useEffect, useState } from "react";
 import {
   View,
@@ -13,6 +14,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { Toast } from "toastify-react-native";
 
 export default function SignIn() {
+  const scale = useTVScale();
   useEffect(() => {
     SplashScreen.hide();
   }, []);
@@ -42,13 +44,24 @@ export default function SignIn() {
     <SafeAreaView className="flex-1 bg-black justify-center">
       <View className="items-center mt-10 mb-10">
         <Text className="text-white text-3xl font-bold">Hound</Text>
-        <Text className="text-gray-400 mt-2">Sign in to your server</Text>
+        <Text
+          style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
+          className="text-gray-400 mt-2"
+        >
+          Sign in to your server
+        </Text>
       </View>
 
       <View className="space-y-4 px-10 flex-1 items-center w-full">
         <View className="w-full">
-          <Text className="text-gray-400 mb-1 ml-1">Host URL</Text>
+          <Text
+            style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
+            className="text-gray-400 mb-1 ml-1"
+          >
+            Host URL
+          </Text>
           <TextInput
+            style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
             className="bg-zinc-800 text-white p-4 rounded-lg border border-zinc-700 focus:border-indigo-500"
             placeholder="e.g. 192.168.1.10:8000"
             placeholderTextColor="#666"
@@ -60,8 +73,14 @@ export default function SignIn() {
         </View>
 
         <View className="w-full mt-2">
-          <Text className="text-gray-400 mb-1 ml-1">Username</Text>
+          <Text
+            style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
+            className="text-gray-400 mb-1 ml-1"
+          >
+            Username
+          </Text>
           <TextInput
+            style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
             className="bg-zinc-800 text-white p-4 rounded-lg border border-zinc-700 focus:border-indigo-500"
             placeholder="Username"
             placeholderTextColor="#666"
@@ -73,8 +92,14 @@ export default function SignIn() {
         </View>
 
         <View className="w-full mt-2">
-          <Text className="text-gray-400 mb-1 ml-1">Password</Text>
+          <Text
+            style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
+            className="text-gray-400 mb-1 ml-1"
+          >
+            Password
+          </Text>
           <TextInput
+            style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
             className="bg-zinc-800 text-white p-4 rounded-lg border border-zinc-700 focus:border-indigo-500"
             placeholder="Password"
             placeholderTextColor="#666"

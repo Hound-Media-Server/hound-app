@@ -1,3 +1,4 @@
+import { useTVScale } from "@/hooks/useTVScale";
 import React, { useState } from "react";
 import {
   View,
@@ -19,6 +20,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useModalStore } from "@/stores/modalStore";
 
 export default function Profiles() {
+  const scale = useTVScale();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { session, profiles, selectProfile, signIn, deleteProfile } =
@@ -144,7 +146,7 @@ export default function Profiles() {
                     focusable={Platform.isTV}
                     onPress={() => handleDelete(profile)}
                   >
-                    <Ionicons name="trash-outline" size={24} color="white" />
+                    <Ionicons name="trash-outline" size={24 * scale} color="white" />
                   </Pressable>
                 </View>
               );
@@ -163,8 +165,14 @@ export default function Profiles() {
         ) : (
           <View className="w-full space-y-4">
             <View className="w-full">
-              <Text className="text-gray-400 mb-1 ml-1">Host URL</Text>
+              <Text
+                    style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
+                className="text-gray-400 mb-1 ml-1"
+              >
+                Host URL
+              </Text>
               <TextInput
+                style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
                 className="bg-zinc-800 text-white p-4 rounded-lg border border-zinc-700 focus:border-indigo-500"
                 placeholder="e.g. 192.168.1.10:8000"
                 placeholderTextColor="#666"
@@ -175,8 +183,14 @@ export default function Profiles() {
               />
             </View>
             <View className="w-full mt-2">
-              <Text className="text-gray-400 mb-1 ml-1">Username</Text>
+              <Text
+                    style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
+                className="text-gray-400 mb-1 ml-1"
+              >
+                Username
+              </Text>
               <TextInput
+                style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
                 className="bg-zinc-800 text-white p-4 rounded-lg border border-zinc-700 focus:border-indigo-500"
                 placeholder="Username"
                 placeholderTextColor="#666"
@@ -188,8 +202,14 @@ export default function Profiles() {
             </View>
 
             <View className="w-full mt-2">
-              <Text className="text-gray-400 mb-1 ml-1">Password</Text>
+              <Text
+                    style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
+                className="text-gray-400 mb-1 ml-1"
+              >
+                Password
+              </Text>
               <TextInput
+                style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
                 className="bg-zinc-800 text-white p-4 rounded-lg border border-zinc-700 focus:border-indigo-500"
                 placeholder="Password"
                 placeholderTextColor="#666"

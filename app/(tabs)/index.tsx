@@ -144,7 +144,10 @@ export default function Index() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-black h-full">
+    <SafeAreaView
+      className="flex-1 bg-black h-full"
+      edges={Platform.OS === "ios" && Platform.isTV ? [] : undefined}
+    >
       <HomeDetails />
       <View className="flex-1">
         <FlatList
@@ -182,7 +185,9 @@ export default function Index() {
             />
           )}
           ItemSeparatorComponent={() => <View className="h-5" />}
-          ListFooterComponent={Platform.isTV ? () => <View className="h-5" /> : undefined}
+          ListFooterComponent={
+            Platform.isTV ? () => <View className="h-5" /> : undefined
+          }
         />
       </View>
     </SafeAreaView>

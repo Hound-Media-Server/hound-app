@@ -1,3 +1,4 @@
+import { useTVScale } from "@/hooks/useTVScale";
 import {
   View,
   Pressable,
@@ -37,6 +38,7 @@ export default function SelectStreamScreen() {
     previousEncodedData?: string;
   }>();
 
+  const scale = useTVScale();
   const flatListRef = useRef<FlatList>(null);
 
   const seasonNumber = season ? parseInt(season) : undefined;
@@ -170,7 +172,7 @@ export default function SelectStreamScreen() {
         }}
       >
         <View className="bg-gray-900 p-3 rounded-lg border border-slate-700">
-          <ThemedText className="text-white text-[16px] mb-1">
+          <ThemedText className="text-white text-[1.142857142857rem] mb-1">
             {item?.title}
           </ThemedText>
           <ThemedText className="text-gray-300 text-sm">
@@ -193,7 +195,7 @@ export default function SelectStreamScreen() {
             : `stream-${item.provider}-${item.info_hash}-${index}`
         }
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 20 }}
+        contentContainerStyle={{ padding: 20 * scale }}
         ListHeaderComponent={
           <View className="flex-row justify-between items-center mb-4 mt-6">
             <View>

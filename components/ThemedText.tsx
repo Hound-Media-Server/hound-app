@@ -1,4 +1,4 @@
-import { Text, type TextProps } from "react-native";
+import { Platform, Text, type TextProps } from "react-native";
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
@@ -17,7 +17,11 @@ export function ThemedText({
   // edit to support dark/light mode switching in the future
   return (
     <Text
-      className={className}
+      className={
+        Platform.OS === "ios" && Platform.isTV
+          ? `tvos-body ${className ?? ""}`
+          : className
+      }
       style={[
         type === "default" ? { fontFamily: "Cabin_400Regular" } : undefined,
         type === "title" ? { fontFamily: "Cabin_700Bold" } : undefined,

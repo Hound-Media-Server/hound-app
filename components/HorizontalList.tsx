@@ -1,3 +1,4 @@
+import { useTVScale } from "@/hooks/useTVScale";
 import {
   View,
   ActivityIndicator,
@@ -38,6 +39,7 @@ export default function HorizontalList({
   onRowFocus,
   hasPreferredFocus,
 }: HorizontalListProps) {
+  const scale = useTVScale();
   const flatListRef = useRef<FlatList<any> | null>(null);
   const setFocusedItem = useFocusStore((s) => s.setFocusedItem);
   const handleFocus = (index: number) => {
@@ -52,11 +54,11 @@ export default function HorizontalList({
     });
   };
   const { width: winWidth } = useWindowDimensions();
-  let posterWidth = Platform.isTV ? 120 : winWidth / 4;
+  let posterWidth = Platform.isTV ? 120 * scale : winWidth / 4;
   if (!Platform.isTV) {
     posterWidth = Math.min(Math.max(posterWidth, 120), 150);
   }
-  let landscapeWidth = Platform.isTV ? 200 : posterWidth * 2;
+  let landscapeWidth = Platform.isTV ? 200 * scale : posterWidth * 2;
   if (!Platform.isTV) {
     landscapeWidth = Math.max(landscapeWidth, 200);
   }
@@ -72,7 +74,7 @@ export default function HorizontalList({
               {header}
             </ThemedText>
           )}
-          <View className="w-full h-[100px] justify-center items-center">
+          <View className="w-full h-list-min-height justify-center items-center">
             <ThemedText className="text-white bg-black">
               Error fetching {header}: {error.message}
             </ThemedText>
@@ -88,12 +90,12 @@ export default function HorizontalList({
     return (
       <View
         className="flex-1"
-        style={{ paddingHorizontal: Platform.isTV ? 40 : 20 }}
+        style={{ paddingHorizontal: Platform.isTV ? 40 * scale : 20 }}
       >
         {!!header && (
           <ThemedText className="text-white text-2xl mb-3">{header}</ThemedText>
         )}
-        <View className="flex-row gap-[10px]">
+        <View className="flex-row gap-list-gap">
           {[...Array(7)].map((_, index) =>
             itemType === "episode" ? (
               <ContinueWatchingCardPlaceholder
@@ -117,11 +119,11 @@ export default function HorizontalList({
   // prevents errors on other platforms (web)
   return wrapTVFocusGuideView(
     <View>
-      <View style={{ minHeight: 100 }}>
+      <View className="min-h-list-min-height">
         {!!header && data && (
           <ThemedText
             className="text-white text-2xl mb-3"
-            style={{ paddingHorizontal: Platform.isTV ? 40 : 20 }}
+            style={{ paddingHorizontal: Platform.isTV ? 40 * scale : 20 }}
           >
             {header}
           </ThemedText>
@@ -137,8 +139,8 @@ export default function HorizontalList({
           data={data}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: Platform.isTV ? 40 : 20 }}
-          ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
+          contentContainerStyle={{ paddingHorizontal: Platform.isTV ? 40 * scale : 20 }}
+          ItemSeparatorComponent={() => <View className="w-list-gap" />}
           renderItem={({ item, index }) => {
             if (itemType === "cast") {
               return (

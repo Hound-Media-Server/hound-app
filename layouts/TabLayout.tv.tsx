@@ -1,3 +1,4 @@
+import { useTVScale } from "@/hooks/useTVScale";
 import { ThemedText } from "@/components/ThemedText";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, useRouter } from "expo-router";
@@ -16,6 +17,7 @@ function TVTabBar({
   descriptors: any;
   navigation: any;
 }) {
+  const scale = useTVScale();
   const tabRefs = useRef<any[]>([]);
   const [tabBarFocused, setTabBarFocused] = useState<boolean>(false);
   const fadeAnimation = useRef(new Animated.Value(0.4)).current;
@@ -55,7 +57,7 @@ function TVTabBar({
       >
         <Animated.View
           className="self-start flex-row bg-black/50 rounded-full overflow-hidden p-2"
-          style={{ opacity: fadeAnimation, columnGap: 8 }}
+          style={{ opacity: fadeAnimation, columnGap: 8 * scale }}
         >
           {state.routes.map((route: any, index: number) => {
             const isSelected = state.index === index;
@@ -95,7 +97,7 @@ function TVTabBar({
                     {descriptors[route.key]?.options?.title === "Search" ? (
                       <Ionicons
                         name="search-outline"
-                        size={20}
+                        size={20 * scale}
                         color="group-focus:text-black"
                       />
                     ) : (

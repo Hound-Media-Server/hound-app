@@ -1,4 +1,5 @@
-import { View, Dimensions, Platform } from "react-native";
+import { useTVScale } from "@/hooks/useTVScale";
+import { View, useWindowDimensions, Platform } from "react-native";
 import { Image } from "expo-image";
 import { ThemedText } from "../ThemedText";
 import { LinearGradient } from "expo-linear-gradient";
@@ -11,10 +12,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { useEffect } from "react";
 
-const SCREEN_HEIGHT = Dimensions.get("window").height;
-const HERO_HEIGHT = SCREEN_HEIGHT / 1.8;
-
 export default function HomeDetails() {
+  const { height } = useWindowDimensions();
+  const heroHeight = height / 1.8;
+  const scale = useTVScale();
   if (!Platform.isTV) {
     return (
       <View className="flex justify-center py-4 px-6">
@@ -26,19 +27,19 @@ export default function HomeDetails() {
   }
   const focusedItem = useFocusStore((s) => s.focusedItem);
   if (!focusedItem) {
-    return <PlaceholderHero />;
+    return <PlaceholderHero height={heroHeight} />;
   }
   const releaseYear = focusedItem.release_date?.slice(0, 4);
   const genres = focusedItem.genres?.map((g) => g.genre).join(", ");
   // TODO: HACKY, we need a better way to support image sizes in hound
   const backdropUri = focusedItem?.backdrop_uri?.replace("w500", "w1280");
   return (
-    <View className="relative" style={{ height: HERO_HEIGHT }}>
+    <View className="relative" style={{ height: heroHeight }}>
       {backdropUri && (
         <Image
           source={backdropUri}
           className="opacity-80"
-          style={{ height: HERO_HEIGHT }}
+          style={{ height: heroHeight }}
         />
       )}
       <LinearGradient
@@ -48,7 +49,7 @@ export default function HomeDetails() {
           left: 0,
           right: 0,
           bottom: 0,
-          height: 300,
+          height: 300 * scale,
         }}
       />
       <View className="absolute left-0 bottom-0 ps-10 pe-10 mb-5 w-4/5">
@@ -91,7 +92,8 @@ export default function HomeDetails() {
   );
 }
 
-function PlaceholderHero() {
+function PlaceholderHero({ height: heroHeight }: { height: number }) {
+  const scale = useTVScale();
   const opacity = useSharedValue(0.8);
   // shimmer animation
   useEffect(() => {
@@ -107,23 +109,23 @@ function PlaceholderHero() {
     opacity: opacity.value,
   }));
   return (
-    <View className="relative" style={{ height: HERO_HEIGHT }}>
+    <View className="relative" style={{ height: heroHeight }}>
       <View className="absolute left-0 bottom-0 ps-10 pe-10 mb-5 w-4/5">
         <Animated.View
           className="bg-gray-700 rounded-lg"
-          style={[{ width: 200, height: 30 }, pulsingStyle]}
+          style={[{ width: 200 * scale, height: 30 * scale }, pulsingStyle]}
         />
         <Animated.View
           className="bg-gray-700 rounded-lg mt-2"
-          style={[{ width: 100, height: 20 }, pulsingStyle]}
+          style={[{ width: 100 * scale, height: 20 * scale }, pulsingStyle]}
         />
         <Animated.View
           className="bg-gray-700 rounded-lg mt-2"
-          style={[{ width: 300, height: 20 }, pulsingStyle]}
+          style={[{ width: 300 * scale, height: 20 * scale }, pulsingStyle]}
         />
         <Animated.View
           className="bg-gray-700 rounded-lg mt-2"
-          style={[{ width: 300, height: 20 }, pulsingStyle]}
+          style={[{ width: 300 * scale, height: 20 * scale }, pulsingStyle]}
         />
       </View>
     </View>

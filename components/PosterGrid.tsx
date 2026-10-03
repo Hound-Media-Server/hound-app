@@ -1,3 +1,4 @@
+import { useTVScale } from "@/hooks/useTVScale";
 import { View, ActivityIndicator, FlatList, Platform } from "react-native";
 import React, { useRef } from "react";
 import MediaItemCard from "./MediaItemCard";
@@ -39,6 +40,7 @@ export default function PosterGrid({
   cardWidth = 120,
   horizontalGap = 15,
 }: PosterGridProps) {
+  const scale = useTVScale();
   const bottomPadding = useMobileTabContentPadding();
   const flatListRef = useRef<FlatList<any> | null>(null);
 
@@ -119,7 +121,7 @@ export default function PosterGrid({
         </LinearGradient>
       )}
       <FlatList
-        style={{ marginTop: -40 }}
+        style={{ marginTop: -40 * scale }}
         ref={flatListRef}
         data={data}
         numColumns={numColumns}
@@ -130,7 +132,7 @@ export default function PosterGrid({
           item.media_type + "-" + item.media_source + "-" + item.source_id
         }
         contentContainerStyle={{
-          paddingBottom: Platform.isTV ? 140 : bottomPadding,
+          paddingBottom: Platform.isTV ? 140 * scale : bottomPadding,
           alignSelf: "center",
           width: totalGridWidth,
         }}
@@ -138,7 +140,7 @@ export default function PosterGrid({
           justifyContent: "flex-start",
           gap: horizontalGap,
         }}
-        ItemSeparatorComponent={() => <View style={{ height: 20 }} />}
+        ItemSeparatorComponent={() => <View className="h-grid-gap" />}
         onEndReached={onEndReached}
         onEndReachedThreshold={0.5}
         ListHeaderComponent={<View className="mt-10" />}

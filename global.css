@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
+
+@layer components {
+  .tvos-body {
+    font-size: 1rem;
+  }
+}
+
 @tailwind utilities;

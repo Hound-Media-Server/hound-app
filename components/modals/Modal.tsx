@@ -1,3 +1,4 @@
+import { useTVScale } from "@/hooks/useTVScale";
 import { Modal, Platform, Pressable, StyleSheet } from "react-native";
 import { ThemedText } from "../ThemedText";
 import { useEffect, useState } from "react";
@@ -41,6 +42,8 @@ export function ContextModal({
   onClose: () => void;
   autoFocus?: boolean;
 }) {
+  const scale = useTVScale();
+  const styles = React.useMemo(() => createStyles(scale), [scale]);
   // autofocus doesn't seem to be necessary anymore, remove soon
   autoFocus = true;
   const [tvPressedOnce, setTvPressedOnce] = useState(autoFocus ?? false);
@@ -99,6 +102,8 @@ export function ModalAction({
   hasTVPreferredFocus?: boolean;
   onFocus?: () => void;
 }) {
+  const scale = useTVScale();
+  const styles = React.useMemo(() => createStyles(scale), [scale]);
   const { tvPressedOnce } = useModalInternal();
   return (
     <Pressable
@@ -118,49 +123,50 @@ export function ModalAction({
   );
 }
 
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.8)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#1a1a1a",
-    borderRadius: 12,
-    padding: 20,
-    width: "80%",
-    maxWidth: 460,
-    maxHeight: "70%",
-  },
-  modalTitle: {
-    color: "white",
-    fontSize: 20,
-    fontWeight: "bold",
-    marginLeft: 5,
-    marginBottom: 20,
-  },
-  modalItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 15,
-    // borderBottomWidth: 1,
-    // borderBottomColor: "#333",
-  },
-  modalItemText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  modalItemTextFocused: {
-    color: "#FF6B6B",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  modalItemSubtext: {
-    color: "#999",
-    fontSize: 14,
-    marginTop: 2,
-  },
-});
+const createStyles = (scale: number) =>
+  StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.8)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    modalContent: {
+      backgroundColor: "#1a1a1a",
+      borderRadius: 12 * scale,
+      padding: 20 * scale,
+      width: "80%",
+      maxWidth: 460 * scale,
+      maxHeight: "70%",
+    },
+    modalTitle: {
+      color: "white",
+      fontSize: 20 * scale,
+      fontWeight: "bold",
+      marginLeft: 5 * scale,
+      marginBottom: 20 * scale,
+    },
+    modalItem: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: 15 * scale,
+      // borderBottomWidth: 1,
+      // borderBottomColor: "#333",
+    },
+    modalItemText: {
+      color: "white",
+      fontSize: 16 * scale,
+      fontWeight: "600",
+    },
+    modalItemTextFocused: {
+      color: "#FF6B6B",
+      fontSize: 16 * scale,
+      fontWeight: "600",
+    },
+    modalItemSubtext: {
+      color: "#999",
+      fontSize: 14 * scale,
+      marginTop: 2 * scale,
+    },
+  });

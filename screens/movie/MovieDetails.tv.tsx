@@ -46,9 +46,9 @@ export default function MovieDetails({
       >
         <View className="flex-1 w-3/5">
           <View className="absolute bottom-0">
-            <ThemedText className="text-white text-3xl leading-[36px]">
+            <ThemedText className="text-white text-3xl leading-title">
               {details?.media_title}
-              <ThemedText className="text-gray-400 text-2xl leading-[32px]">
+              <ThemedText className="text-gray-400 text-2xl leading-subtitle">
                 {" (" + details?.release_date?.split("-")[0] + ")"}
               </ThemedText>
             </ThemedText>

@@ -225,13 +225,13 @@ export function ContinueWatchingCardPlaceholder({ width = 200 }) {
       <View style={{ width: width }}>
         <Animated.View
           className={
-            "mt-2 h-[13px] rounded-md bg-gray-700 items-center justify-center"
+            "mt-2 h-placeholder-line rounded-md bg-gray-700 items-center justify-center"
           }
           style={[{ width: width * 0.4 }, pulsingStyle]}
         />
         <Animated.View
           className={
-            "mt-1 h-[13px] rounded-md bg-gray-700 items-center justify-center"
+            "mt-1 h-placeholder-line rounded-md bg-gray-700 items-center justify-center"
           }
           style={[{ width: width * 0.6 }, pulsingStyle]}
         />

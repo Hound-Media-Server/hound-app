@@ -1,3 +1,4 @@
+import { useTVScale } from "@/hooks/useTVScale";
 import {
   View,
   Platform,
@@ -47,19 +48,20 @@ export default function CollectionView({
   }, [focusedIndex, fadeAnim]);
 
   const { width } = useWindowDimensions();
+  const scale = useTVScale();
 
-  let cardWidth = 120;
-  const horizontalGap = 15;
+  let cardWidth = 120 * scale;
+  const horizontalGap = 15 * scale;
   let numColumns = 3;
 
   // for phones, fill width to screen
-  if (width < 600) {
+  if (width / scale < 600) {
     numColumns = 3;
     cardWidth = (width - 40 - (numColumns - 1) * horizontalGap) / numColumns;
   } else {
     // for bigger devices, lock to 120
     const calculatedColumns = Math.floor(
-      (width - 40) / (cardWidth + horizontalGap),
+      (width - 40 * scale) / (cardWidth + horizontalGap),
     );
     numColumns = Math.min(6, Math.max(3, calculatedColumns));
   }
