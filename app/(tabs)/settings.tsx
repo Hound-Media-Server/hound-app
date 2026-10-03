@@ -18,8 +18,10 @@ import * as Updates from "expo-updates";
 import { ThemedText } from "@/components/ThemedText";
 import { useModalStore } from "@/stores/modalStore";
 import { Toast } from "toastify-react-native";
+import { useMobileTabContentPadding } from "@/hooks/useMobileTabContentPadding";
 
 export default function Settings() {
+  const bottomPadding = useMobileTabContentPadding();
   const { signOut, session } = useSession();
   const router = useRouter();
   const [defaultPlayer, setDefaultPlayer] = useState<string | undefined>(
@@ -135,6 +137,7 @@ export default function Settings() {
     <SafeAreaView className="flex-1 bg-black items-center justify-center">
       <ScrollView
         className={"mt-20 flex-1 w-full px-5 md:px-12"}
+        contentContainerStyle={{ paddingBottom: bottomPadding }}
         showsVerticalScrollIndicator={false}
       >
         <ThemedText className="text-white text-2xl ps-2">Settings</ThemedText>

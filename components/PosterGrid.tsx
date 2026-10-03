@@ -4,6 +4,7 @@ import MediaItemCard from "./MediaItemCard";
 import { ThemedText } from "./ThemedText";
 import { TVFocusGuideView } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useMobileTabContentPadding } from "@/hooks/useMobileTabContentPadding";
 
 interface PosterGridProps {
   useQuery?: (limit?: number, offset?: number) => any;
@@ -38,6 +39,7 @@ export default function PosterGrid({
   cardWidth = 120,
   horizontalGap = 15,
 }: PosterGridProps) {
+  const bottomPadding = useMobileTabContentPadding();
   const flatListRef = useRef<FlatList<any> | null>(null);
 
   const handleFocus = (index: number) => {
@@ -128,7 +130,7 @@ export default function PosterGrid({
           item.media_type + "-" + item.media_source + "-" + item.source_id
         }
         contentContainerStyle={{
-          paddingBottom: 140,
+          paddingBottom: Platform.isTV ? 140 : bottomPadding,
           alignSelf: "center",
           width: totalGridWidth,
         }}

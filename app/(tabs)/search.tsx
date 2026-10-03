@@ -12,8 +12,10 @@ import { ThemedText } from "@/components/ThemedText";
 import { useSearch } from "@/services/searchService";
 import HorizontalList from "@/components/HorizontalList";
 import { useQueryClient } from "@tanstack/react-query";
+import { useMobileTabContentPadding } from "@/hooks/useMobileTabContentPadding";
 
 export default function Search() {
+  const bottomPadding = useMobileTabContentPadding();
   const { query } = useLocalSearchParams();
   const [searchQuery, setSearchQuery] = useState((query as string) || "");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(
@@ -85,7 +87,9 @@ export default function Search() {
             scrollEnabled={!Platform.isTV}
             showsVerticalScrollIndicator={false}
             removeClippedSubviews={false}
-            contentContainerStyle={{ paddingBottom: 100 }}
+            contentContainerStyle={{
+              paddingBottom: Platform.isTV ? 100 : bottomPadding,
+            }}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }

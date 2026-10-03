@@ -16,8 +16,10 @@ import * as SplashScreen from "expo-splash-screen";
 import { useServerInfo } from "@/services/internalService";
 import { ServerVersionGTE } from "@/utils/version";
 import { Toast } from "toastify-react-native";
+import { useMobileTabContentPadding } from "@/hooks/useMobileTabContentPadding";
 
 export default function Index() {
+  const bottomPadding = useMobileTabContentPadding();
   const queryClient = useQueryClient();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
@@ -146,6 +148,7 @@ export default function Index() {
       <HomeDetails />
       <View className="flex-1">
         <FlatList
+          contentContainerStyle={{ paddingBottom: bottomPadding }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
@@ -179,13 +182,7 @@ export default function Index() {
             />
           )}
           ItemSeparatorComponent={() => <View className="h-5" />}
-          ListFooterComponent={() =>
-            !Platform.isTV ? (
-              <View className="h-20" />
-            ) : (
-              <View className="h-5" />
-            )
-          }
+          ListFooterComponent={Platform.isTV ? () => <View className="h-5" /> : undefined}
         />
       </View>
     </SafeAreaView>
