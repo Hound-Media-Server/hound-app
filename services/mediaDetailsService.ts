@@ -32,22 +32,9 @@ const showDetailsQuery = (id: string) => ({
 
 export const prefetchMediaDetails = (
   queryClient: QueryClient,
-  item?: {
-    media_type?: string;
-    media_source?: string;
-    source_id?: string;
-    logo_uri?: string;
-    watch_progress?: { logo_uri?: string };
-    next_episode?: { logo_uri?: string };
-  },
+  item?: { media_type?: string; media_source?: string; source_id?: string | number },
 ) => {
-  if (
-    !item?.media_source ||
-    !item.source_id ||
-    item.logo_uri ||
-    item.watch_progress?.logo_uri ||
-    item.next_episode?.logo_uri
-  ) return;
+  if (!item?.media_source || !item.source_id) return;
   const id = `${item.media_source}-${item.source_id}`;
   if (item.media_type === MediaTypeMovie) {
     void queryClient.prefetchQuery(movieDetailsQuery(id));

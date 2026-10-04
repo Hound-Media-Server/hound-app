@@ -46,7 +46,7 @@ export default function Collections() {
             )}
           </View>
         )}
-        {collections?.length && (
+        {!!collections?.length && (
           <>
             <ThemedText className="ps-2 text-2xl text-white mb-3">
               Your Collections
@@ -90,7 +90,7 @@ export default function Collections() {
             )}
           </View>
         )}
-        {publicCollections?.length && (
+        {!!publicCollections?.length && (
           <>
             <ThemedText className="ps-2 text-2xl text-white mb-3 mt-3">
               Public Collections

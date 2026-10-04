@@ -16,7 +16,8 @@
         "buildConfiguration": "Debug",
         "simulator": true
       },
-      "channel": "development"
+      "channel": "development",
+      "environment": "development"
     },
     "development_tv": {
       "extends": "development",
@@ -35,7 +36,8 @@
         "buildType": "apk",
         "withoutCredentials": true
       },
-      "channel": "preview"
+      "channel": "preview",
+      "environment": "preview"
     },
     "preview_tv": {
       "extends": "preview",
@@ -45,7 +47,8 @@
       "channel": "preview_tv"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "environment": "production"
     },
     "production_tv": {
       "extends": "production",

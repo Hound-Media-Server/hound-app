@@ -102,6 +102,9 @@ export default function ContinueWatchingCard({
             release_date:
               item.watch_progress?.release_date ||
               item.next_episode?.release_date,
+            status: item.status,
+            duration: item.duration,
+            genres: item.genres,
             season_number:
               item.watch_progress?.season_number ||
               item.next_episode?.season_number,

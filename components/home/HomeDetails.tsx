@@ -9,6 +9,7 @@ import {
   useMovieDetails,
   useShowDetails,
 } from "@/services/mediaDetailsService";
+import { formatMediaMetadata, normalizeOverview } from "@/utils/mediaMetadata";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -45,25 +46,26 @@ function TVHomeDetails({
     focusedItem?.media_source && focusedItem?.source_id
       ? `${focusedItem.media_source}-${focusedItem.source_id}`
       : "";
-  const needsLogo = !!focusedItem && !focusedItem.logo_uri && !!detailsId;
   const { data: movieDetails } = useMovieDetails(
     detailsId,
-    needsLogo && focusedItem?.media_type === MediaTypeMovie,
+    focusedItem?.media_type === MediaTypeMovie,
   );
   const { data: showDetails } = useShowDetails(
     detailsId,
-    needsLogo && focusedItem?.media_type === MediaTypeTVShow,
+    focusedItem?.media_type === MediaTypeTVShow,
   );
   if (!focusedItem) {
     return <PlaceholderHero height={heroHeight} />;
   }
-  const logoUri =
-    focusedItem.logo_uri ||
-    (focusedItem.media_type === MediaTypeMovie
-      ? movieDetails?.logo_uri
-      : showDetails?.logo_uri);
-  const releaseYear = focusedItem.release_date?.slice(0, 4);
-  const genres = focusedItem.genres?.map((g) => g.genre).join(", ");
+  const details =
+    focusedItem.media_type === MediaTypeMovie ? movieDetails : showDetails;
+  const logoUri = details?.logo_uri || focusedItem.logo_uri;
+  const metadata = formatMediaMetadata({
+    release_date: details?.release_date || focusedItem.release_date,
+    status: details?.status || focusedItem.status,
+    duration: details?.duration || focusedItem.duration,
+    genres: details?.genres?.length ? details.genres : focusedItem.genres,
+  });
   // TODO: HACKY, we need a better way to support image sizes in hound
   const backdropUri = focusedItem?.backdrop_uri?.replace("w500", "w1280");
   return (
@@ -90,23 +92,17 @@ function TVHomeDetails({
           <Image
             source={logoUri}
             contentFit="contain"
-            contentPosition="left center"
+            contentPosition="left bottom"
             transition={300}
             style={{
-              width: 200 * scale,
+              width: 300 * scale,
               height: 100 * scale,
-              marginBottom: 2.5 * scale,
+              marginBottom: 10 * scale,
             }}
           />
         ) : (
           <ThemedText className="text-white text-3xl mb-1">
             {focusedItem.media_title}
-            {releaseYear && (
-              <ThemedText className="text-gray-400 text-2xl">
-                {" "}
-                ({releaseYear})
-              </ThemedText>
-            )}
           </ThemedText>
         )}
         {focusedItem.media_subtitle && (
@@ -122,9 +118,13 @@ function TVHomeDetails({
             </ThemedText>
           </ThemedText>
         )}
-        {focusedItem.genres && (
-          <ThemedText className="text-secondary opacity-90 text-base">
-            {genres}
+        {!!metadata && (
+          <ThemedText
+            className="text-secondary opacity-90 text-base"
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {metadata}
           </ThemedText>
         )}
         <ThemedText
@@ -132,7 +132,7 @@ function TVHomeDetails({
           numberOfLines={3}
           ellipsizeMode="tail"
         >
-          {focusedItem.overview}
+          {normalizeOverview(details?.overview || focusedItem.overview)}
         </ThemedText>
       </View>
     </View>

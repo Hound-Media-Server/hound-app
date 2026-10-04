@@ -22,6 +22,7 @@ import { getSelectStreamUrl } from "@/utils/navigation";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useModalStore } from "@/stores/modalStore";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
+import { normalizeOverview } from "@/utils/mediaMetadata";
 
 const isTV = Platform.isTV;
 
@@ -419,7 +420,7 @@ function EpisodeCard({
       </View>
       {!isTV && (
         <ThemedText className="text-gray-400 mb-4 text-sm">
-          {episode?.overview}
+          {normalizeOverview(episode?.overview)}
         </ThemedText>
       )}
     </View>
@@ -463,7 +464,7 @@ function EpisodeInfo({
       ) : null}
       {isTV && (
         <ThemedText className="text-gray-400 mb-4 text-base md:text-xl">
-          {episode?.overview}
+          {normalizeOverview(episode?.overview)}
         </ThemedText>
       )}
     </View>

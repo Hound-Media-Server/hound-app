@@ -11,6 +11,8 @@ import {
 import { useModalStore } from "@/stores/modalStore";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
 import { TVDetailsProps } from "@/app/tv/[id]";
+import MediaPageTitle from "@/components/media_page/MediaPageTitle";
+import { formatMediaMetadata, normalizeOverview } from "@/utils/mediaMetadata";
 
 export default function TVDetails({
   id,
@@ -21,6 +23,8 @@ export default function TVDetails({
   handleRewatch,
 }: TVDetailsProps) {
   const openModal = useModalStore((s) => s.open);
+  const metadata = formatMediaMetadata(details);
+  const overview = normalizeOverview(details?.overview);
 
   return (
     <View className="flex-1">
@@ -29,24 +33,29 @@ export default function TVDetails({
           uri={details?.backdrop_uri as string}
           className="h-full w-full px-8 py-8"
         >
-          <View className="flex-1 w-3/5">
+          <View
+            className={
+              overview.length > 300 ? "flex-1 w-4/5" : "flex-1 w-3/5"
+            }
+          >
             <View className="absolute bottom-0">
-              <ThemedText className="text-white text-3xl leading-title">
-                {details?.media_title}
-                <ThemedText className="text-gray-400 text-2xl leading-subtitle">
-                  {" (" + details?.release_date?.split("-")[0] + ")"}
+              <MediaPageTitle title={details?.media_title} logoUri={details?.logo_uri} />
+              {!!metadata && (
+                <ThemedText
+                  className="text-secondary mt-1 opacity-80 sm:text-lg"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {metadata}
                 </ThemedText>
-              </ThemedText>
-              <ThemedText className="text-secondary mt-1 opacity-80 sm:text-lg">
-                {details?.genres?.map((item: any) => item.genre).join(", ")}
-              </ThemedText>
+              )}
               {/* {creators && (
               <ThemedText className="text-gray-300 mt-1 sm:text-lg">
                 by {creators}
               </ThemedText>
             )} */}
               <ThemedText className="text-gray-400 text-md sm:text-lg mt-1">
-                {details?.overview}
+                {overview}
               </ThemedText>
               {details?.cast?.length > 0 && (
                 <ThemedText className="italic text-gray-200 text-sm mt-1">

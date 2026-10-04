@@ -11,6 +11,7 @@ export type FocusItem = {
   episode_number?: number;
   genres?: any[];
   status?: string;
+  duration?: number;
   release_date?: string;
   backdrop_uri?: string;
   overview?: string;

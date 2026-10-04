@@ -11,6 +11,8 @@ import {
 import { useModalStore } from "@/stores/modalStore";
 import { MediaTypeMovie } from "@/constants/MediaTypes";
 import { MovieDetailsProps } from "@/app/movie/[id]";
+import MediaPageTitle from "@/components/media_page/MediaPageTitle";
+import { formatMediaMetadata, normalizeOverview } from "@/utils/mediaMetadata";
 
 export default function MovieDetails({
   id,
@@ -23,50 +25,42 @@ export default function MovieDetails({
   const openModal = useModalStore((s) => s.open);
 
   const creators = details?.creators?.map((item: any) => item.name).join(", ");
-  // create array to render info in a row
-  const info = [];
-  if (details?.duration) {
-    details.duration <= 60
-      ? info.push(details.duration + "m")
-      : info.push(
-          Math.floor(details?.duration / 60) +
-            "h " +
-            (details?.duration % 60) +
-            "m",
-        );
-  }
-  if (creators) {
-    info.push(creators);
-  }
+  const metadata = formatMediaMetadata(details);
+  const overview = normalizeOverview(details?.overview);
   return (
     <View className="flex-1 absolute inset-0 bg-red-500">
       <GradientBackgroundView
         uri={details?.backdrop_uri as string}
         className="h-full w-full px-8 py-8"
       >
-        <View className="flex-1 w-3/5">
+        <View
+          className={
+            overview.length > 300 ? "flex-1 w-4/5" : "flex-1 w-3/5"
+          }
+        >
           <View className="absolute bottom-0">
-            <ThemedText className="text-white text-3xl leading-title">
-              {details?.media_title}
-              <ThemedText className="text-gray-400 text-2xl leading-subtitle">
-                {" (" + details?.release_date?.split("-")[0] + ")"}
-              </ThemedText>
-            </ThemedText>
+            <MediaPageTitle title={details?.media_title} logoUri={details?.logo_uri} />
             {movieWatchData && (
               <ThemedText className="text-gray-400 text-xs sm:text-sm">
                 Last watched {movieWatchData}
               </ThemedText>
             )}
-            <ThemedText className="text-secondary mt-1 opacity-80 sm:text-lg">
-              {details?.genres?.map((item: any) => item.genre).join(", ")}
-            </ThemedText>
-            {info.length > 0 && (
+            {!!metadata && (
+              <ThemedText
+                className="text-secondary mt-1 opacity-80 sm:text-lg"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {metadata}
+              </ThemedText>
+            )}
+            {!!creators && (
               <ThemedText className="text-gray-300 mt-1 sm:text-lg">
-                {info.join(" ⸱ ")}
+                {creators}
               </ThemedText>
             )}
             <ThemedText className="text-gray-400 text-md sm:text-lg mt-1">
-              {details?.overview}
+              {overview}
             </ThemedText>
             {details?.cast?.length > 0 && (
               <ThemedText className="italic text-gray-200 text-sm mt-1">

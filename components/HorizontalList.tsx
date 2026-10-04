@@ -202,6 +202,7 @@ export default function HorizontalList({
                     backdrop_uri: item.backdrop_uri,
                     release_date: item.release_date,
                     status: item.status,
+                    duration: item.duration,
                     genres: item.genres,
                   };
                   setFocusedItem(focusItem);
