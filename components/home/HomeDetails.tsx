@@ -96,7 +96,7 @@ function TVHomeDetails({
             transition={300}
             style={{
               width: 300 * scale,
-              height: 100 * scale,
+              height: 85 * scale,
               marginBottom: 10 * scale,
             }}
           />
