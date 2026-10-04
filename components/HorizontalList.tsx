@@ -42,6 +42,7 @@ export default function HorizontalList({
   hasPreferredFocus,
 }: HorizontalListProps) {
   const scale = useTVScale();
+  const horizontalPadding = Platform.isTV ? 40 * scale : 20;
   const flatListRef = useRef<FlatList<any> | null>(null);
   const queryClient = useQueryClient();
   const setFocusedItem = useFocusStore((s) => s.setFocusedItem);
@@ -56,7 +57,8 @@ export default function HorizontalList({
     flatListRef.current?.scrollToIndex({
       index,
       animated: true,
-      viewPosition: 0.15,
+      viewPosition: 0,
+      viewOffset: horizontalPadding,
     });
   };
   const { width: winWidth } = useWindowDimensions();
@@ -94,10 +96,7 @@ export default function HorizontalList({
 
   if (isLoading) {
     return (
-      <View
-        className="flex-1"
-        style={{ paddingHorizontal: Platform.isTV ? 40 * scale : 20 }}
-      >
+      <View className="flex-1" style={{ paddingHorizontal: horizontalPadding }}>
         {!!header && (
           <ThemedText className="text-white text-2xl mb-3">{header}</ThemedText>
         )}
@@ -129,7 +128,7 @@ export default function HorizontalList({
         {!!header && data && (
           <ThemedText
             className="text-white text-2xl mb-3"
-            style={{ paddingHorizontal: Platform.isTV ? 40 * scale : 20 }}
+            style={{ paddingHorizontal: horizontalPadding }}
           >
             {header}
           </ThemedText>
@@ -145,7 +144,9 @@ export default function HorizontalList({
           data={data}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: Platform.isTV ? 40 * scale : 20 }}
+          contentContainerStyle={{
+            paddingHorizontal: horizontalPadding,
+          }}
           ItemSeparatorComponent={() => <View className="w-list-gap" />}
           renderItem={({ item, index }) => {
             if (itemType === "cast") {
@@ -219,7 +220,11 @@ export default function HorizontalList({
 
 function wrapTVFocusGuideView(children: React.ReactNode) {
   if (!Platform.isTV) return children;
-  return <TVFocusGuideView trapFocusRight>{children}</TVFocusGuideView>;
+  return (
+    <TVFocusGuideView autoFocus trapFocusRight>
+      {children}
+    </TVFocusGuideView>
+  );
 }
 
 function getMediaTitle(item: any) {

@@ -17,6 +17,7 @@ import { useServerInfo } from "@/services/internalService";
 import { ServerVersionGTE } from "@/utils/version";
 import { Toast } from "toastify-react-native";
 import { useMobileTabContentPadding } from "@/hooks/useMobileTabContentPadding";
+import { prefetchMediaDetails } from "@/services/mediaDetailsService";
 
 export default function Index() {
   const bottomPadding = useMobileTabContentPadding();
@@ -181,6 +182,16 @@ export default function Index() {
                   viewPosition: 0.5,
                   animated: true,
                 });
+                const nextItem = rows
+                  .slice(rowIndex + 1)
+                  .map(
+                    (row) =>
+                      (useNewCatalogAPI && row.itemType !== "episode"
+                        ? row.query.data?.items
+                        : row.query.data)?.[0],
+                  )
+                  .find(Boolean);
+                prefetchMediaDetails(queryClient, nextItem);
               }}
             />
           )}
