@@ -15,6 +15,8 @@ import ContinueWatchingCard, {
 } from "./ContinueWatchingCard";
 import { TVFocusGuideView } from "react-native";
 import { FocusItem, useFocusStore } from "@/stores/focusStore";
+import { useQueryClient } from "@tanstack/react-query";
+import { prefetchMediaDetails } from "@/services/mediaDetailsService";
 
 interface HorizontalListProps {
   useQuery?: () => any;
@@ -41,9 +43,13 @@ export default function HorizontalList({
 }: HorizontalListProps) {
   const scale = useTVScale();
   const flatListRef = useRef<FlatList<any> | null>(null);
+  const queryClient = useQueryClient();
   const setFocusedItem = useFocusStore((s) => s.setFocusedItem);
   const handleFocus = (index: number) => {
     if (!Platform.isTV) return;
+    if (itemType !== "search") {
+      prefetchMediaDetails(queryClient, data?.[index + 1]);
+    }
     // vertical scroll in parent
     onRowFocus?.(rowIndex ?? 0);
     // scroll within row
@@ -187,8 +193,10 @@ export default function HorizontalList({
                 onFocus={() => {
                   const focusItem: FocusItem = {
                     media_type: item.media_type,
+                    media_source: item.media_source,
                     source_id: item.source_id,
                     media_title: item.media_title,
+                    logo_uri: item.logo_uri,
                     overview: item.overview,
                     backdrop_uri: item.backdrop_uri,
                     release_date: item.release_date,

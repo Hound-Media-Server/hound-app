@@ -4,6 +4,11 @@ import { Image } from "expo-image";
 import { ThemedText } from "../ThemedText";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusStore } from "@/stores/focusStore";
+import { MediaTypeMovie, MediaTypeTVShow } from "@/constants/MediaTypes";
+import {
+  useMovieDetails,
+  useShowDetails,
+} from "@/services/mediaDetailsService";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -25,10 +30,38 @@ export default function HomeDetails() {
       </View>
     );
   }
+  return <TVHomeDetails height={heroHeight} scale={scale} />;
+}
+
+function TVHomeDetails({
+  height: heroHeight,
+  scale,
+}: {
+  height: number;
+  scale: number;
+}) {
   const focusedItem = useFocusStore((s) => s.focusedItem);
+  const detailsId =
+    focusedItem?.media_source && focusedItem?.source_id
+      ? `${focusedItem.media_source}-${focusedItem.source_id}`
+      : "";
+  const needsLogo = !!focusedItem && !focusedItem.logo_uri && !!detailsId;
+  const { data: movieDetails } = useMovieDetails(
+    detailsId,
+    needsLogo && focusedItem?.media_type === MediaTypeMovie,
+  );
+  const { data: showDetails } = useShowDetails(
+    detailsId,
+    needsLogo && focusedItem?.media_type === MediaTypeTVShow,
+  );
   if (!focusedItem) {
     return <PlaceholderHero height={heroHeight} />;
   }
+  const logoUri =
+    focusedItem.logo_uri ||
+    (focusedItem.media_type === MediaTypeMovie
+      ? movieDetails?.logo_uri
+      : showDetails?.logo_uri);
   const releaseYear = focusedItem.release_date?.slice(0, 4);
   const genres = focusedItem.genres?.map((g) => g.genre).join(", ");
   // TODO: HACKY, we need a better way to support image sizes in hound
@@ -53,24 +86,38 @@ export default function HomeDetails() {
         }}
       />
       <View className="absolute left-0 bottom-0 ps-10 pe-10 mb-5 w-4/5">
-        <ThemedText className="text-white text-3xl mb-1">
-          {focusedItem.media_title}
-          {releaseYear && (
-            <ThemedText className="text-gray-400 text-2xl">
-              {" "}
-              ({releaseYear})
-            </ThemedText>
-          )}
-        </ThemedText>
+        {logoUri ? (
+          <Image
+            source={logoUri}
+            contentFit="contain"
+            contentPosition="left center"
+            transition={300}
+            style={{
+              width: 200 * scale,
+              height: 100 * scale,
+              marginBottom: 2.5 * scale,
+            }}
+          />
+        ) : (
+          <ThemedText className="text-white text-3xl mb-1">
+            {focusedItem.media_title}
+            {releaseYear && (
+              <ThemedText className="text-gray-400 text-2xl">
+                {" "}
+                ({releaseYear})
+              </ThemedText>
+            )}
+          </ThemedText>
+        )}
         {focusedItem.media_subtitle && (
-          <ThemedText>
+          <ThemedText numberOfLines={1}>
             {focusedItem.season_number && focusedItem.episode_number && (
-              <ThemedText className="text-gray-300 opacity-90 text-xl">
+              <ThemedText className="text-gray-200 opacity-90 text-xl">
                 S{focusedItem.season_number}E{focusedItem.episode_number}
                 {" | "}
               </ThemedText>
             )}
-            <ThemedText className="text-gray-400 text-xl">
+            <ThemedText className="text-gray-300 text-xl">
               {focusedItem.media_subtitle}
             </ThemedText>
           </ThemedText>

@@ -82,7 +82,12 @@ export default function ContinueWatchingCard({
         onFocus={() => {
           const focusItem: FocusItem = {
             media_type: item.media_type,
+            media_source: item.media_source,
             source_id: item.source_id,
+            logo_uri:
+              item.logo_uri ||
+              item.watch_progress?.logo_uri ||
+              item.next_episode?.logo_uri,
             media_title:
               item.watch_progress?.media_title ||
               item.next_episode?.media_title,

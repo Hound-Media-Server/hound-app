@@ -2,8 +2,10 @@ import { create } from "zustand";
 
 export type FocusItem = {
   media_type: string;
+  media_source: string;
   source_id: string;
   media_title: string;
+  logo_uri?: string;
   media_subtitle?: string;
   season_number?: number;
   episode_number?: number;
