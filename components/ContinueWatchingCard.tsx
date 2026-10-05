@@ -1,5 +1,5 @@
-import { View, Text, TouchableHighlight, Platform } from "react-native";
-import React, { useEffect } from "react";
+import { Animated, View, Text, TouchableHighlight, Platform } from "react-native";
+import React from "react";
 import { Image } from "expo-image";
 import { Route, useRouter } from "expo-router";
 import { ThemedText } from "./ThemedText";
@@ -8,12 +8,7 @@ import { FocusItem, useFocusStore } from "@/stores/focusStore";
 import { useModalStore } from "@/stores/modalStore";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
 import { getYear } from "@/utils/dateUtils";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from "react-native-reanimated";
+import { usePlaceholderOpacity } from "@/hooks/usePlaceholderOpacity";
 
 export default function ContinueWatchingCard({
   item,
@@ -76,7 +71,7 @@ export default function ContinueWatchingCard({
   return (
     <>
       <TouchableHighlight
-        className={"rounded-lg" + Platform.isTV ? "group" : ""}
+        className={"rounded-lg" + (Platform.isTV ? " group" : "")}
         focusable
         hasTVPreferredFocus={hasTVPreferredFocus || false}
         onFocus={() => {
@@ -208,26 +203,13 @@ export default function ContinueWatchingCard({
 }
 
 export function ContinueWatchingCardPlaceholder({ width = 200 }) {
-  const opacity = useSharedValue(0.8);
-  // shimmer animation
-  useEffect(() => {
-    opacity.value = withRepeat(
-      withTiming(1, {
-        duration: 700,
-      }),
-      -1,
-      true,
-    );
-  }, []);
-  const pulsingStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
+  const opacity = usePlaceholderOpacity();
   return (
     <View>
       <View className="rounded-lg">
         <Animated.View
           className={"rounded-lg bg-zinc-800 items-center justify-center"}
-          style={[{ width: width, height: width * 0.56 }, pulsingStyle]}
+          style={{ width: width, height: width * 0.56, opacity }}
         />
       </View>
       <View style={{ width: width }}>
@@ -235,13 +217,13 @@ export function ContinueWatchingCardPlaceholder({ width = 200 }) {
           className={
             "mt-2 h-placeholder-line rounded-md bg-gray-700 items-center justify-center"
           }
-          style={[{ width: width * 0.4 }, pulsingStyle]}
+          style={{ width: width * 0.4, opacity }}
         />
         <Animated.View
           className={
             "mt-1 h-placeholder-line rounded-md bg-gray-700 items-center justify-center"
           }
-          style={[{ width: width * 0.6 }, pulsingStyle]}
+          style={{ width: width * 0.6, opacity }}
         />
       </View>
     </View>

@@ -1,5 +1,5 @@
 import { useTVScale } from "@/hooks/useTVScale";
-import { View, useWindowDimensions, Platform } from "react-native";
+import { Animated, View, useWindowDimensions, Platform } from "react-native";
 import { Image } from "expo-image";
 import { ThemedText } from "../ThemedText";
 import { LinearGradient } from "expo-linear-gradient";
@@ -10,13 +10,7 @@ import {
   useShowDetails,
 } from "@/services/mediaDetailsService";
 import { formatMediaMetadata, normalizeOverview } from "@/utils/mediaMetadata";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from "react-native-reanimated";
-import { useEffect } from "react";
+import { usePlaceholderOpacity } from "@/hooks/usePlaceholderOpacity";
 
 export default function HomeDetails() {
   const { height } = useWindowDimensions();
@@ -141,38 +135,25 @@ function TVHomeDetails({
 
 function PlaceholderHero({ height: heroHeight }: { height: number }) {
   const scale = useTVScale();
-  const opacity = useSharedValue(0.8);
-  // shimmer animation
-  useEffect(() => {
-    opacity.value = withRepeat(
-      withTiming(1, {
-        duration: 700,
-      }),
-      -1,
-      true,
-    );
-  }, []);
-  const pulsingStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
+  const opacity = usePlaceholderOpacity();
   return (
     <View className="relative" style={{ height: heroHeight }}>
       <View className="absolute left-0 bottom-0 ps-10 pe-10 mb-5 w-4/5">
         <Animated.View
           className="bg-gray-700 rounded-lg"
-          style={[{ width: 200 * scale, height: 30 * scale }, pulsingStyle]}
+          style={{ width: 200 * scale, height: 30 * scale, opacity }}
         />
         <Animated.View
           className="bg-gray-700 rounded-lg mt-2"
-          style={[{ width: 100 * scale, height: 20 * scale }, pulsingStyle]}
+          style={{ width: 100 * scale, height: 20 * scale, opacity }}
         />
         <Animated.View
           className="bg-gray-700 rounded-lg mt-2"
-          style={[{ width: 300 * scale, height: 20 * scale }, pulsingStyle]}
+          style={{ width: 300 * scale, height: 20 * scale, opacity }}
         />
         <Animated.View
           className="bg-gray-700 rounded-lg mt-2"
-          style={[{ width: 300 * scale, height: 20 * scale }, pulsingStyle]}
+          style={{ width: 300 * scale, height: 20 * scale, opacity }}
         />
       </View>
     </View>

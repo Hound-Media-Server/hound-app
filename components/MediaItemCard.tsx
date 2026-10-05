@@ -1,17 +1,12 @@
-import { View, TouchableHighlight } from "react-native";
-import React, { useEffect } from "react";
+import { Animated, View, TouchableHighlight } from "react-native";
+import React from "react";
 import { Platform } from "react-native";
 import { Image } from "expo-image";
 import { RelativePathString, useRouter } from "expo-router";
 import { ThemedText } from "./ThemedText";
 import { getMediaPageUrl } from "@/utils/navigation";
 import { useModalStore } from "@/stores/modalStore";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from "react-native-reanimated";
+import { usePlaceholderOpacity } from "@/hooks/usePlaceholderOpacity";
 
 export default function MediaItemCard({
   mediaItem,
@@ -42,7 +37,7 @@ export default function MediaItemCard({
   return (
     <>
       <TouchableHighlight
-        className={"rounded-lg" + Platform.isTV ? "group" : ""}
+        className={"rounded-lg" + (Platform.isTV ? " group" : "")}
         focusable
         hasTVPreferredFocus={hasTVPreferredFocus || false}
         onFocus={() => {
@@ -126,20 +121,7 @@ export function MediaItemCardPlaceholder({
   width = 120,
   showDescription = false,
 }) {
-  const opacity = useSharedValue(0.8);
-  // shimmer animation
-  useEffect(() => {
-    opacity.value = withRepeat(
-      withTiming(1, {
-        duration: 700,
-      }),
-      -1,
-      true,
-    );
-  }, []);
-  const pulsingStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
+  const opacity = usePlaceholderOpacity();
   return (
     <>
       <View className={"rounded-lg"}>
@@ -151,7 +133,7 @@ export function MediaItemCardPlaceholder({
                 ? " group-focus:border-white border-2 border-transparent"
                 : "")
             }
-            style={[{ width: width, height: width * 1.5 }, pulsingStyle]}
+            style={{ width: width, height: width * 1.5, opacity }}
           />
           {/* {showDescription && (
             <>
