@@ -1,11 +1,21 @@
-export function formatMediaMetadata(media?: {
-  release_date?: string;
-  status?: string;
-  duration?: number;
-  genres?: Array<{ genre?: string }>;
-} | null): string {
+import { MediaTypeMovie } from "@/constants/MediaTypes";
+
+export function formatMediaMetadata(
+  media: {
+    release_date?: string;
+    status?: string;
+    duration?: number;
+    media_type?: string;
+    genres?: Array<{ genre?: string }>;
+  } | null | undefined,
+): string {
   if (!media) return "";
-  const minutes = media.duration;
+  const minutes =
+    (media.media_type === MediaTypeMovie || !media.media_type) &&
+    media.duration != null &&
+    media.duration > 0
+      ? media.duration
+      : undefined;
   const duration = minutes
     ? minutes < 60
       ? `${minutes}m`
