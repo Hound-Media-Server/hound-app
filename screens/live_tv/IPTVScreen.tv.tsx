@@ -1,3 +1,4 @@
+import { useTVScale } from "@/hooks/useTVScale";
 import { LiveTVProps } from "@/app/(tabs)/live_tv";
 import { ThemedText } from "@/components/ThemedText";
 import { TVFocusGuideViewWrapper } from "@/components/TVFocusGuideViewWrapper";
@@ -10,13 +11,15 @@ import { useLiveTVStore } from "@/stores/livePlayerStore";
 import { FlashList, FlashListRef } from "@shopify/flash-list";
 import { useKeepAwake } from "expo-keep-awake";
 import { useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMobileTabContentPadding } from "@/hooks/useMobileTabContentPadding";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   Animated,
   BackHandler,
   Platform,
   Pressable,
+  ScrollView,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -70,6 +73,8 @@ export default function IPTVScreenTV({
   setIPTVProviderID,
   categories,
 }: LiveTVProps) {
+  const scale = useTVScale();
+  const bottomPadding = useMobileTabContentPadding();
   const videoPlayerRef = useRef<View>(null);
   const resizePlayer = useLiveTVStore((s) => s.setRect);
   const setSource = useLiveTVStore((s) => s.setSource);
@@ -246,6 +251,7 @@ export default function IPTVScreenTV({
               Categories
             </ThemedText>
             <FlashList<XtreamCategory>
+              contentContainerStyle={{ paddingBottom: bottomPadding }}
               ref={categoryListRef}
               data={categories}
               keyExtractor={(item) => `category-${item.category_id}`}
@@ -307,6 +313,7 @@ export default function IPTVScreenTV({
               </View>
             ) : (
               <FlashList<any>
+                contentContainerStyle={{ paddingBottom: bottomPadding }}
                 ref={channelListRef}
                 data={channels?.channels}
                 keyExtractor={(item) => `channel-${item.stream_id}`}
@@ -364,8 +371,8 @@ export default function IPTVScreenTV({
                         <Image
                           source={{ uri: item.thumbnail_url }}
                           style={{
-                            width: 30,
-                            height: 30,
+                            width: 30 * scale,
+                            height: 30 * scale,
                             objectFit: "contain",
                           }}
                           contentFit="contain"
@@ -421,7 +428,7 @@ export default function IPTVScreenTV({
               setFullscreen();
             }}
             style={{
-              padding: 3,
+              padding: 3 * scale,
               aspectRatio: 16 / 9,
             }}
           >
@@ -431,7 +438,7 @@ export default function IPTVScreenTV({
               onLayout={updatePlayer}
             />
           </Pressable>
-          <View className="flex-1 mt-2 ps-2 pe-2">
+          <LiveTVDetails bottomPadding={bottomPadding}>
             <ThemedText
               type="defaultSemiBold"
               className="text-2xl text-white mb-0 pb-0"
@@ -467,9 +474,29 @@ export default function IPTVScreenTV({
                 {pickText(nowPlayingEPG?.descriptions)}
               </ThemedText>
             ) : null}
-          </View>
+          </LiveTVDetails>
         </View>
       </View>
     </View>
+  );
+}
+
+function LiveTVDetails({
+  children,
+  bottomPadding,
+}: {
+  children: ReactNode;
+  bottomPadding: number;
+}) {
+  if (Platform.isTV) {
+    return <View className="flex-1 mt-2 ps-2 pe-2">{children}</View>;
+  }
+  return (
+    <ScrollView
+      className="flex-1 mt-2 ps-2 pe-2"
+      contentContainerStyle={{ paddingBottom: bottomPadding }}
+    >
+      {children}
+    </ScrollView>
   );
 }

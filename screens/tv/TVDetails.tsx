@@ -9,6 +9,8 @@ import { ImageBackground } from "expo-image";
 import { useModalStore } from "@/stores/modalStore";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
 import { TVDetailsProps } from "@/app/tv/[id]";
+import MediaPageTitle from "@/components/media_page/MediaPageTitle";
+import { formatMediaMetadata, normalizeOverview } from "@/utils/mediaMetadata";
 
 export default function TVDetails({
   id,
@@ -21,6 +23,7 @@ export default function TVDetails({
   const openModal = useModalStore((s) => s.open);
 
   const creators = details?.creators?.map((item: any) => item.name).join(", ");
+  const metadata = formatMediaMetadata(details);
   // if first season is specials, move it to the end
   const seasonsData =
     details?.seasons?.[0]?.season_number === 0
@@ -44,41 +47,41 @@ export default function TVDetails({
           }
         >
           <View className="px-5 sm:px-8 md:px-24">
-            <View className="flex-row">
-              <TouchableOpacity
-                focusable
-                hasTVPreferredFocus
-                onPress={handlePlayPress}
-                activeOpacity={0.75}
-                className="p-2 mb-3 bg-secondary rounded-2xl w-[120px] sm:w-[150px] items-center"
-              >
-                <ThemedText className="text-primary text-md sm:text-lg">
-                  {playLabel}
-                </ThemedText>
-              </TouchableOpacity>
-            </View>
             <View className="me-5">
-              <View className="flex-row items-center">
-                <ThemedText className="text-white text-3xl leading-[36px]">
-                  {details?.media_title}
-                  <ThemedText className="text-gray-400 text-2xl leading-[32px]">
-                    {" (" + details?.release_date?.split("-")[0] + ")"}
-                  </ThemedText>
+              <MediaPageTitle
+                title={details?.media_title}
+                logoUri={details?.logo_uri}
+              />
+              {!!metadata && (
+                <ThemedText
+                  className="text-secondary mt-1 opacity-80 sm:text-lg"
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
+                  {metadata}
                 </ThemedText>
-              </View>
-              <ThemedText className="text-secondary mt-1 opacity-80 sm:text-lg">
-                {details?.genres?.map((item: any) => item.genre).join(", ")}
-              </ThemedText>
+              )}
               {!!creators && (
                 <ThemedText className="text-gray-300 mt-1 sm:text-lg">
                   {creators}
                 </ThemedText>
               )}
               <ThemedText className="text-gray-400 text-md sm:text-lg mt-1">
-                {details?.overview}
+                {normalizeOverview(details?.overview)}
               </ThemedText>
             </View>
             <View className="flex-row gap-3">
+              <TouchableOpacity
+                focusable
+                hasTVPreferredFocus
+                onPress={handlePlayPress}
+                activeOpacity={0.75}
+                className="p-2 mt-3 bg-secondary rounded-2xl w-[120px] sm:w-[150px] items-center"
+              >
+                <ThemedText className="text-primary text-md sm:text-lg">
+                  {playLabel}
+                </ThemedText>
+              </TouchableOpacity>
               <TouchableOpacity
                 onPress={() =>
                   router.push(

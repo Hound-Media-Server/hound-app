@@ -16,8 +16,11 @@ import * as SplashScreen from "expo-splash-screen";
 import { useServerInfo } from "@/services/internalService";
 import { ServerVersionGTE } from "@/utils/version";
 import { Toast } from "toastify-react-native";
+import { useMobileTabContentPadding } from "@/hooks/useMobileTabContentPadding";
+import { prefetchMediaDetails } from "@/services/mediaDetailsService";
 
 export default function Index() {
+  const bottomPadding = useMobileTabContentPadding();
   const queryClient = useQueryClient();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
@@ -142,10 +145,14 @@ export default function Index() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-black h-full">
+    <SafeAreaView
+      className="flex-1 bg-black h-full"
+      edges={Platform.OS === "ios" && Platform.isTV ? [] : undefined}
+    >
       <HomeDetails />
       <View className="flex-1">
         <FlatList
+          contentContainerStyle={{ paddingBottom: bottomPadding }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
@@ -175,16 +182,22 @@ export default function Index() {
                   viewPosition: 0.5,
                   animated: true,
                 });
+                const nextItem = rows
+                  .slice(rowIndex + 1)
+                  .map(
+                    (row) =>
+                      (useNewCatalogAPI && row.itemType !== "episode"
+                        ? row.query.data?.items
+                        : row.query.data)?.[0],
+                  )
+                  .find(Boolean);
+                prefetchMediaDetails(queryClient, nextItem);
               }}
             />
           )}
           ItemSeparatorComponent={() => <View className="h-5" />}
-          ListFooterComponent={() =>
-            !Platform.isTV ? (
-              <View className="h-20" />
-            ) : (
-              <View className="h-5" />
-            )
+          ListFooterComponent={
+            Platform.isTV ? () => <View className="h-5" /> : undefined
           }
         />
       </View>

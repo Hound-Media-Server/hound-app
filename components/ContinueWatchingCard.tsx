@@ -82,7 +82,12 @@ export default function ContinueWatchingCard({
         onFocus={() => {
           const focusItem: FocusItem = {
             media_type: item.media_type,
+            media_source: item.media_source,
             source_id: item.source_id,
+            logo_uri:
+              item.logo_uri ||
+              item.watch_progress?.logo_uri ||
+              item.next_episode?.logo_uri,
             media_title:
               item.watch_progress?.media_title ||
               item.next_episode?.media_title,
@@ -97,6 +102,9 @@ export default function ContinueWatchingCard({
             release_date:
               item.watch_progress?.release_date ||
               item.next_episode?.release_date,
+            status: item.status,
+            duration: item.duration,
+            genres: item.genres,
             season_number:
               item.watch_progress?.season_number ||
               item.next_episode?.season_number,
@@ -225,13 +233,13 @@ export function ContinueWatchingCardPlaceholder({ width = 200 }) {
       <View style={{ width: width }}>
         <Animated.View
           className={
-            "mt-2 h-[13px] rounded-md bg-gray-700 items-center justify-center"
+            "mt-2 h-placeholder-line rounded-md bg-gray-700 items-center justify-center"
           }
           style={[{ width: width * 0.4 }, pulsingStyle]}
         />
         <Animated.View
           className={
-            "mt-1 h-[13px] rounded-md bg-gray-700 items-center justify-center"
+            "mt-1 h-placeholder-line rounded-md bg-gray-700 items-center justify-center"
           }
           style={[{ width: width * 0.6 }, pulsingStyle]}
         />

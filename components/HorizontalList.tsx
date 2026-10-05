@@ -1,3 +1,4 @@
+import { useTVScale } from "@/hooks/useTVScale";
 import {
   View,
   ActivityIndicator,
@@ -14,6 +15,8 @@ import ContinueWatchingCard, {
 } from "./ContinueWatchingCard";
 import { TVFocusGuideView } from "react-native";
 import { FocusItem, useFocusStore } from "@/stores/focusStore";
+import { useQueryClient } from "@tanstack/react-query";
+import { prefetchMediaDetails } from "@/services/mediaDetailsService";
 
 interface HorizontalListProps {
   useQuery?: () => any;
@@ -38,25 +41,32 @@ export default function HorizontalList({
   onRowFocus,
   hasPreferredFocus,
 }: HorizontalListProps) {
+  const scale = useTVScale();
+  const horizontalPadding = Platform.isTV ? 40 * scale : 20;
   const flatListRef = useRef<FlatList<any> | null>(null);
+  const queryClient = useQueryClient();
   const setFocusedItem = useFocusStore((s) => s.setFocusedItem);
   const handleFocus = (index: number) => {
     if (!Platform.isTV) return;
+    if (itemType !== "search") {
+      prefetchMediaDetails(queryClient, data?.[index + 1]);
+    }
     // vertical scroll in parent
     onRowFocus?.(rowIndex ?? 0);
     // scroll within row
     flatListRef.current?.scrollToIndex({
       index,
       animated: true,
-      viewPosition: 0.15,
+      viewPosition: 0,
+      viewOffset: horizontalPadding,
     });
   };
   const { width: winWidth } = useWindowDimensions();
-  let posterWidth = Platform.isTV ? 120 : winWidth / 4;
+  let posterWidth = Platform.isTV ? 120 * scale : winWidth / 4;
   if (!Platform.isTV) {
     posterWidth = Math.min(Math.max(posterWidth, 120), 150);
   }
-  let landscapeWidth = Platform.isTV ? 200 : posterWidth * 2;
+  let landscapeWidth = Platform.isTV ? 200 * scale : posterWidth * 2;
   if (!Platform.isTV) {
     landscapeWidth = Math.max(landscapeWidth, 200);
   }
@@ -72,7 +82,7 @@ export default function HorizontalList({
               {header}
             </ThemedText>
           )}
-          <View className="w-full h-[100px] justify-center items-center">
+          <View className="w-full h-list-min-height justify-center items-center">
             <ThemedText className="text-white bg-black">
               Error fetching {header}: {error.message}
             </ThemedText>
@@ -86,14 +96,11 @@ export default function HorizontalList({
 
   if (isLoading) {
     return (
-      <View
-        className="flex-1"
-        style={{ paddingHorizontal: Platform.isTV ? 40 : 20 }}
-      >
+      <View className="flex-1" style={{ paddingHorizontal: horizontalPadding }}>
         {!!header && (
           <ThemedText className="text-white text-2xl mb-3">{header}</ThemedText>
         )}
-        <View className="flex-row gap-[10px]">
+        <View className="flex-row gap-list-gap">
           {[...Array(7)].map((_, index) =>
             itemType === "episode" ? (
               <ContinueWatchingCardPlaceholder
@@ -117,11 +124,11 @@ export default function HorizontalList({
   // prevents errors on other platforms (web)
   return wrapTVFocusGuideView(
     <View>
-      <View style={{ minHeight: 100 }}>
+      <View className="min-h-list-min-height">
         {!!header && data && (
           <ThemedText
             className="text-white text-2xl mb-3"
-            style={{ paddingHorizontal: Platform.isTV ? 40 : 20 }}
+            style={{ paddingHorizontal: horizontalPadding }}
           >
             {header}
           </ThemedText>
@@ -137,8 +144,10 @@ export default function HorizontalList({
           data={data}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: Platform.isTV ? 40 : 20 }}
-          ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
+          contentContainerStyle={{
+            paddingHorizontal: horizontalPadding,
+          }}
+          ItemSeparatorComponent={() => <View className="w-list-gap" />}
           renderItem={({ item, index }) => {
             if (itemType === "cast") {
               return (
@@ -158,6 +167,8 @@ export default function HorizontalList({
                   title={getMediaTitle(item)}
                   imgAlt={getMediaTitle(item)}
                   showDescription={showDescription}
+                  onFocus={() => handleFocus(index)}
+                  hasTVPreferredFocus={hasPreferredFocus && index === 0}
                   width={posterWidth}
                 />
               );
@@ -183,12 +194,15 @@ export default function HorizontalList({
                 onFocus={() => {
                   const focusItem: FocusItem = {
                     media_type: item.media_type,
+                    media_source: item.media_source,
                     source_id: item.source_id,
                     media_title: item.media_title,
+                    logo_uri: item.logo_uri,
                     overview: item.overview,
                     backdrop_uri: item.backdrop_uri,
                     release_date: item.release_date,
                     status: item.status,
+                    duration: item.duration,
                     genres: item.genres,
                   };
                   setFocusedItem(focusItem);
@@ -207,7 +221,11 @@ export default function HorizontalList({
 
 function wrapTVFocusGuideView(children: React.ReactNode) {
   if (!Platform.isTV) return children;
-  return <TVFocusGuideView trapFocusRight>{children}</TVFocusGuideView>;
+  return (
+    <TVFocusGuideView autoFocus trapFocusRight>
+      {children}
+    </TVFocusGuideView>
+  );
 }
 
 function getMediaTitle(item: any) {

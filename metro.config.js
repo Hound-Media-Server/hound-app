@@ -13,12 +13,16 @@ const config = getDefaultConfig(__dirname); // eslint-disable-line no-undef
 // as usual if TV-specific files are not found for a module.
 //
 if (process.env?.EXPO_TV === "1") {
-    const originalSourceExts = config.resolver.sourceExts;
-    const tvSourceExts = [
-        ...originalSourceExts.map((e) => `tv.${e}`),
-        ...originalSourceExts,
-    ];
-    config.resolver.sourceExts = tvSourceExts;
+  const originalSourceExts = config.resolver.sourceExts;
+  const tvSourceExts = [
+    ...originalSourceExts.map((e) => `tv.${e}`),
+    ...originalSourceExts,
+  ];
+  config.resolver.sourceExts = tvSourceExts;
 }
 
-module.exports = withNativeWind(config, { input: "./global.css" });
+module.exports = withNativeWind(config, {
+  input: "./global.css",
+  // Keep rem reactive for TV builds, only tvOS changes its runtime value in global.css
+  inlineRem: process.env.EXPO_TV === "1" ? false : 14,
+});

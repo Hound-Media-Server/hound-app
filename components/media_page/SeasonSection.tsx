@@ -1,3 +1,4 @@
+import { useTVScale } from "@/hooks/useTVScale";
 import {
   View,
   TouchableOpacity,
@@ -21,6 +22,7 @@ import { getSelectStreamUrl } from "@/utils/navigation";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useModalStore } from "@/stores/modalStore";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
+import { normalizeOverview } from "@/utils/mediaMetadata";
 
 const isTV = Platform.isTV;
 
@@ -35,6 +37,7 @@ export default function SeasonSection({
   defaultSeason: number;
   mediaTitle?: string;
 }) {
+  const scale = useTVScale();
   const [selectedSeasonNum, setSelectedSeasonNum] =
     React.useState(defaultSeason);
   const {
@@ -91,8 +94,8 @@ export default function SeasonSection({
               data={seasons}
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 20 }}
-              ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
+              contentContainerStyle={{ paddingHorizontal: 20 * scale }}
+              ItemSeparatorComponent={() => <View className="w-list-gap" />}
               renderItem={({ item }: { item: any }) => (
                 <TouchableOpacity
                   focusable
@@ -109,7 +112,7 @@ export default function SeasonSection({
                       : isTV
                         ? " bg-gray-600"
                         : " bg-gray-400") +
-                    (isTV ? " h-[40px] w-[100px] focus:bg-secondary" : "")
+                    (isTV ? " h-season-height w-season-width focus:bg-secondary" : "")
                   }
                   activeOpacity={isTV ? 1 : 0.75}
                 >
@@ -248,7 +251,7 @@ function EpisodeSection({
         />
       )}
       {isTV && (
-        <View className="h-[80px] mt-3">
+        <View className="h-episode-info mt-3">
           <EpisodeInfo episode={focusedEpisode} watchedAt={focusedWatchedAt} />
         </View>
       )}
@@ -283,6 +286,7 @@ function EpisodeCard({
     | React.RefObject<FlatList<any> | null>;
   animateScroll: boolean;
 }) {
+  const scale = useTVScale();
   const openModal = useModalStore((s) => s.open);
   var info: string[] = [];
   if (episode?.duration) {
@@ -348,7 +352,7 @@ function EpisodeCard({
           >
             {episode.thumbnail_uri ? (
               <Image
-                className="w-[160px] h-[100px] md:w-[240px] md:h-[150px] rounded-md opacity-90"
+                className="w-episode-width h-episode-height md:w-episode-width-wide md:h-episode-height-wide rounded-md opacity-90"
                 source={
                   Platform.isTV
                     ? episode.thumbnail_uri
@@ -358,7 +362,7 @@ function EpisodeCard({
                 transition={1000}
               />
             ) : (
-              <View className="w-[160px] h-[100px] md:w-[240px] md:h-[150px] rounded-md bg-gray-800" />
+              <View className="w-episode-width h-episode-height md:w-episode-width-wide md:h-episode-height-wide rounded-md bg-gray-800" />
             )}
             {watchProgress && (
               <>
@@ -392,7 +396,7 @@ function EpisodeCard({
                 <View className="absolute w-4 h-4 bg-black/40 rounded-full" />
                 <MaterialIcons
                   name="check-circle"
-                  size={22}
+                  size={22 * scale}
                   color="yellow"
                   className="opacity-75"
                 />
@@ -401,7 +405,7 @@ function EpisodeCard({
             <View className="absolute inset-0 flex items-center justify-center rounded-md">
               <Ionicons
                 name="play"
-                size={38}
+                size={38 * scale}
                 color="white"
                 className="opacity-65"
               />
@@ -416,7 +420,7 @@ function EpisodeCard({
       </View>
       {!isTV && (
         <ThemedText className="text-gray-400 mb-4 text-sm">
-          {episode?.overview}
+          {normalizeOverview(episode?.overview)}
         </ThemedText>
       )}
     </View>
@@ -460,7 +464,7 @@ function EpisodeInfo({
       ) : null}
       {isTV && (
         <ThemedText className="text-gray-400 mb-4 text-base md:text-xl">
-          {episode?.overview}
+          {normalizeOverview(episode?.overview)}
         </ThemedText>
       )}
     </View>

@@ -1,5 +1,6 @@
 import { apiClient } from './apiClient';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type QueryClient } from '@tanstack/react-query';
+import { MediaTypeMovie, MediaTypeTVShow } from '@/constants/MediaTypes';
 
 /*
     id is in format tmdb-1234, etc.
@@ -17,11 +18,34 @@ const fetchSeasonDetails = (id: string, seasonNum: number): Promise<any> => {
   return apiClient(`/tv/${id}/season/${seasonNum}`);
 };
 
+const movieDetailsQuery = (id: string) => ({
+  queryKey: ['movie-details', id],
+  queryFn: () => fetchMovieDetails(id),
+  staleTime: 1000 * 60 * 5,
+});
+
+const showDetailsQuery = (id: string) => ({
+  queryKey: ['show-details', id],
+  queryFn: () => fetchShowDetails(id),
+  staleTime: 1000 * 60 * 5,
+});
+
+export const prefetchMediaDetails = (
+  queryClient: QueryClient,
+  item?: { media_type?: string; media_source?: string; source_id?: string | number },
+) => {
+  if (!item?.media_source || !item.source_id) return;
+  const id = `${item.media_source}-${item.source_id}`;
+  if (item.media_type === MediaTypeMovie) {
+    void queryClient.prefetchQuery(movieDetailsQuery(id));
+  } else if (item.media_type === MediaTypeTVShow) {
+    void queryClient.prefetchQuery(showDetailsQuery(id));
+  }
+};
+
 export const useMovieDetails = (id: string, enabled: boolean = true) => {
   return useQuery({
-    queryKey: ['movie-details', id],
-    queryFn: () => fetchMovieDetails(id),
-    staleTime: 1000 * 60 * 5,
+    ...movieDetailsQuery(id),
     enabled: enabled && !!id,
     select: (data: any) => data.data
   });
@@ -29,9 +53,7 @@ export const useMovieDetails = (id: string, enabled: boolean = true) => {
 
 export const useShowDetails = (id: string, enabled: boolean = true) => {
   return useQuery({
-    queryKey: ['show-details', id],
-    queryFn: () => fetchShowDetails(id),
-    staleTime: 1000 * 60 * 5,
+    ...showDetailsQuery(id),
     enabled: enabled && !!id,
     select: (data: any) => data.data
   });

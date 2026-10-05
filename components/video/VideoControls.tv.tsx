@@ -1,3 +1,4 @@
+import { useTVScale } from "@/hooks/useTVScale";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
@@ -6,7 +7,6 @@ import {
   Pressable,
   Modal,
   ScrollView,
-  Platform,
   StyleSheet,
   useTVEventHandler,
   HWEvent,
@@ -83,6 +83,8 @@ export default function VideoControlsTV({
   playbackBusy,
   streamData,
 }: VideoControlsProps) {
+  const scale = useTVScale();
+  const styles = React.useMemo(() => createStyles(scale), [scale]);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [showSubtitlesModal, setShowSubtitlesModal] = useState(false);
   const [showAudioModal, setShowAudioModal] = useState(false);
@@ -315,7 +317,7 @@ export default function VideoControlsTV({
                 focusable={controlsVisible && !isModalOpen}
                 onPress={onSeekBackward}
               >
-                <Ionicons name="play-back" size={25} color="white" />
+                <Ionicons name="play-back" size={25 * scale} color="white" />
               </FocusablePressable>
               <FocusablePressable
                 focusable={controlsVisible && !isModalOpen}
@@ -324,7 +326,7 @@ export default function VideoControlsTV({
               >
                 <Ionicons
                   name={paused ? "play" : "pause"}
-                  size={25}
+                  size={25 * scale}
                   color="white"
                 />
               </FocusablePressable>
@@ -332,14 +334,14 @@ export default function VideoControlsTV({
                 focusable={controlsVisible && !isModalOpen}
                 onPress={onSeekForward}
               >
-                <Ionicons name="play-forward" size={25} color="white" />
+                <Ionicons name="play-forward" size={25 * scale} color="white" />
               </FocusablePressable>
               {hasNextEpisode && (
                 <FocusablePressable
                   focusable={controlsVisible && !isModalOpen}
                   onPress={onNextEpisode}
                 >
-                  <Ionicons name="play-skip-forward" size={25} color="white" />
+                  <Ionicons name="play-skip-forward" size={25 * scale} color="white" />
                 </FocusablePressable>
               )}
             </View>
@@ -350,7 +352,7 @@ export default function VideoControlsTV({
                   focusable={controlsVisible && !isModalOpen}
                   onPress={() => setShowSubtitlesModal(true)}
                 >
-                  <Ionicons name="chatbox-outline" size={24} color="white" />
+                  <Ionicons name="chatbox-outline" size={24 * scale} color="white" />
                 </FocusablePressable>
               )}
 
@@ -359,7 +361,7 @@ export default function VideoControlsTV({
                   focusable={controlsVisible && !isModalOpen}
                   onPress={() => setShowAudioModal(true)}
                 >
-                  <Ionicons name="volume-high" size={24} color="white" />
+                  <Ionicons name="volume-high" size={24 * scale} color="white" />
                 </FocusablePressable>
               )}
 
@@ -370,7 +372,7 @@ export default function VideoControlsTV({
               >
                 <Ionicons
                   name={isZoomedToFill ? "contract" : "expand"}
-                  size={24}
+                  size={24 * scale}
                   color="white"
                 />
               </FocusablePressable>
@@ -383,7 +385,7 @@ export default function VideoControlsTV({
                 >
                   <Ionicons
                     name="information-circle-outline"
-                    size={24}
+                    size={24 * scale}
                     color="white"
                   />
                 </FocusablePressable>
@@ -394,7 +396,7 @@ export default function VideoControlsTV({
                 style={styles.iconButton}
                 onPress={() => setShowSettingsModal(true)}
               >
-                <Ionicons name="settings-outline" size={24} color="white" />
+                <Ionicons name="settings-outline" size={24 * scale} color="white" />
               </FocusablePressable>
             </View>
           </TVFocusGuideView>
@@ -405,9 +407,9 @@ export default function VideoControlsTV({
 
       {/* Autoplay Overlay */}
       {showAutoplay && (
-        <View className="absolute top-[15px] right-[15px] bg-black/40 py-3 px-4 rounded-full">
+        <View className="absolute bg-black/40 py-3 px-4 rounded-full" style={{ top: 15 * scale, right: 15 * scale }}>
           <View className="flex-row items-center justify-between">
-            <Ionicons name="play-skip-forward" size={16} color="white" />
+            <Ionicons name="play-skip-forward" size={16 * scale} color="white" />
             <ThemedText className="text-white ml-3">
               Next Episode in {Math.ceil(remainingTime)}s
             </ThemedText>
@@ -416,7 +418,7 @@ export default function VideoControlsTV({
               onPress={() => setAutoplayCanceled(true)}
               className="bg-white/20 rounded-full"
             >
-              <Ionicons name="close" size={20} color="white" />
+              <Ionicons name="close" size={20 * scale} color="white" />
             </FocusablePressable> */}
           </View>
         </View>
@@ -450,7 +452,7 @@ export default function VideoControlsTV({
               >
                 <Text style={styles.modalItemText}>Off</Text>
                 {selectedTextTrack === 0 && (
-                  <Ionicons name="checkmark" size={24} color="#FF6B6B" />
+                  <Ionicons name="checkmark" size={24 * scale} color="#FF6B6B" />
                 )}
               </TouchableOpacity>
               {textTracks.map((track) => (
@@ -477,7 +479,7 @@ export default function VideoControlsTV({
                     )}
                   </View>
                   {selectedTextTrack === track.id && (
-                    <Ionicons name="checkmark" size={24} color="#FF6B6B" />
+                    <Ionicons name="checkmark" size={24 * scale} color="#FF6B6B" />
                   )}
                 </TouchableOpacity>
               ))}
@@ -531,7 +533,7 @@ export default function VideoControlsTV({
                     )}
                   </View>
                   {selectedAudioTrack === track.id && (
-                    <Ionicons name="checkmark" size={24} color="#FF6B6B" />
+                    <Ionicons name="checkmark" size={24 * scale} color="#FF6B6B" />
                   )}
                 </TouchableOpacity>
               ))}
@@ -560,13 +562,13 @@ export default function VideoControlsTV({
                   <Text className="text-gray-200 text-lg">
                     {streamData.title}
                   </Text>
-                  <Text className="text-gray-500">
+                  <Text style={scale !== 1 ? { fontSize: 14 * scale } : undefined} className="text-gray-500">
                     {streamData.description}
                   </Text>
-                  <Text className="text-gray-300">
+                  <Text style={scale !== 1 ? { fontSize: 14 * scale } : undefined} className="text-gray-300">
                     Provider: {streamData.provider_profile_name}
                   </Text>
-                  <Text className="text-gray-300">
+                  <Text style={scale !== 1 ? { fontSize: 14 * scale } : undefined} className="text-gray-300">
                     Protocol: {streamData.stream_protocol}
                   </Text>
                 </>
@@ -658,122 +660,123 @@ const FocusableMenuItem = ({ children, ...props }: any) => {
   );
 };
 
-const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: "transparent",
-  },
-  controlsContainer: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "flex-end",
-  },
-  topBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
-    paddingTop: Platform.OS === "ios" ? 50 : 20,
-  },
-  topBarRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  bottomBar: {
-    padding: 20,
-    paddingBottom: Platform.OS === "ios" ? 40 : 20,
-  },
-  skipButtonInline: {
-    alignSelf: "flex-end",
-    marginBottom: 12,
-  },
-  skipButtonFloating: {
-    position: "absolute",
-    right: 20,
-    bottom: Platform.OS === "ios" ? 40 : 20,
-  },
-  progressContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  slider: {
-    flex: 1,
-    marginHorizontal: 10,
-    justifyContent: "center",
-    height: 30,
-  },
-  progressTrack: {
-    height: 8,
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-  },
-  timeText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "600",
-    width: 50,
-  },
-  currentTimeText: {
-    textAlign: "right",
-  },
-  durationTimeText: {
-    textAlign: "left",
-  },
-  bottomButtons: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: 15,
-  },
-  iconButton: {
-    padding: 10,
-    alignItems: "center",
-  },
-  smallText: {
-    color: "white",
-    fontSize: 10,
-    marginTop: 2,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.8)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#1a1a1a",
-    borderRadius: 12,
-    padding: 20,
-    width: "80%",
-    maxWidth: 400,
-    maxHeight: "70%",
-  },
-  modalTitle: {
-    color: "white",
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
-  },
-  modalItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#333",
-  },
-  modalItemText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  modalItemSubtext: {
-    color: "#999",
-    fontSize: 14,
-    marginTop: 2,
-  },
-});
+const createStyles = (scale: number) =>
+  StyleSheet.create({
+    overlay: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+    },
+    controlsContainer: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      justifyContent: "flex-end",
+    },
+    topBar: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: 20 * scale,
+      paddingTop: 20 * scale,
+    },
+    topBarRight: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10 * scale,
+    },
+    bottomBar: {
+      padding: 20 * scale,
+      paddingBottom: 20 * scale,
+    },
+    skipButtonInline: {
+      alignSelf: "flex-end",
+      marginBottom: 12 * scale,
+    },
+    skipButtonFloating: {
+      position: "absolute",
+      right: 20 * scale,
+      bottom: 20 * scale,
+    },
+    progressContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 10 * scale,
+    },
+    slider: {
+      flex: 1,
+      marginHorizontal: 10 * scale,
+      justifyContent: "center",
+      height: 30 * scale,
+    },
+    progressTrack: {
+      height: 8 * scale,
+      borderRadius: 4 * scale,
+      overflow: "hidden",
+    },
+    progressFill: {
+      height: "100%",
+    },
+    timeText: {
+      color: "white",
+      fontSize: 14 * scale,
+      fontWeight: "600",
+      width: 50 * scale,
+    },
+    currentTimeText: {
+      textAlign: "right",
+    },
+    durationTimeText: {
+      textAlign: "left",
+    },
+    bottomButtons: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      gap: 15 * scale,
+    },
+    iconButton: {
+      padding: 10 * scale,
+      alignItems: "center",
+    },
+    smallText: {
+      color: "white",
+      fontSize: 10 * scale,
+      marginTop: 2 * scale,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.8)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    modalContent: {
+      backgroundColor: "#1a1a1a",
+      borderRadius: 12 * scale,
+      padding: 20 * scale,
+      width: "80%",
+      maxWidth: 400 * scale,
+      maxHeight: "70%",
+    },
+    modalTitle: {
+      color: "white",
+      fontSize: 20 * scale,
+      fontWeight: "bold",
+      marginBottom: 15 * scale,
+    },
+    modalItem: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: 15 * scale,
+      borderBottomWidth: 1,
+      borderBottomColor: "#333",
+    },
+    modalItemText: {
+      color: "white",
+      fontSize: 16 * scale,
+      fontWeight: "600",
+    },
+    modalItemSubtext: {
+      color: "#999",
+      fontSize: 14 * scale,
+      marginTop: 2 * scale,
+    },
+  });
