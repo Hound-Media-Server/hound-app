@@ -48,10 +48,15 @@
     },
     "production": {
       "autoIncrement": true,
+      "channel": "production",
+      "env": {
+        "EXPO_TV": "0"
+      },
       "environment": "production"
     },
     "production_tv": {
       "extends": "production",
+      "channel": "production_tv",
       "env": {
         "EXPO_TV": "1"
       }
