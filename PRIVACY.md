@@ -1,12 +1,12 @@
 # Privacy Policy
 
-This privacy policy applies to the **Hound** mobile application (the "Application") for Android and IOS devices.
+This privacy policy applies to the **Hound** mobile application (the "Application") for Android and iOS devices.
 
 ## Architecture & Data Flow
 
 The Application functions exclusively as a client interface for user-configured, self-hosted servers.
 
-- **User-Controlled Data:** All data, credentials, and media files processed by the Application are transmitted solely between the user's Android device and the self-hosted server instance explicitly designated and controlled by the user.
+- **User-Controlled Data:** All data, credentials, and media files processed by the Application are transmitted solely between the user's device and the self-hosted server instance explicitly designated and controlled by the user.
 - **No Developer Access:** The developer of this Application does not host any backend servers, track user traffic, or have access to any data transmitted between the Application and the user's self-hosted server.
 - **No Central Collection:** The Application does not collect, aggregate, or store personal information, usage metrics, or account data on any central or third-party database.
 
