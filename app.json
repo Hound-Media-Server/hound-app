@@ -72,7 +72,14 @@
       "expo-secure-store",
       "react-native-video",
       "expo-image",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false,
+          "style": "light"
+        }
+      ]
     ],
     "android": {
       "package": "com.houndmediaserver.hound",
@@ -82,7 +89,8 @@
       "bundleIdentifier": "com.houndmediaserver.houndapp",
       "supportsTablet": true,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Hound contains a reference to a camera API, but accessing the camera is not part of the app's usage."
       }
     },
     "web": {

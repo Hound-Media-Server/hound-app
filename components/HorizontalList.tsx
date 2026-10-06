@@ -168,7 +168,6 @@ export default function HorizontalList({
                   imgAlt={getMediaTitle(item)}
                   showDescription={showDescription}
                   onFocus={() => handleFocus(index)}
-                  hasTVPreferredFocus={hasPreferredFocus && index === 0}
                   width={posterWidth}
                 />
               );

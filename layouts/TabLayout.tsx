@@ -13,7 +13,7 @@ export default function TabLayoutMobile() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "#000000" }}>
       <Tabs
         safeAreaInsets={{ bottom: 0 }}
         initialRouteName="index"
