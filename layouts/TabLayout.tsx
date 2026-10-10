@@ -129,7 +129,7 @@ export default function TabLayoutMobile() {
           }}
         />
       </Tabs>
-      {pathname !== "/search" && (
+      {pathname === "/" && (
         <Pressable
           accessibilityLabel="Search"
           accessibilityRole="button"
