@@ -98,17 +98,23 @@ function DirectStream({
       episode?: string;
       previousEncodedData?: string;
     }>();
-  const { selectedStream, tryNextStream, isLoading, isError } = useDirectStream({
-    mediaType,
-    id,
-    season: season ? parseInt(season) : undefined,
-    episode: episode ? parseInt(episode) : undefined,
-    previousEncodedData,
-  });
+  const { selectedStream, hasMediaFile, tryNextStream, isLoading, isError } =
+    useDirectStream({
+      mediaType,
+      id,
+      season: season ? parseInt(season) : undefined,
+      episode: episode ? parseInt(episode) : undefined,
+      previousEncodedData,
+    });
   const isValidMediaType =
     mediaType === MediaTypeMovie || mediaType === MediaTypeTVShow;
   const lastFault = useRef<string | null>(null);
+  const [streamError, setStreamError] = useState(false);
   useEffect(() => {
+    if (streamError) {
+      onLoadingChange("No playable streams found.");
+      return;
+    }
     if (isValidMediaType && selectedStream) return;
     onLoadingChange(
       !isValidMediaType
@@ -119,18 +125,30 @@ function DirectStream({
             ? "Failed to fetch streams."
             : "No streams available",
     );
-  }, [isValidMediaType, selectedStream, isLoading, isError, onLoadingChange]);
+  }, [
+    isValidMediaType,
+    selectedStream,
+    isLoading,
+    isError,
+    streamError,
+    onLoadingChange,
+  ]);
 
-  return isValidMediaType && selectedStream ? (
+  return isValidMediaType && selectedStream && !streamError ? (
     <StreamPlayer
       key={selectedStream.encodedData}
       {...selectedStream}
       onLoadingChange={onLoadingChange}
-      onDuration={(duration) => {
-        if (!Number.isFinite(duration) || duration <= 0 || duration >= 60 || lastFault.current === selectedStream.encodedData) return;
-        lastFault.current = selectedStream.encodedData;
-        tryNextStream();
-      }}
+      onDuration={
+        hasMediaFile ? undefined : (duration) => {
+          if (!Number.isFinite(duration) || duration <= 0) return false;
+          if (duration >= 60) return true;
+          if (lastFault.current === selectedStream.encodedData) return false;
+          lastFault.current = selectedStream.encodedData;
+          if (!tryNextStream()) setStreamError(true);
+          return false;
+        }
+      }
     />
   ) : null;
 }
@@ -144,7 +162,7 @@ function StreamPlayer({
   encodedData: string;
   streamsMatch: boolean;
   onLoadingChange: (message: string | null) => void;
-  onDuration?: (duration: number) => void;
+  onDuration?: (duration: number) => boolean;
 }) {
   const router = useRouter();
   const {
@@ -321,9 +339,8 @@ function StreamPlayer({
 
   // Progress callback from video screens
   const handleProgress = useCallback((time: number, dur: number) => {
-    onDuration?.(dur);
     setPlaybackProgress({ time, duration: dur });
-  }, [onDuration]);
+  }, []);
 
   // Determine if near end (>80% or <5 min remaining)
   const isNearEnd = useMemo(() => {
@@ -487,6 +504,7 @@ function StreamPlayer({
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
           encodedData={encodedData}
           onReady={handlePlayerReady}
+          onDuration={onDuration}
           defaultSubtitleIdx={activeSubtitleIdx}
           defaultAudioIdx={activeAudioIdx}
           defaultAudioLang={defaultAudioLang}
@@ -512,6 +530,7 @@ function StreamPlayer({
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
           encodedData={encodedData}
           onReady={handlePlayerReady}
+          onDuration={onDuration}
           defaultSubtitleIdx={activeSubtitleIdx}
           defaultAudioIdx={activeAudioIdx}
           defaultAudioLang={defaultAudioLang}

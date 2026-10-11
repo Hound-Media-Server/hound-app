@@ -218,7 +218,6 @@ export default function VideoControlsTV({
       }
       focusable
       hasTVPreferredFocus={!controlsVisible}
-      accessibilityRole="button"
       onPress={() => {
         if (skipSegment.nextEpisode) onNextEpisode?.();
         else onSeek(skipSegment.end);
@@ -341,7 +340,11 @@ export default function VideoControlsTV({
                   focusable={controlsVisible && !isModalOpen}
                   onPress={onNextEpisode}
                 >
-                  <Ionicons name="play-skip-forward" size={25 * scale} color="white" />
+                  <Ionicons
+                    name="play-skip-forward"
+                    size={25 * scale}
+                    color="white"
+                  />
                 </FocusablePressable>
               )}
             </View>
@@ -352,7 +355,11 @@ export default function VideoControlsTV({
                   focusable={controlsVisible && !isModalOpen}
                   onPress={() => setShowSubtitlesModal(true)}
                 >
-                  <Ionicons name="chatbox-outline" size={24 * scale} color="white" />
+                  <Ionicons
+                    name="chatbox-outline"
+                    size={24 * scale}
+                    color="white"
+                  />
                 </FocusablePressable>
               )}
 
@@ -361,7 +368,11 @@ export default function VideoControlsTV({
                   focusable={controlsVisible && !isModalOpen}
                   onPress={() => setShowAudioModal(true)}
                 >
-                  <Ionicons name="volume-high" size={24 * scale} color="white" />
+                  <Ionicons
+                    name="volume-high"
+                    size={24 * scale}
+                    color="white"
+                  />
                 </FocusablePressable>
               )}
 
@@ -396,7 +407,11 @@ export default function VideoControlsTV({
                 style={styles.iconButton}
                 onPress={() => setShowSettingsModal(true)}
               >
-                <Ionicons name="settings-outline" size={24 * scale} color="white" />
+                <Ionicons
+                  name="settings-outline"
+                  size={24 * scale}
+                  color="white"
+                />
               </FocusablePressable>
             </View>
           </TVFocusGuideView>
@@ -407,9 +422,16 @@ export default function VideoControlsTV({
 
       {/* Autoplay Overlay */}
       {showAutoplay && (
-        <View className="absolute bg-black/40 py-3 px-4 rounded-full" style={{ top: 15 * scale, right: 15 * scale }}>
+        <View
+          className="absolute bg-black/40 py-3 px-4 rounded-full"
+          style={{ top: 15 * scale, right: 15 * scale }}
+        >
           <View className="flex-row items-center justify-between">
-            <Ionicons name="play-skip-forward" size={16 * scale} color="white" />
+            <Ionicons
+              name="play-skip-forward"
+              size={16 * scale}
+              color="white"
+            />
             <ThemedText className="text-white ml-3">
               Next Episode in {Math.ceil(remainingTime)}s
             </ThemedText>
@@ -452,7 +474,11 @@ export default function VideoControlsTV({
               >
                 <Text style={styles.modalItemText}>Off</Text>
                 {selectedTextTrack === 0 && (
-                  <Ionicons name="checkmark" size={24 * scale} color="#FF6B6B" />
+                  <Ionicons
+                    name="checkmark"
+                    size={24 * scale}
+                    color="#FF6B6B"
+                  />
                 )}
               </TouchableOpacity>
               {textTracks.map((track) => (
@@ -479,7 +505,11 @@ export default function VideoControlsTV({
                     )}
                   </View>
                   {selectedTextTrack === track.id && (
-                    <Ionicons name="checkmark" size={24 * scale} color="#FF6B6B" />
+                    <Ionicons
+                      name="checkmark"
+                      size={24 * scale}
+                      color="#FF6B6B"
+                    />
                   )}
                 </TouchableOpacity>
               ))}
@@ -533,7 +563,11 @@ export default function VideoControlsTV({
                     )}
                   </View>
                   {selectedAudioTrack === track.id && (
-                    <Ionicons name="checkmark" size={24 * scale} color="#FF6B6B" />
+                    <Ionicons
+                      name="checkmark"
+                      size={24 * scale}
+                      color="#FF6B6B"
+                    />
                   )}
                 </TouchableOpacity>
               ))}
@@ -562,13 +596,22 @@ export default function VideoControlsTV({
                   <Text className="text-gray-200 text-lg">
                     {streamData.title}
                   </Text>
-                  <Text style={scale !== 1 ? { fontSize: 14 * scale } : undefined} className="text-gray-500">
+                  <Text
+                    style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
+                    className="text-gray-500"
+                  >
                     {streamData.description}
                   </Text>
-                  <Text style={scale !== 1 ? { fontSize: 14 * scale } : undefined} className="text-gray-300">
+                  <Text
+                    style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
+                    className="text-gray-300"
+                  >
                     Provider: {streamData.provider_profile_name}
                   </Text>
-                  <Text style={scale !== 1 ? { fontSize: 14 * scale } : undefined} className="text-gray-300">
+                  <Text
+                    style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
+                    className="text-gray-300"
+                  >
                     Protocol: {streamData.stream_protocol}
                   </Text>
                 </>

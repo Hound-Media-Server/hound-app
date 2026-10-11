@@ -35,6 +35,7 @@ export default function MPVVideoScreen(props: {
   onTrackChange?: (subtitleIdx: number, audioIdx: number) => void;
   displayInfo?: DisplayInfo;
   onReady?: () => void;
+  onDuration?: (duration: number) => boolean;
   playerSettings?: PlayerSettings | null;
   onChangePlayer?: (
     player: "exoplayer" | "mpv",
@@ -63,8 +64,8 @@ export default function MPVVideoScreen(props: {
   );
   const [isReady, setIsReady] = useState(false);
   useEffect(() => {
-    if (isReady) props.onReady?.();
-  }, [isReady, props.onReady]);
+    if (isReady && props.onDuration?.(duration) !== false) props.onReady?.();
+  }, [isReady, duration, props.onDuration, props.onReady]);
   const [isBuffering, setIsBuffering] = useState(false);
   const [appSettings] = useState<SettingsSchema>(getAllSettings());
   const defaultAudioSelected = useRef(false);
@@ -210,12 +211,16 @@ export default function MPVVideoScreen(props: {
   }, [isReady, appSettings?.subtitleSize]);
 
   const handleLoad = async () => {
-    // don't seem to need this yet
+    const duration = await videoRef.current?.getDuration();
+    if (!mounted.current) return false;
+    if (duration) setDuration(duration);
+    return props.onDuration?.(duration ?? 0) !== false;
   };
 
   // Reapply committed selections after FILE_LOADED or external track additions.
-  const handleTracksReady = () =>
-    queueTrackUpdate(async () => {
+  const handleTracksReady = () => {
+    void handleLoad();
+    return queueTrackUpdate(async () => {
       try {
         const subtitles = await videoRef.current?.getSubtitleTracks();
         const audio = await videoRef.current?.getAudioTracks();
@@ -355,6 +360,7 @@ export default function MPVVideoScreen(props: {
         setIsReady(true);
       }
     });
+  };
 
   const handlePlaybackStateChange = async (event: any) => {
     const { isPaused, isReadyToSeek, isLoading } = event.nativeEvent;
@@ -363,6 +369,7 @@ export default function MPVVideoScreen(props: {
       setPaused(isPaused);
     }
     if (isReadyToSeek) {
+      if (!(await handleLoad())) return;
       setIsReady(true);
       // seek to start time
       if (props.startTime) {

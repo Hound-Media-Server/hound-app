@@ -63,12 +63,14 @@ export function useDirectStream({
 
   return {
     selectedStream,
+    hasMediaFile,
     tryNextStream: () => {
-      if (hasMediaFile) return;
+      if (hasMediaFile) return false;
       const index = streams.findIndex((stream: any) => stream.encoded_data === selectedStream?.encodedData);
-      if (attempt >= 3 || index < 0 || !streams[index + 1]) return;
+      if (attempt >= 3 || index < 0 || !streams[index + 1]) return false;
       setAttempt(attempt + 1);
       setSelectedStream({ encodedData: streams[index + 1].encoded_data, streamsMatch: false });
+      return true;
     },
     isLoading: !selectedStream &&
       (mediaFiles.isPending || providers.isPending || streams.length > 0),

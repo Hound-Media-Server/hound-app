@@ -28,10 +28,9 @@ export default function PlayerLoadingOverlay({
     inputRange: [0.8, 1],
     outputRange: [0.45, 1],
   });
-  const year = (mediaDetails?.release_date || mediaDetails?.first_air_date)?.slice(
-    0,
-    4,
-  );
+  const year = (
+    mediaDetails?.release_date || mediaDetails?.first_air_date
+  )?.slice(0, 4);
 
   return (
     <View style={StyleSheet.absoluteFill} className="bg-black overflow-hidden">
@@ -57,16 +56,15 @@ export default function PlayerLoadingOverlay({
         locations={[0, 0.55]}
         style={StyleSheet.absoluteFill}
       />
-      <Pressable
-        accessibilityLabel="Close player"
-        accessibilityRole="button"
-        onPress={() => router.back()}
-        hasTVPreferredFocus={Platform.isTV}
-        className="absolute rounded-full p-2 border-2 border-transparent focus:border-white"
-        style={{ top: 16 * scale, left: 16 * scale }}
-      >
-        <Ionicons name="arrow-back" size={24 * scale} color="white" />
-      </Pressable>
+      {Platform.OS === "ios" && !Platform.isTV && (
+        <Pressable
+          onPress={() => router.back()}
+          className="absolute p-2"
+          style={{ top: 16 * scale, left: 16 * scale }}
+        >
+          <Ionicons name="arrow-back" size={24 * scale} color="white" />
+        </Pressable>
+      )}
       <View
         className="absolute items-end"
         style={{
@@ -90,7 +88,10 @@ export default function PlayerLoadingOverlay({
             <ThemedText
               className="text-white text-right"
               style={{
-                fontSize: Math.max(16 * scale, Math.min(height * 0.03, 40 * scale)),
+                fontSize: Math.max(
+                  16 * scale,
+                  Math.min(height * 0.03, 40 * scale),
+                ),
               }}
             >
               {mediaDetails?.media_title}
@@ -99,7 +100,6 @@ export default function PlayerLoadingOverlay({
           )}
         </Animated.View>
         <ThemedText
-          accessibilityLiveRegion="polite"
           className="text-white text-right"
           style={{ marginTop: 12 * scale, fontSize: 14 * scale }}
         >

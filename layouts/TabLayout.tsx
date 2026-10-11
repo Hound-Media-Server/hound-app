@@ -131,8 +131,6 @@ export default function TabLayoutMobile() {
       </Tabs>
       {pathname === "/" && (
         <Pressable
-          accessibilityLabel="Search"
-          accessibilityRole="button"
           onPress={() => router.navigate("/search")}
           style={{
             position: "absolute",
