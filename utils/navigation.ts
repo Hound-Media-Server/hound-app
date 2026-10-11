@@ -1,5 +1,4 @@
 import { getSetting } from "@/stores/settingsStore";
-import { fetchMediaFiles, fetchProviders } from "@/services/providerService";
 import { MediaTypeMovie, MediaTypeTVShow, MediaType } from "@/constants/MediaTypes";
 
 export interface StreamUrlParams {
@@ -11,7 +10,7 @@ export interface StreamUrlParams {
   startTime?: number | string;
   playerSettings?: string;
   streamsMatch?: boolean;
-  previousEncodedData?: string; // previous watched stream, will be prioritized if autoSelect is true
+  previousEncodedData?: string; // previous watched stream, prioritized during direct play
 }
 
 export function getStreamUrl(encodedData: string, params: StreamUrlParams) {
@@ -32,6 +31,9 @@ export function getStreamUrl(encodedData: string, params: StreamUrlParams) {
 // forceSelect -> user explicitly wants to see the select stream modal
 export function getSelectStreamUrl(params: StreamUrlParams, forceSelect?: boolean) {
   const playAction = getSetting("defaultPlayAction");
+  if (playAction === "direct" && !forceSelect) {
+    return getStreamUrl("direct", params);
+  }
   const queryParts = [];
   queryParts.push(`id=${params.id}`);
   queryParts.push(`mediaType=${params.mediaType}`);
@@ -41,12 +43,6 @@ export function getSelectStreamUrl(params: StreamUrlParams, forceSelect?: boolea
   if (params.startTime) queryParts.push(`startTime=${params.startTime}`);
   if (params.playerSettings) queryParts.push(`playerSettings=${encodeURIComponent(params.playerSettings)}`);
   if (params.previousEncodedData) queryParts.push(`previousEncodedData=${encodeURIComponent(params.previousEncodedData)}`);
-
-  // In direct play, select-stream modal will resolve the top result, 
-  // attempting to match previousEncodeData if available
-  if (playAction === "direct" && !forceSelect) {
-    queryParts.push("autoSelect=true");
-  }
 
   return `/select-stream?${queryParts.join("&")}` as any;
 }

@@ -1,4 +1,4 @@
-import { Platform, View, ActivityIndicator } from "react-native";
+import { Platform, View } from "react-native";
 import React, { useState, useMemo, useRef, useCallback } from "react";
 import { useEffect } from "react";
 import { lockLandscape, unlockOrientation } from "@/utils/screenOrientation";
@@ -7,6 +7,9 @@ import { useSession } from "@/services/ctx";
 import MPVVideoScreen from "@/components/video/MPVVideoScreen";
 import { useKeepAwake } from "expo-keep-awake";
 import VideoScreen from "@/components/video/ExoplayerVideoScreen";
+import PlayerLoadingOverlay from "@/components/video/PlayerLoadingOverlay";
+import { useDirectStream } from "@/hooks/useDirectStream";
+import { StatusBar } from "expo-status-bar";
 import {
   getAllSettings,
   getSetting,
@@ -38,24 +41,139 @@ export type DisplayInfo = {
 };
 
 export default function Stream() {
+  const { encoded_data, streamsMatch, id, mediaType, season, episode } =
+    useLocalSearchParams();
+  const [loadingMessage, setLoadingMessage] = useState<string | null>(
+    encoded_data === "direct" ? "Fetching streams..." : "Loading player...",
+  );
+  const { data: movieDetails } = useMovieDetails(
+    id as string,
+    mediaType === MediaTypeMovie,
+  );
+  const { data: showDetails } = useShowDetails(
+    id as string,
+    mediaType === MediaTypeTVShow,
+  );
+  useKeepAwake();
+  useEffect(() => {
+    lockLandscape();
+    return () => unlockOrientation();
+  }, []);
+
+  return (
+    <View className="flex-1 bg-black">
+      <StatusBar hidden />
+      {encoded_data === "direct" ? (
+        <DirectStream
+          key={`${id}:${season}:${episode}`}
+          onLoadingChange={setLoadingMessage}
+        />
+      ) : (
+        <StreamPlayer
+          encodedData={encoded_data as string}
+          streamsMatch={streamsMatch === "true"}
+          onLoadingChange={setLoadingMessage}
+        />
+      )}
+      {loadingMessage !== null && (
+        <PlayerLoadingOverlay
+          mediaDetails={movieDetails || showDetails}
+          message={loadingMessage}
+        />
+      )}
+    </View>
+  );
+}
+
+function DirectStream({
+  onLoadingChange,
+}: {
+  onLoadingChange: (message: string | null) => void;
+}) {
+  const { id, mediaType, season, episode, previousEncodedData } =
+    useLocalSearchParams<{
+      id: string;
+      mediaType: string;
+      season?: string;
+      episode?: string;
+      previousEncodedData?: string;
+    }>();
+  const { selectedStream, tryNextStream, isLoading, isError } = useDirectStream({
+    mediaType,
+    id,
+    season: season ? parseInt(season) : undefined,
+    episode: episode ? parseInt(episode) : undefined,
+    previousEncodedData,
+  });
+  const isValidMediaType =
+    mediaType === MediaTypeMovie || mediaType === MediaTypeTVShow;
+  const lastFault = useRef<string | null>(null);
+  useEffect(() => {
+    if (isValidMediaType && selectedStream) return;
+    onLoadingChange(
+      !isValidMediaType
+        ? "Invalid media type"
+        : isLoading
+          ? "Fetching streams..."
+          : isError
+            ? "Failed to fetch streams."
+            : "No streams available",
+    );
+  }, [isValidMediaType, selectedStream, isLoading, isError, onLoadingChange]);
+
+  return isValidMediaType && selectedStream ? (
+    <StreamPlayer
+      key={selectedStream.encodedData}
+      {...selectedStream}
+      onLoadingChange={onLoadingChange}
+      onDuration={(duration) => {
+        if (!Number.isFinite(duration) || duration <= 0 || duration >= 60 || lastFault.current === selectedStream.encodedData) return;
+        lastFault.current = selectedStream.encodedData;
+        tryNextStream();
+      }}
+    />
+  ) : null;
+}
+
+function StreamPlayer({
+  encodedData,
+  streamsMatch,
+  onLoadingChange,
+  onDuration,
+}: {
+  encodedData: string;
+  streamsMatch: boolean;
+  onLoadingChange: (message: string | null) => void;
+  onDuration?: (duration: number) => void;
+}) {
   const router = useRouter();
   const {
-    encoded_data,
     startTime,
     id,
     mediaType,
     season,
     episode,
-    streamsMatch,
     playerSettings,
   } = useLocalSearchParams();
-  const { data: decodedStreams } = useDecodeStreams(encoded_data as string);
+  const { data: decodedStreams } = useDecodeStreams(encodedData);
   const { session } = useSession();
   const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
   const [currentProgress, setCurrentProgress] = useState<number>(
     startTime ? parseInt(startTime as string, 10) : 0,
   );
   const [isNavigating, setIsNavigating] = useState(false);
+  useEffect(() => {
+    onLoadingChange(
+      currentPlayer === null
+        ? "Loading player..."
+        : currentPlayer === "exoplayer" && Platform.OS !== "ios"
+          ? "Loading Exoplayer..."
+          : "Loading MPV...",
+    );
+  }, [currentPlayer, isNavigating, onLoadingChange]);
+  const handlePlayerReady = useCallback(() => {
+    onLoadingChange(null);
+  }, [onLoadingChange]);
   const parsedPlayerSettings = playerSettings
     ? JSON.parse(playerSettings as string)
     : null;
@@ -66,15 +184,13 @@ export default function Stream() {
 
   // streamsMatch=true means the saved progress encoded_data matches this
   // exact stream, so use last selected subtitle_idx/audio_idx
-  const isStreamsMatch = streamsMatch === "true";
-
   // MPV indexes 1-based by default, exoplayer is 0-based,
   // normalized to 1-based here
   const [activeSubtitleIdx, setActiveSubtitleIdx] = useState<number | null>(
-    isStreamsMatch ? (parsedPlayerSettings?.subtitle_idx ?? null) : null,
+    streamsMatch ? (parsedPlayerSettings?.subtitle_idx ?? null) : null,
   );
   const [activeAudioIdx, setActiveAudioIdx] = useState<number | null>(
-    isStreamsMatch ? (parsedPlayerSettings?.audio_idx ?? null) : null,
+    streamsMatch ? (parsedPlayerSettings?.audio_idx ?? null) : null,
   );
   const [displayInfo, setDisplayInfo] = useState<DisplayInfo | undefined>(
     undefined,
@@ -205,8 +321,9 @@ export default function Stream() {
 
   // Progress callback from video screens
   const handleProgress = useCallback((time: number, dur: number) => {
+    onDuration?.(dur);
     setPlaybackProgress({ time, duration: dur });
-  }, []);
+  }, [onDuration]);
 
   // Determine if near end (>80% or <5 min remaining)
   const isNearEnd = useMemo(() => {
@@ -314,7 +431,6 @@ export default function Stream() {
   }, [isNearEnd, nextEpisodeInfo, id, autoplayEnabled, currentSettings]);
 
   useEffect(() => {
-    lockLandscape();
     // Load setting
     const defaultResizeMode =
       mediaType === MediaTypeMovie
@@ -331,10 +447,6 @@ export default function Stream() {
       ...prev,
       resize_mode: prev?.resize_mode || defaultResizeMode || "contain",
     }));
-
-    return () => {
-      unlockOrientation();
-    };
   }, [mediaType]);
 
   const handlePlayerChange = async (
@@ -355,27 +467,16 @@ export default function Stream() {
     }
   };
 
-  useKeepAwake();
-
   if (!session) return null;
-  if (currentPlayer === null) {
-    return (
-      <View className="flex-1 bg-black items-center justify-center">
-        <ActivityIndicator size="large" color="white" />
-      </View>
-    );
-  }
+  if (currentPlayer === null || isNavigating || (!movieDetails && !showDetails))
+    return null;
 
-  let url = `${session?.host}/api/v1/stream/${encoded_data}`;
+  let url = `${session?.host}/api/v1/stream/${encodedData}`;
 
   // IOS will only play with MPV
   return (
     <View className="flex-1 bg-black justify-center items-center">
-      {isNavigating || (!movieDetails && !showDetails) ? (
-        <View className="flex-1 bg-black items-center justify-center">
-          <ActivityIndicator size="large" color="white" />
-        </View>
-      ) : currentPlayer === "mpv" || Platform.OS === "ios" ? (
+      {currentPlayer === "mpv" || Platform.OS === "ios" ? (
         <MPVVideoScreen
           key={url}
           src={url}
@@ -384,7 +485,8 @@ export default function Stream() {
           mediaType={mediaType as MediaType}
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
-          encodedData={encoded_data as string}
+          encodedData={encodedData}
+          onReady={handlePlayerReady}
           defaultSubtitleIdx={activeSubtitleIdx}
           defaultAudioIdx={activeAudioIdx}
           defaultAudioLang={defaultAudioLang}
@@ -408,7 +510,8 @@ export default function Stream() {
           mediaType={mediaType as MediaType}
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
-          encodedData={encoded_data as string}
+          encodedData={encodedData}
+          onReady={handlePlayerReady}
           defaultSubtitleIdx={activeSubtitleIdx}
           defaultAudioIdx={activeAudioIdx}
           defaultAudioLang={defaultAudioLang}

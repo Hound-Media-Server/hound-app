@@ -1,5 +1,4 @@
 import {
-  ActivityIndicator,
   Alert,
   Platform,
   useWindowDimensions,
@@ -26,7 +25,6 @@ import type {
 } from "react-native-video";
 import VideoControls from "./VideoControls";
 import VideoControlsTV from "./VideoControls.tv";
-import { ThemedText } from "../ThemedText";
 import { router } from "expo-router";
 import { getAllSettings, SettingsSchema } from "@/stores/settingsStore";
 import { get2LetterLangCode } from "@/utils/locale";
@@ -48,6 +46,7 @@ export default function ExoplayerVideoScreen(props: {
   defaultAudioLang?: string | undefined;
   onTrackChange?: (subtitleIdx: number, audioIdx: number) => void;
   displayInfo?: DisplayInfo;
+  onReady?: () => void;
   playerSettings?: PlayerSettings | null;
   onChangePlayer?: (
     player: "exoplayer" | "mpv",
@@ -373,6 +372,7 @@ export default function ExoplayerVideoScreen(props: {
           paused={paused}
           resizeMode={isZoomedToFill ? ResizeMode.COVER : ResizeMode.CONTAIN}
           onLoad={handleLoad}
+          onReadyForDisplay={props.onReady}
           onProgress={handleProgress}
           onBuffer={({ isBuffering }) => setIsBuffering(isBuffering)}
           onSeek={({ currentTime }) => {
@@ -458,17 +458,7 @@ export default function ExoplayerVideoScreen(props: {
             streamData={props.streamData}
           />
         )}
-        {!isReady && <LoadingOverlay />}
       </View>
     </>
   );
 }
-
-const LoadingOverlay = () => {
-  return (
-    <View className="absolute top-0 left-0 right-0 bottom-0 w-100 h-100 bg-black flex items-center justify-center">
-      <ActivityIndicator size="large" color="white" />
-      <ThemedText className="text-white mt-2">Loading Exoplayer...</ThemedText>
-    </View>
-  );
-};

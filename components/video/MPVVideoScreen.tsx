@@ -1,5 +1,4 @@
 import {
-  ActivityIndicator,
   Alert,
   Platform,
   useWindowDimensions,
@@ -15,7 +14,6 @@ import {
 import { MpvPlayerView, MpvPlayerViewRef } from "@/modules/mpv-player";
 import VideoControls from "./VideoControls";
 import VideoControlsTV from "./VideoControls.tv";
-import { ThemedText } from "../ThemedText";
 import { router } from "expo-router";
 import { getAllSettings, SettingsSchema } from "@/stores/settingsStore";
 import { get2LetterLangCode } from "@/utils/locale";
@@ -36,6 +34,7 @@ export default function MPVVideoScreen(props: {
   defaultAudioLang?: string | undefined;
   onTrackChange?: (subtitleIdx: number, audioIdx: number) => void;
   displayInfo?: DisplayInfo;
+  onReady?: () => void;
   playerSettings?: PlayerSettings | null;
   onChangePlayer?: (
     player: "exoplayer" | "mpv",
@@ -63,6 +62,9 @@ export default function MPVVideoScreen(props: {
     props.playerSettings?.resize_mode === "cover",
   );
   const [isReady, setIsReady] = useState(false);
+  useEffect(() => {
+    if (isReady) props.onReady?.();
+  }, [isReady, props.onReady]);
   const [isBuffering, setIsBuffering] = useState(false);
   const [appSettings] = useState<SettingsSchema>(getAllSettings());
   const defaultAudioSelected = useRef(false);
@@ -599,17 +601,7 @@ export default function MPVVideoScreen(props: {
             streamData={props.streamData}
           />
         )}
-        {!isReady && <LoadingOverlay />}
       </View>
     </>
   );
 }
-
-const LoadingOverlay = () => {
-  return (
-    <View className="absolute top-0 left-0 right-0 bottom-0 w-100 h-100 bg-black flex items-center justify-center">
-      <ActivityIndicator size="large" color="white" />
-      <ThemedText className="text-white mt-2">Loading MPV...</ThemedText>
-    </View>
-  );
-};
