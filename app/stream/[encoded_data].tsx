@@ -21,8 +21,8 @@ import {
   useShowDetails,
 } from "@/services/mediaDetailsService";
 import {
-  fetchMediaFiles,
-  fetchProviders,
+  useMediaFiles,
+  useProviders,
   useDecodeStreams,
   useSubtitles,
 } from "@/services/providerService";
@@ -33,7 +33,6 @@ import {
   MediaType,
 } from "@/constants/MediaTypes";
 import { get2LetterLangCode } from "@/utils/locale";
-import { Toast } from "toastify-react-native";
 
 export type DisplayInfo = {
   title: string;
@@ -231,9 +230,7 @@ function StreamPlayer({
     time: number;
     duration: number;
   }>({ time: 0, duration: 0 });
-  const cachedNextEpisodeData = useRef<any>(null);
   const nextEpisodePending = useRef(false);
-  const cacheWarmStarted = useRef(false);
 
   // Fetch show details if it is a tv show to handle next episode
   const { data: showDetails } = useShowDetails(
@@ -345,107 +342,43 @@ function StreamPlayer({
   // Determine if near end (>80% or <5 min remaining)
   const isNearEnd = useMemo(() => {
     const { time, duration: dur } = playbackProgress;
-    if (dur <= 0 || time <= 0) return false;
+    if (dur < 60 || time <= 0) return false;
     const remaining = dur - time;
     return remaining < 300 || time / dur > 0.8;
   }, [playbackProgress]);
 
-  // Next episode logic, if prefetch is true, warm cache without navigating
-  // UPDATE: looks like aiostreams already has a setting for prefetching, we
-  // might not need to duplicate this. Aiostream's implementation more aggressive
-  // since it caches the first providers query, while we try to cache the first
-  // media files query.
-  const handleNextEpisode = async (nextSettings: any, prefetch = false) => {
-    if (!nextEpisodeInfo || !id) return;
-    if (!prefetch && nextEpisodePending.current) return;
-    if (!prefetch) nextEpisodePending.current = true;
-    let navigating = false;
-    try {
-      let topStream = cachedNextEpisodeData.current;
-      if (!topStream) {
-        const mediaFilesRes = await fetchMediaFiles(
-          MediaTypeTVShow,
-          id as string,
-          nextEpisodeInfo.season,
-          nextEpisodeInfo.episode,
-        );
-        if (mediaFilesRes?.data?.providers?.[0].streams?.length > 0) {
-          topStream = mediaFilesRes?.data?.providers?.[0]?.streams?.[0];
-        }
-        // prioritize media files, if not found, then fetch
-        // this does add a delay to fetching providers
-        if (!topStream) {
-          const providersRes = await fetchProviders(
-            MediaTypeTVShow,
-            id as string,
-            nextEpisodeInfo.season,
-            nextEpisodeInfo.episode,
-          );
-          if (providersRes?.data?.providers?.[0].streams?.length > 0) {
-            topStream = providersRes?.data?.providers?.[0]?.streams?.[0];
-          }
-        }
-      }
-      if (topStream) {
-        if (prefetch) {
-          cachedNextEpisodeData.current = topStream;
-          // warm the url for p2p, debrid cases for faster resolution on next call
-          // aiostreams can handle this, we might not need to
-          // const nextUrl = `${session?.host}/api/v1/stream/${firstStream.encoded_data}`;
-          // fetch(nextUrl, { method: "HEAD" }).catch((err) =>
-          //   console.warn(
-          //     "[NEXT_EPISODE] Failed to warm up next episode URL",
-          //     err,
-          //   ),
-          // );
-          return;
-        }
-        const link = getStreamUrl(topStream.encoded_data, {
-          id: id as string,
-          mediaType: MediaTypeTVShow,
-          season: nextEpisodeInfo.season,
-          episode: nextEpisodeInfo.episode,
-          startTime: 0,
-          playerSettings: JSON.stringify({
-            ...nextSettings,
-            player: currentPlayer,
-          }),
-        });
-        setIsNavigating(true);
-        navigating = true;
-        // Give React time to unmount the player component
-        // not ideal, but I haven't found a better solution
-        setTimeout(() => {
-          router.replace(link);
-        }, 100);
-      } else {
-        if (!prefetch) {
-          Toast.error("No streams found for the next episode.");
-          console.log(
-            "[NEXT_EPISODE] No main stream found in providers response",
-          );
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching next episode providers:", error);
-    } finally {
-      if (!prefetch && !navigating) nextEpisodePending.current = false;
-    }
-  };
+  // Warm the same queries used by direct playback without selecting a link.
+  const prefetchNextEpisode =
+    isNearEnd && autoplayEnabled && !!nextEpisodeInfo && !!id;
+  useMediaFiles(
+    MediaTypeTVShow,
+    id as string,
+    nextEpisodeInfo?.season,
+    nextEpisodeInfo?.episode,
+    prefetchNextEpisode,
+  );
+  useProviders(
+    MediaTypeTVShow,
+    id as string,
+    nextEpisodeInfo?.season,
+    nextEpisodeInfo?.episode,
+    prefetchNextEpisode,
+  );
 
-  // pre-fetch next episode data when near end
-  useEffect(() => {
-    if (
-      !isNearEnd ||
-      !nextEpisodeInfo ||
-      !id ||
-      cacheWarmStarted.current ||
-      !autoplayEnabled
-    )
-      return;
-    cacheWarmStarted.current = true;
-    handleNextEpisode(currentSettings, true);
-  }, [isNearEnd, nextEpisodeInfo, id, autoplayEnabled, currentSettings]);
+  const handleNextEpisode = (nextSettings: any) => {
+    if (!nextEpisodeInfo || !id || nextEpisodePending.current) return;
+    nextEpisodePending.current = true;
+    const link = getStreamUrl("direct", {
+      id: id as string,
+      mediaType: MediaTypeTVShow,
+      ...nextEpisodeInfo,
+      startTime: 0,
+      playerSettings: JSON.stringify({ ...nextSettings, player: currentPlayer }),
+    });
+    setIsNavigating(true);
+    // Let the native player unmount before navigating.
+    setTimeout(() => router.replace(link), 100);
+  };
 
   useEffect(() => {
     // Load setting
@@ -513,7 +446,7 @@ function StreamPlayer({
           onChangePlayer={handlePlayerChange}
           onTrackChange={handleTrackChange}
           hasNextEpisode={!!nextEpisodeInfo}
-          onNextEpisode={(settings: any) => handleNextEpisode(settings, false)}
+          onNextEpisode={handleNextEpisode}
           autoplayEnabled={autoplayEnabled && !!nextEpisodeInfo}
           onProgress={handleProgress}
           externalSubtitles={externalSubtitles}
@@ -539,7 +472,7 @@ function StreamPlayer({
           onChangePlayer={handlePlayerChange}
           onTrackChange={handleTrackChange}
           hasNextEpisode={!!nextEpisodeInfo}
-          onNextEpisode={(settings: any) => handleNextEpisode(settings, false)}
+          onNextEpisode={handleNextEpisode}
           autoplayEnabled={autoplayEnabled && !!nextEpisodeInfo}
           onProgress={handleProgress}
           externalSubtitles={externalSubtitles}

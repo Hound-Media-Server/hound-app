@@ -175,6 +175,7 @@ export default function VideoControlsTV({
   const remainingTime = Math.floor(duration - currentTime);
   const showAutoplay =
     autoplayEnabled &&
+    duration >= 60 &&
     hasNextEpisode &&
     !autoplayCanceled &&
     !paused &&
