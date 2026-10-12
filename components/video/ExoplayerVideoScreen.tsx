@@ -1,5 +1,4 @@
 import {
-  ActivityIndicator,
   Alert,
   Platform,
   useWindowDimensions,
@@ -26,7 +25,6 @@ import type {
 } from "react-native-video";
 import VideoControls from "./VideoControls";
 import VideoControlsTV from "./VideoControls.tv";
-import { ThemedText } from "../ThemedText";
 import { router } from "expo-router";
 import { getAllSettings, SettingsSchema } from "@/stores/settingsStore";
 import { get2LetterLangCode } from "@/utils/locale";
@@ -48,6 +46,8 @@ export default function ExoplayerVideoScreen(props: {
   defaultAudioLang?: string | undefined;
   onTrackChange?: (subtitleIdx: number, audioIdx: number) => void;
   displayInfo?: DisplayInfo;
+  onReady?: () => void;
+  onDuration?: (duration: number) => boolean;
   playerSettings?: PlayerSettings | null;
   onChangePlayer?: (
     player: "exoplayer" | "mpv",
@@ -68,6 +68,7 @@ export default function ExoplayerVideoScreen(props: {
   const [currentTime, setCurrentTime] = useState(0);
   const currentTimeRef = useRef(0); // for setInterval, refs don't get stale
   const durationRef = useRef(0);
+  const displayReady = useRef(false);
   const [duration, setDuration] = useState(0);
   const [textTracks, setTextTracks] = useState<any[]>([]);
   const [audioTracks, setAudioTracks] = useState<any[]>([]);
@@ -158,6 +159,8 @@ export default function ExoplayerVideoScreen(props: {
   }, [selectedTextTrack, selectedAudioTrack]);
 
   const handleLoad = (data: OnLoadData) => {
+    durationRef.current = data.duration;
+    if (props.onDuration?.(data.duration) === false) return;
     // Seek to start time if provided
     if (props.startTime && !initialSeekDone.current) {
       handleSeek(props.startTime);
@@ -165,7 +168,7 @@ export default function ExoplayerVideoScreen(props: {
     }
     setIsReady(true);
     setDuration(data.duration);
-    durationRef.current = data.duration;
+    if (displayReady.current) props.onReady?.();
   };
 
   const handleProgress = (data: OnProgressData) => {
@@ -373,6 +376,12 @@ export default function ExoplayerVideoScreen(props: {
           paused={paused}
           resizeMode={isZoomedToFill ? ResizeMode.COVER : ResizeMode.CONTAIN}
           onLoad={handleLoad}
+          onReadyForDisplay={() => {
+            displayReady.current = true;
+            if (props.onDuration?.(durationRef.current) !== false) {
+              props.onReady?.();
+            }
+          }}
           onProgress={handleProgress}
           onBuffer={({ isBuffering }) => setIsBuffering(isBuffering)}
           onSeek={({ currentTime }) => {
@@ -458,17 +467,7 @@ export default function ExoplayerVideoScreen(props: {
             streamData={props.streamData}
           />
         )}
-        {!isReady && <LoadingOverlay />}
       </View>
     </>
   );
 }
-
-const LoadingOverlay = () => {
-  return (
-    <View className="absolute top-0 left-0 right-0 bottom-0 w-100 h-100 bg-black flex items-center justify-center">
-      <ActivityIndicator size="large" color="white" />
-      <ThemedText className="text-white mt-2">Loading Exoplayer...</ThemedText>
-    </View>
-  );
-};

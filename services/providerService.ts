@@ -95,11 +95,13 @@ export const useMediaFiles = (
   mediaType: MediaType | string,
   id: string,
   season?: number | null,
-  episode?: number | null
+  episode?: number | null,
+  enabled: boolean = true,
 ) => {
   return useQuery({
     queryKey: ["media-files", mediaType, id, season, episode],
     queryFn: () => fetchMediaFiles(mediaType, id, season, episode),
+    enabled,
   });
 };
 
@@ -107,11 +109,13 @@ export const useProviders = (
   mediaType: MediaType | string,
   id: string,
   season?: number | null,
-  episode?: number | null
+  episode?: number | null,
+  enabled: boolean = true,
 ) => {
   return useQuery({
     queryKey: ["providers", mediaType, id, season, episode],
     queryFn: () => fetchProviders(mediaType, id, season, episode),
+    enabled,
   });
 };
 

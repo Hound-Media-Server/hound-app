@@ -113,6 +113,7 @@ export default function VideoControls({
   const remainingTime = Math.floor(duration - currentTime);
   const showAutoplay =
     autoplayEnabled &&
+    duration >= 60 &&
     hasNextEpisode &&
     !autoplayCanceled &&
     !paused &&
@@ -164,7 +165,6 @@ export default function VideoControls({
     <Pressable
       className="bg-black/40 py-3 px-4 rounded-full"
       style={showControls ? styles.skipButtonInline : styles.skipButtonFloating}
-      accessibilityRole="button"
       onPress={() => {
         if (skipSegment.nextEpisode) onNextEpisode?.();
         else onSeek(skipSegment.end);

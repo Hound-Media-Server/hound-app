@@ -1,4 +1,4 @@
-import { Platform, View, ActivityIndicator } from "react-native";
+import { Platform, View } from "react-native";
 import React, { useState, useMemo, useRef, useCallback } from "react";
 import { useEffect } from "react";
 import { lockLandscape, unlockOrientation } from "@/utils/screenOrientation";
@@ -7,6 +7,9 @@ import { useSession } from "@/services/ctx";
 import MPVVideoScreen from "@/components/video/MPVVideoScreen";
 import { useKeepAwake } from "expo-keep-awake";
 import VideoScreen from "@/components/video/ExoplayerVideoScreen";
+import PlayerLoadingOverlay from "@/components/video/PlayerLoadingOverlay";
+import { useDirectStream } from "@/hooks/useDirectStream";
+import { StatusBar } from "expo-status-bar";
 import {
   getAllSettings,
   getSetting,
@@ -18,8 +21,8 @@ import {
   useShowDetails,
 } from "@/services/mediaDetailsService";
 import {
-  fetchMediaFiles,
-  fetchProviders,
+  useMediaFiles,
+  useProviders,
   useDecodeStreams,
   useSubtitles,
 } from "@/services/providerService";
@@ -30,7 +33,6 @@ import {
   MediaType,
 } from "@/constants/MediaTypes";
 import { get2LetterLangCode } from "@/utils/locale";
-import { Toast } from "toastify-react-native";
 
 export type DisplayInfo = {
   title: string;
@@ -38,24 +40,157 @@ export type DisplayInfo = {
 };
 
 export default function Stream() {
+  const { encoded_data, streamsMatch, id, mediaType, season, episode } =
+    useLocalSearchParams();
+  const [loadingMessage, setLoadingMessage] = useState<string | null>(
+    encoded_data === "direct" ? "Fetching streams..." : "Loading player...",
+  );
+  const { data: movieDetails } = useMovieDetails(
+    id as string,
+    mediaType === MediaTypeMovie,
+  );
+  const { data: showDetails } = useShowDetails(
+    id as string,
+    mediaType === MediaTypeTVShow,
+  );
+  useKeepAwake();
+  useEffect(() => {
+    lockLandscape();
+    return () => unlockOrientation();
+  }, []);
+
+  return (
+    <View className="flex-1 bg-black">
+      <StatusBar hidden />
+      {encoded_data === "direct" ? (
+        <DirectStream
+          key={`${id}:${season}:${episode}`}
+          onLoadingChange={setLoadingMessage}
+        />
+      ) : (
+        <StreamPlayer
+          encodedData={encoded_data as string}
+          streamsMatch={streamsMatch === "true"}
+          onLoadingChange={setLoadingMessage}
+        />
+      )}
+      {loadingMessage !== null && (
+        <PlayerLoadingOverlay
+          mediaDetails={movieDetails || showDetails}
+          message={loadingMessage}
+        />
+      )}
+    </View>
+  );
+}
+
+function DirectStream({
+  onLoadingChange,
+}: {
+  onLoadingChange: (message: string | null) => void;
+}) {
+  const { id, mediaType, season, episode, previousEncodedData } =
+    useLocalSearchParams<{
+      id: string;
+      mediaType: string;
+      season?: string;
+      episode?: string;
+      previousEncodedData?: string;
+    }>();
+  const { selectedStream, hasMediaFile, tryNextStream, isLoading, isError } =
+    useDirectStream({
+      mediaType,
+      id,
+      season: season ? parseInt(season) : undefined,
+      episode: episode ? parseInt(episode) : undefined,
+      previousEncodedData,
+    });
+  const isValidMediaType =
+    mediaType === MediaTypeMovie || mediaType === MediaTypeTVShow;
+  const lastFault = useRef<string | null>(null);
+  const [streamError, setStreamError] = useState(false);
+  useEffect(() => {
+    if (streamError) {
+      onLoadingChange("No playable streams found.");
+      return;
+    }
+    if (isValidMediaType && selectedStream) return;
+    onLoadingChange(
+      !isValidMediaType
+        ? "Invalid media type"
+        : isLoading
+          ? "Fetching streams..."
+          : isError
+            ? "Failed to fetch streams."
+            : "No streams available",
+    );
+  }, [
+    isValidMediaType,
+    selectedStream,
+    isLoading,
+    isError,
+    streamError,
+    onLoadingChange,
+  ]);
+
+  return isValidMediaType && selectedStream && !streamError ? (
+    <StreamPlayer
+      key={selectedStream.encodedData}
+      {...selectedStream}
+      onLoadingChange={onLoadingChange}
+      onDuration={
+        hasMediaFile ? undefined : (duration) => {
+          if (!Number.isFinite(duration) || duration <= 0) return false;
+          if (duration >= 60) return true;
+          if (lastFault.current === selectedStream.encodedData) return false;
+          lastFault.current = selectedStream.encodedData;
+          if (!tryNextStream()) setStreamError(true);
+          return false;
+        }
+      }
+    />
+  ) : null;
+}
+
+function StreamPlayer({
+  encodedData,
+  streamsMatch,
+  onLoadingChange,
+  onDuration,
+}: {
+  encodedData: string;
+  streamsMatch: boolean;
+  onLoadingChange: (message: string | null) => void;
+  onDuration?: (duration: number) => boolean;
+}) {
   const router = useRouter();
   const {
-    encoded_data,
     startTime,
     id,
     mediaType,
     season,
     episode,
-    streamsMatch,
     playerSettings,
   } = useLocalSearchParams();
-  const { data: decodedStreams } = useDecodeStreams(encoded_data as string);
+  const { data: decodedStreams } = useDecodeStreams(encodedData);
   const { session } = useSession();
   const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
   const [currentProgress, setCurrentProgress] = useState<number>(
     startTime ? parseInt(startTime as string, 10) : 0,
   );
   const [isNavigating, setIsNavigating] = useState(false);
+  useEffect(() => {
+    onLoadingChange(
+      currentPlayer === null
+        ? "Loading player..."
+        : currentPlayer === "exoplayer" && Platform.OS !== "ios"
+          ? "Loading Exoplayer..."
+          : "Loading MPV...",
+    );
+  }, [currentPlayer, isNavigating, onLoadingChange]);
+  const handlePlayerReady = useCallback(() => {
+    onLoadingChange(null);
+  }, [onLoadingChange]);
   const parsedPlayerSettings = playerSettings
     ? JSON.parse(playerSettings as string)
     : null;
@@ -66,15 +201,13 @@ export default function Stream() {
 
   // streamsMatch=true means the saved progress encoded_data matches this
   // exact stream, so use last selected subtitle_idx/audio_idx
-  const isStreamsMatch = streamsMatch === "true";
-
   // MPV indexes 1-based by default, exoplayer is 0-based,
   // normalized to 1-based here
   const [activeSubtitleIdx, setActiveSubtitleIdx] = useState<number | null>(
-    isStreamsMatch ? (parsedPlayerSettings?.subtitle_idx ?? null) : null,
+    streamsMatch ? (parsedPlayerSettings?.subtitle_idx ?? null) : null,
   );
   const [activeAudioIdx, setActiveAudioIdx] = useState<number | null>(
-    isStreamsMatch ? (parsedPlayerSettings?.audio_idx ?? null) : null,
+    streamsMatch ? (parsedPlayerSettings?.audio_idx ?? null) : null,
   );
   const [displayInfo, setDisplayInfo] = useState<DisplayInfo | undefined>(
     undefined,
@@ -97,9 +230,7 @@ export default function Stream() {
     time: number;
     duration: number;
   }>({ time: 0, duration: 0 });
-  const cachedNextEpisodeData = useRef<any>(null);
   const nextEpisodePending = useRef(false);
-  const cacheWarmStarted = useRef(false);
 
   // Fetch show details if it is a tv show to handle next episode
   const { data: showDetails } = useShowDetails(
@@ -211,110 +342,45 @@ export default function Stream() {
   // Determine if near end (>80% or <5 min remaining)
   const isNearEnd = useMemo(() => {
     const { time, duration: dur } = playbackProgress;
-    if (dur <= 0 || time <= 0) return false;
+    if (dur < 60 || time <= 0) return false;
     const remaining = dur - time;
     return remaining < 300 || time / dur > 0.8;
   }, [playbackProgress]);
 
-  // Next episode logic, if prefetch is true, warm cache without navigating
-  // UPDATE: looks like aiostreams already has a setting for prefetching, we
-  // might not need to duplicate this. Aiostream's implementation more aggressive
-  // since it caches the first providers query, while we try to cache the first
-  // media files query.
-  const handleNextEpisode = async (nextSettings: any, prefetch = false) => {
-    if (!nextEpisodeInfo || !id) return;
-    if (!prefetch && nextEpisodePending.current) return;
-    if (!prefetch) nextEpisodePending.current = true;
-    let navigating = false;
-    try {
-      let topStream = cachedNextEpisodeData.current;
-      if (!topStream) {
-        const mediaFilesRes = await fetchMediaFiles(
-          MediaTypeTVShow,
-          id as string,
-          nextEpisodeInfo.season,
-          nextEpisodeInfo.episode,
-        );
-        if (mediaFilesRes?.data?.providers?.[0].streams?.length > 0) {
-          topStream = mediaFilesRes?.data?.providers?.[0]?.streams?.[0];
-        }
-        // prioritize media files, if not found, then fetch
-        // this does add a delay to fetching providers
-        if (!topStream) {
-          const providersRes = await fetchProviders(
-            MediaTypeTVShow,
-            id as string,
-            nextEpisodeInfo.season,
-            nextEpisodeInfo.episode,
-          );
-          if (providersRes?.data?.providers?.[0].streams?.length > 0) {
-            topStream = providersRes?.data?.providers?.[0]?.streams?.[0];
-          }
-        }
-      }
-      if (topStream) {
-        if (prefetch) {
-          cachedNextEpisodeData.current = topStream;
-          // warm the url for p2p, debrid cases for faster resolution on next call
-          // aiostreams can handle this, we might not need to
-          // const nextUrl = `${session?.host}/api/v1/stream/${firstStream.encoded_data}`;
-          // fetch(nextUrl, { method: "HEAD" }).catch((err) =>
-          //   console.warn(
-          //     "[NEXT_EPISODE] Failed to warm up next episode URL",
-          //     err,
-          //   ),
-          // );
-          return;
-        }
-        const link = getStreamUrl(topStream.encoded_data, {
-          id: id as string,
-          mediaType: MediaTypeTVShow,
-          season: nextEpisodeInfo.season,
-          episode: nextEpisodeInfo.episode,
-          startTime: 0,
-          playerSettings: JSON.stringify({
-            ...nextSettings,
-            player: currentPlayer,
-          }),
-        });
-        setIsNavigating(true);
-        navigating = true;
-        // Give React time to unmount the player component
-        // not ideal, but I haven't found a better solution
-        setTimeout(() => {
-          router.replace(link);
-        }, 100);
-      } else {
-        if (!prefetch) {
-          Toast.error("No streams found for the next episode.");
-          console.log(
-            "[NEXT_EPISODE] No main stream found in providers response",
-          );
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching next episode providers:", error);
-    } finally {
-      if (!prefetch && !navigating) nextEpisodePending.current = false;
-    }
+  // Warm the same queries used by direct playback without selecting a link.
+  const prefetchNextEpisode =
+    isNearEnd && autoplayEnabled && !!nextEpisodeInfo && !!id;
+  useMediaFiles(
+    MediaTypeTVShow,
+    id as string,
+    nextEpisodeInfo?.season,
+    nextEpisodeInfo?.episode,
+    prefetchNextEpisode,
+  );
+  useProviders(
+    MediaTypeTVShow,
+    id as string,
+    nextEpisodeInfo?.season,
+    nextEpisodeInfo?.episode,
+    prefetchNextEpisode,
+  );
+
+  const handleNextEpisode = (nextSettings: any) => {
+    if (!nextEpisodeInfo || !id || nextEpisodePending.current) return;
+    nextEpisodePending.current = true;
+    const link = getStreamUrl("direct", {
+      id: id as string,
+      mediaType: MediaTypeTVShow,
+      ...nextEpisodeInfo,
+      startTime: 0,
+      playerSettings: JSON.stringify({ ...nextSettings, player: currentPlayer }),
+    });
+    setIsNavigating(true);
+    // Let the native player unmount before navigating.
+    setTimeout(() => router.replace(link), 100);
   };
 
-  // pre-fetch next episode data when near end
   useEffect(() => {
-    if (
-      !isNearEnd ||
-      !nextEpisodeInfo ||
-      !id ||
-      cacheWarmStarted.current ||
-      !autoplayEnabled
-    )
-      return;
-    cacheWarmStarted.current = true;
-    handleNextEpisode(currentSettings, true);
-  }, [isNearEnd, nextEpisodeInfo, id, autoplayEnabled, currentSettings]);
-
-  useEffect(() => {
-    lockLandscape();
     // Load setting
     const defaultResizeMode =
       mediaType === MediaTypeMovie
@@ -331,10 +397,6 @@ export default function Stream() {
       ...prev,
       resize_mode: prev?.resize_mode || defaultResizeMode || "contain",
     }));
-
-    return () => {
-      unlockOrientation();
-    };
   }, [mediaType]);
 
   const handlePlayerChange = async (
@@ -355,27 +417,16 @@ export default function Stream() {
     }
   };
 
-  useKeepAwake();
-
   if (!session) return null;
-  if (currentPlayer === null) {
-    return (
-      <View className="flex-1 bg-black items-center justify-center">
-        <ActivityIndicator size="large" color="white" />
-      </View>
-    );
-  }
+  if (currentPlayer === null || isNavigating || (!movieDetails && !showDetails))
+    return null;
 
-  let url = `${session?.host}/api/v1/stream/${encoded_data}`;
+  let url = `${session?.host}/api/v1/stream/${encodedData}`;
 
   // IOS will only play with MPV
   return (
     <View className="flex-1 bg-black justify-center items-center">
-      {isNavigating || (!movieDetails && !showDetails) ? (
-        <View className="flex-1 bg-black items-center justify-center">
-          <ActivityIndicator size="large" color="white" />
-        </View>
-      ) : currentPlayer === "mpv" || Platform.OS === "ios" ? (
+      {currentPlayer === "mpv" || Platform.OS === "ios" ? (
         <MPVVideoScreen
           key={url}
           src={url}
@@ -384,7 +435,9 @@ export default function Stream() {
           mediaType={mediaType as MediaType}
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
-          encodedData={encoded_data as string}
+          encodedData={encodedData}
+          onReady={handlePlayerReady}
+          onDuration={onDuration}
           defaultSubtitleIdx={activeSubtitleIdx}
           defaultAudioIdx={activeAudioIdx}
           defaultAudioLang={defaultAudioLang}
@@ -393,7 +446,7 @@ export default function Stream() {
           onChangePlayer={handlePlayerChange}
           onTrackChange={handleTrackChange}
           hasNextEpisode={!!nextEpisodeInfo}
-          onNextEpisode={(settings: any) => handleNextEpisode(settings, false)}
+          onNextEpisode={handleNextEpisode}
           autoplayEnabled={autoplayEnabled && !!nextEpisodeInfo}
           onProgress={handleProgress}
           externalSubtitles={externalSubtitles}
@@ -408,7 +461,9 @@ export default function Stream() {
           mediaType={mediaType as MediaType}
           seasonNumber={season ? parseInt(season as string, 10) : undefined}
           episodeNumber={episode ? parseInt(episode as string, 10) : undefined}
-          encodedData={encoded_data as string}
+          encodedData={encodedData}
+          onReady={handlePlayerReady}
+          onDuration={onDuration}
           defaultSubtitleIdx={activeSubtitleIdx}
           defaultAudioIdx={activeAudioIdx}
           defaultAudioLang={defaultAudioLang}
@@ -417,7 +472,7 @@ export default function Stream() {
           onChangePlayer={handlePlayerChange}
           onTrackChange={handleTrackChange}
           hasNextEpisode={!!nextEpisodeInfo}
-          onNextEpisode={(settings: any) => handleNextEpisode(settings, false)}
+          onNextEpisode={handleNextEpisode}
           autoplayEnabled={autoplayEnabled && !!nextEpisodeInfo}
           onProgress={handleProgress}
           externalSubtitles={externalSubtitles}

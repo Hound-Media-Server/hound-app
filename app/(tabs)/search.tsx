@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import { useSearch } from "@/services/searchService";
 import HorizontalList from "@/components/HorizontalList";
@@ -25,8 +25,14 @@ export default function Search() {
   );
 
   const [refreshing, setRefreshing] = useState(false);
+  const searchInputRef = useRef<TextInput>(null);
   const verticalListRef = useRef<FlatList>(null);
   const queryClient = useQueryClient();
+  useFocusEffect(
+    useCallback(() => {
+      searchInputRef.current?.focus();
+    }, []),
+  );
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([
@@ -51,10 +57,10 @@ export default function Search() {
     return () => clearTimeout(handler);
   }, [searchQuery, query]);
 
-  const { data, isLoading, error } = useSearch(debouncedSearchQuery);
+  const { data, isFetching, error } = useSearch(debouncedSearchQuery);
 
   const isSearching =
-    isLoading ||
+    isFetching ||
     (searchQuery.length > 0 && searchQuery !== debouncedSearchQuery);
   const rows = [
     { key: "tv", header: "TV Shows", itemData: data?.tv_results },
@@ -67,6 +73,8 @@ export default function Search() {
         className={"w-full px-5 md:px-10 " + (Platform.isTV ? "mt-20" : "mt-5")}
       >
         <TextInput
+          ref={searchInputRef}
+          autoFocus
           className="w-full bg-zinc-800 text-white p-4 rounded-md border border-zinc-700 focus:border-indigo-500 focus:outline-none"
           style={scale !== 1 ? { fontSize: 14 * scale } : undefined}
           placeholder="Search..."
@@ -116,13 +124,16 @@ export default function Search() {
               />
             )}
             ItemSeparatorComponent={() => <View className="h-5" />}
-            ListEmptyComponent={() => (
-              <View className="flex-1 items-center justify-center mt-10">
-                <ThemedText className="text-white text-lg">
-                  No results found.
-                </ThemedText>
-              </View>
-            )}
+            ListEmptyComponent={() =>
+              !isSearching &&
+              !error && (
+                <View className="flex-1 items-center justify-center mt-10">
+                  <ThemedText className="text-white text-lg">
+                    No results found.
+                  </ThemedText>
+                </View>
+              )
+            }
           />
         </View>
       )}
