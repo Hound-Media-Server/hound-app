@@ -26,10 +26,7 @@ function TVTabBar({
   const router = useRouter();
 
   useEffect(() => {
-    const selectedIndex = state.routes[state.index]?.name === "search"
-      ? state.routes.findIndex((route: any) => route.name === "index")
-      : state.index;
-    setSelectedTabNode(tabRefs.current[selectedIndex] ?? null);
+    setSelectedTabNode(tabRefs.current[state.index] ?? null);
   }, [state.index]);
 
   useEffect(() => {
@@ -63,12 +60,6 @@ function TVTabBar({
           style={{ opacity: fadeAnimation, columnGap: 8 * scale }}
         >
           {state.routes.map((route: any, index: number) => {
-            if (
-              route.name === "search" &&
-              state.routes[state.index]?.name !== "index"
-            ) {
-              return null;
-            }
             const isSelected = state.index === index;
             const onPress = () => {
               if (isSelected) return;
