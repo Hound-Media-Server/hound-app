@@ -16,18 +16,24 @@ This project uses
 
 ## Installing
 
+### Android, Android TV
 To install on Android, please join the closed testing:
 
 First, join this group: https://groups.google.com/g/hound-play-store-testing
+
 Then get the app on either of these links:
 
-Web: https://play.google.com/apps/testing/com.houndmediaserver.hound
+- Web: https://play.google.com/apps/testing/com.houndmediaserver.hound
+- Your android device: https://play.google.com/store/apps/details?id=com.houndmediaserver.hound
 
-Your android device: https://play.google.com/store/apps/details?id=com.houndmediaserver.hound
+Make sure you join the group with the same account that is logged in your Play Store.
 
 Please help join the closed testing so we can get Hound published in the play store!
 
-You can also install Android mobile and Android TV apps by sideloading the .apk in the Releases page. iOS and tvOS are currently under review by Apple and will be available in TestFlight soon.
+You can also install Android mobile and Android TV apps by sideloading the .apk in the Releases page. 
+
+### iOS and tvOS
+iOS and tvOS are currently under review by Apple and will be available in TestFlight soon.
 
 ## How to use
 
