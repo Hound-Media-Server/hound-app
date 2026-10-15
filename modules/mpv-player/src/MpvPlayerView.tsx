@@ -27,8 +27,8 @@ export default React.forwardRef<MpvPlayerViewRef, MpvPlayerViewProps>(
       destroy: async () => {
         await nativeRef.current?.destroy();
       },
-      seekTo: async (position: number) => {
-        await nativeRef.current?.seekTo(position);
+      seekTo: async (position: number, exact?: boolean) => {
+        await nativeRef.current?.seekTo(position, exact);
       },
       seekBy: async (offset: number) => {
         await nativeRef.current?.seekBy(offset);

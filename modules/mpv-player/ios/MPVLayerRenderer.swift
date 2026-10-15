@@ -1113,13 +1113,15 @@ final class MPVLayerRenderer {
         if isPaused { play() } else { pausePlayback() }
     }
     
-    func seek(to seconds: Double) {
+    /// exact: nil uses mpv's hr-seek option, true/false force a precise/keyframe seek
+    func seek(to seconds: Double, exact: Bool? = nil) {
         guard mpv != nil else { return }
         let clamped = max(0, seconds)
         cachedPosition = clamped
         onQueue { [weak self] in
             guard let self, let handle = self.mpv else { return }
-            self.commandSync(handle, ["seek", String(clamped), "absolute"])
+            let flags = exact.map { $0 ? "+exact" : "+keyframes" } ?? ""
+            self.commandSync(handle, ["seek", String(clamped), "absolute" + flags])
         }
     }
 

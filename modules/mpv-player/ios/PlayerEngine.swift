@@ -333,11 +333,11 @@ final class MPVPlayerEngine: NSObject {
 		shutdown()
 	}
 
-	func seekTo(position: Double) {
+	func seekTo(position: Double, exact: Bool? = nil) {
 		// Update cached position and Now Playing immediately for smooth Control Center feedback
 		cachedPosition = position
 		syncNowPlaying(isPlaying: !isPaused())
-		renderer?.seek(to: position)
+		renderer?.seek(to: position, exact: exact)
 	}
 
 	func seekBy(offset: Double) {

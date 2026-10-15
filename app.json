@@ -47,6 +47,7 @@
       [
         "./plugins/withMpvLibcxx.js"
       ],
+      "./plugins/withPictureInPicture.js",
       [
         "expo-build-properties",
         {
@@ -70,7 +71,12 @@
       "expo-font",
       "expo-web-browser",
       "expo-secure-store",
-      "react-native-video",
+      [
+        "react-native-video",
+        {
+          "enableBackgroundAudio": true
+        }
+      ],
       "expo-image",
       "expo-status-bar",
       [

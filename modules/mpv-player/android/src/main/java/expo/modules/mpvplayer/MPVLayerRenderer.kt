@@ -752,10 +752,12 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         if (_isPaused) play() else pause()
     }
     
-    fun seekTo(seconds: Double) {
+    /** exact: null uses the hr-seek, true/false to force a precise/keyframe seek */
+    fun seekTo(seconds: Double, exact: Boolean? = null) {
         val clamped = maxOf(0.0, seconds)
         cachedPosition = clamped
-        mpv?.command(arrayOf("seek", clamped.toString(), "absolute"))
+        val flags = exact?.let { if (it) "+exact" else "+keyframes" } ?: ""
+        mpv?.command(arrayOf("seek", clamped.toString(), "absolute$flags"))
     }
     
     fun seekBy(seconds: Double) {

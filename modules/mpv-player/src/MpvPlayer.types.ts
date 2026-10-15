@@ -117,7 +117,8 @@ export interface MpvPlayerViewRef {
   destroy: () => Promise<void>;
   // Pre-libmpv-1.0 alias (kept for source-history reference):
   // stop: () => Promise<void>;
-  seekTo: (position: number) => Promise<void>;
+  /** exact: precise vs. keyframe seek */
+  seekTo: (position: number, exact?: boolean) => Promise<void>;
   seekBy: (offset: number) => Promise<void>;
   setSpeed: (speed: number) => Promise<void>;
   getSpeed: () => Promise<number>;

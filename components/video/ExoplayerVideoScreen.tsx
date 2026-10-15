@@ -32,6 +32,7 @@ import { MediaType } from "@/constants/MediaTypes";
 import { DisplayInfo } from "@/app/stream/[encoded_data]";
 import { Toast } from "toastify-react-native";
 import { useVideoSegments } from "@/services/segmentService";
+import { usePictureInPicture } from "@/hooks/usePictureInPicture";
 
 export default function ExoplayerVideoScreen(props: {
   src: string;
@@ -86,6 +87,7 @@ export default function ExoplayerVideoScreen(props: {
   const subtitleInitialized = useRef(false);
   const [appSettings] = useState<SettingsSchema>(getAllSettings());
   const skipSegment = useVideoSegments(props, duration, currentTime);
+  const [isPip, onPipChange] = usePictureInPicture(() => setPaused(true));
 
   const handleNextEpisode = () => {
     if (props.onNextEpisode) {
@@ -409,8 +411,12 @@ export default function ExoplayerVideoScreen(props: {
               ? { type: SelectedTrackType.INDEX, value: selectedAudioTrack - 1 }
               : undefined
           }
+          enterPictureInPictureOnLeave={!Platform.isTV}
+          onPictureInPictureStatusChanged={({ isActive }) =>
+            onPipChange(isActive)
+          }
         />
-        {Platform.isTV ? (
+        {isPip ? null : Platform.isTV ? (
           <VideoControlsTV
             videoRef={videoRef as any}
             player={"exoplayer"}

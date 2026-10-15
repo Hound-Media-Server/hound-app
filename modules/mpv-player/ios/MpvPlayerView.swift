@@ -147,8 +147,8 @@ class MpvPlayerView: ExpoView {
 		engine.destroy()
 	}
 
-	func seekTo(position: Double) {
-		engine.seekTo(position: position)
+	func seekTo(position: Double, exact: Bool? = nil) {
+		engine.seekTo(position: position, exact: exact)
 	}
 
 	func seekBy(offset: Double) {

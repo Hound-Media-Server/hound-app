@@ -20,6 +20,9 @@ import { get2LetterLangCode } from "@/utils/locale";
 import { MediaType } from "@/constants/MediaTypes";
 import { DisplayInfo } from "@/app/stream/[encoded_data]";
 import { useVideoSegments } from "@/services/segmentService";
+import { usePictureInPicture } from "@/hooks/usePictureInPicture";
+
+const EXACT_SEEK = true;
 
 export default function MPVVideoScreen(props: {
   src: string;
@@ -74,6 +77,9 @@ export default function MPVVideoScreen(props: {
   const trackUpdates = useRef<Promise<void>>(Promise.resolve());
   const mounted = useRef(true);
   const skipSegment = useVideoSegments(props, duration, currentTime);
+  const [isPip, onPipChange] = usePictureInPicture(() =>
+    videoRef.current?.pause(),
+  );
 
   // if events overlap, use manual selections rather than a callback's older render state.
   const queueTrackUpdate = (update: () => Promise<void>) => {
@@ -374,7 +380,7 @@ export default function MPVVideoScreen(props: {
       // seek to start time
       if (props.startTime) {
         try {
-          await videoRef.current?.seekTo(props.startTime);
+          await videoRef.current?.seekTo(props.startTime, EXACT_SEEK);
         } catch (error) {
           console.error("Error seeking to start time:", error);
         }
@@ -454,7 +460,7 @@ export default function MPVVideoScreen(props: {
     if (!videoRef.current) return;
     setIsBuffering(true);
     try {
-      await videoRef.current?.seekTo(time);
+      await videoRef.current?.seekTo(time, EXACT_SEEK);
     } catch (error) {
       setIsBuffering(false);
       console.error("Error seeking:", error);
@@ -550,8 +556,11 @@ export default function MPVVideoScreen(props: {
           onProgress={handleProgress}
           onError={(error) => handleError(error, props.startTime || 0)}
           onTracksReady={handleTracksReady}
+          onPictureInPictureChange={(e) =>
+            onPipChange(e.nativeEvent.isActive)
+          }
         />
-        {Platform.isTV ? (
+        {isPip ? null : Platform.isTV ? (
           <VideoControlsTV
             videoRef={videoRef}
             player="mpv"

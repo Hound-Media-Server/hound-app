@@ -373,8 +373,8 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
         activeSurface = null
     }
 
-    fun seekTo(position: Double) {
-        renderer?.seekTo(position)
+    fun seekTo(position: Double, exact: Boolean? = null) {
+        renderer?.seekTo(position, exact)
     }
 
     fun seekBy(offset: Double) {

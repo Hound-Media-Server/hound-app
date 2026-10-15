@@ -82,8 +82,8 @@ class MpvPlayerModule : Module() {
             }
 
             // Async function to seek to position
-            AsyncFunction("seekTo") { view: MpvPlayerView, position: Double ->
-                view.seekTo(position)
+            AsyncFunction("seekTo") { view: MpvPlayerView, position: Double, exact: Boolean? ->
+                view.seekTo(position, exact)
             }
 
             // Async function to seek by offset
