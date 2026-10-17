@@ -8,6 +8,7 @@ interface ServerInfoResponse {
     version: string;
     buildTime: string;
     commit: string;
+    hound_plus_enabled?: boolean;
   };
 }
 

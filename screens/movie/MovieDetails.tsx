@@ -8,6 +8,8 @@ import { useModalStore } from "@/stores/modalStore";
 import { MediaTypeMovie } from "@/constants/MediaTypes";
 import { MovieDetailsProps } from "@/app/movie/[id]";
 import MediaPageTitle from "@/components/media_page/MediaPageTitle";
+import MediaScores from "@/components/media_page/MediaScores";
+import { useMediaScores } from "@/services/mediaDetailsService";
 import { formatMediaMetadata, normalizeOverview } from "@/utils/mediaMetadata";
 
 export default function MovieDetails({
@@ -19,6 +21,7 @@ export default function MovieDetails({
   handlePlayPress,
 }: MovieDetailsProps) {
   const openModal = useModalStore((s) => s.open);
+  const { data: scores, isWaiting: isScoresWaiting } = useMediaScores(MediaTypeMovie, id);
 
   const creators = details?.creators?.map((item: any) => item.name).join(", ");
   const metadata = formatMediaMetadata(details);
@@ -64,8 +67,8 @@ export default function MovieDetails({
                   {creators}
                 </ThemedText>
               )}
-              <ThemedText className="text-gray-400 text-md sm:text-lg mt-1">
-                {normalizeOverview(details?.overview)}
+              <ThemedText className={`text-gray-400 text-md sm:text-lg mt-1 ${isScoresWaiting ? "opacity-0" : ""}`}>
+                {normalizeOverview(scores?.short_overview || details?.overview)}
               </ThemedText>
               {details?.cast?.length > 0 && (
                 <ThemedText className="italic text-gray-200 text-sm mt-1">
@@ -77,6 +80,9 @@ export default function MovieDetails({
                   {details.cast.length > 3 && ", and more..."}
                 </ThemedText>
               )}
+              <View className="mt-1">
+                <MediaScores scores={scores} />
+              </View>
             </View>
             <View className="flex-row gap-3">
               <TouchableOpacity

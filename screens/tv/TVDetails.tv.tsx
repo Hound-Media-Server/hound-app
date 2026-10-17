@@ -12,6 +12,8 @@ import { useModalStore } from "@/stores/modalStore";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
 import { TVDetailsProps } from "@/app/tv/[id]";
 import MediaPageTitle from "@/components/media_page/MediaPageTitle";
+import MediaScores from "@/components/media_page/MediaScores";
+import { useMediaScores } from "@/services/mediaDetailsService";
 import { formatMediaMetadata, normalizeOverview } from "@/utils/mediaMetadata";
 
 export default function TVDetails({
@@ -23,8 +25,11 @@ export default function TVDetails({
   handleRewatch,
 }: TVDetailsProps) {
   const openModal = useModalStore((s) => s.open);
+  const { data: scores, isWaiting: isScoresWaiting } = useMediaScores(MediaTypeTVShow, id);
   const metadata = formatMediaMetadata(details);
-  const overview = normalizeOverview(details?.overview);
+  const overview = normalizeOverview(
+    scores?.short_overview || details?.overview,
+  );
 
   return (
     <View className="flex-1">
@@ -54,7 +59,7 @@ export default function TVDetails({
                 by {creators}
               </ThemedText>
             )} */}
-              <ThemedText className="text-gray-400 text-md sm:text-lg mt-1">
+              <ThemedText className={`text-gray-400 text-md sm:text-lg mt-1 ${isScoresWaiting ? "opacity-0" : ""}`}>
                 {overview}
               </ThemedText>
               {details?.cast?.length > 0 && (
@@ -108,6 +113,9 @@ export default function TVDetails({
                 />
               </View>
             </View>
+          </View>
+          <View className="absolute right-8 bottom-8">
+            <MediaScores scores={scores} variant="column" />
           </View>
         </GradientBackgroundView>
       </View>
