@@ -12,6 +12,8 @@ import { useModalStore } from "@/stores/modalStore";
 import { MediaTypeMovie } from "@/constants/MediaTypes";
 import { MovieDetailsProps } from "@/app/movie/[id]";
 import MediaPageTitle from "@/components/media_page/MediaPageTitle";
+import MediaScores from "@/components/media_page/MediaScores";
+import { useMediaScores } from "@/services/mediaDetailsService";
 import { formatMediaMetadata, normalizeOverview } from "@/utils/mediaMetadata";
 
 export default function MovieDetails({
@@ -23,10 +25,13 @@ export default function MovieDetails({
   handlePlayPress,
 }: MovieDetailsProps) {
   const openModal = useModalStore((s) => s.open);
+  const { data: scores, isWaiting: isScoresWaiting } = useMediaScores(MediaTypeMovie, id);
 
   const creators = details?.creators?.map((item: any) => item.name).join(", ");
   const metadata = formatMediaMetadata(details);
-  const overview = normalizeOverview(details?.overview);
+  const overview = normalizeOverview(
+    scores?.short_overview || details?.overview,
+  );
   return (
     <View className="flex-1 absolute inset-0 bg-red-500">
       <GradientBackgroundView
@@ -59,7 +64,7 @@ export default function MovieDetails({
                 {creators}
               </ThemedText>
             )}
-            <ThemedText className="text-gray-400 text-md sm:text-lg mt-1">
+            <ThemedText className={`text-gray-400 text-md sm:text-lg mt-1 ${isScoresWaiting ? "opacity-0" : ""}`}>
               {overview}
             </ThemedText>
             {details?.cast?.length > 0 && (
@@ -107,6 +112,9 @@ export default function MovieDetails({
               />
             </View>
           </View>
+        </View>
+        <View className="absolute right-8 bottom-8">
+          <MediaScores scores={scores} variant="column" />
         </View>
       </GradientBackgroundView>
     </View>

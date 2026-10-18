@@ -6,9 +6,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusStore } from "@/stores/focusStore";
 import { MediaTypeMovie, MediaTypeTVShow } from "@/constants/MediaTypes";
 import {
+  useMediaScores,
   useMovieDetails,
   useShowDetails,
 } from "@/services/mediaDetailsService";
+import MediaScores from "../media_page/MediaScores";
 import { formatMediaMetadata, normalizeOverview } from "@/utils/mediaMetadata";
 import { usePlaceholderOpacity } from "@/hooks/usePlaceholderOpacity";
 
@@ -47,6 +49,12 @@ function TVHomeDetails({
   const { data: showDetails } = useShowDetails(
     detailsId,
     focusedItem?.media_type === MediaTypeTVShow,
+  );
+  const { data: scores, isWaiting: isScoresWaiting } = useMediaScores(
+    focusedItem?.media_type ?? "",
+    detailsId,
+    focusedItem?.media_type === MediaTypeMovie ||
+      focusedItem?.media_type === MediaTypeTVShow,
   );
   if (!focusedItem) {
     return <PlaceholderHero height={heroHeight} />;
@@ -122,12 +130,15 @@ function TVHomeDetails({
           </ThemedText>
         )}
         <ThemedText
-          className="text-gray-400 text-lg"
+          className={`text-gray-400 text-lg ${isScoresWaiting ? "opacity-0" : ""}`}
           numberOfLines={3}
           ellipsizeMode="tail"
         >
-          {normalizeOverview(details?.overview || focusedItem.overview)}
+          {normalizeOverview(
+            scores?.short_overview || details?.overview || focusedItem.overview,
+          )}
         </ThemedText>
+        {!isScoresWaiting && <MediaScores scores={scores} />}
       </View>
     </View>
   );
