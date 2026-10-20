@@ -25,7 +25,10 @@ export default function MovieDetails({
   handlePlayPress,
 }: MovieDetailsProps) {
   const openModal = useModalStore((s) => s.open);
-  const { data: scores, isWaiting: isScoresWaiting } = useMediaScores(MediaTypeMovie, id);
+  const { data: scores, isWaiting: isScoresWaiting } = useMediaScores(
+    MediaTypeMovie,
+    id,
+  );
 
   const creators = details?.creators?.map((item: any) => item.name).join(", ");
   const metadata = formatMediaMetadata(details);
@@ -39,12 +42,13 @@ export default function MovieDetails({
         className="h-full w-full px-8 py-8"
       >
         <View
-          className={
-            overview.length > 300 ? "flex-1 w-4/5" : "flex-1 w-3/5"
-          }
+          className={overview.length > 300 ? "flex-1 w-4/5" : "flex-1 w-3/5"}
         >
           <View className="absolute bottom-0">
-            <MediaPageTitle title={details?.media_title} logoUri={details?.logo_uri} />
+            <MediaPageTitle
+              title={details?.media_title}
+              logoUri={details?.logo_uri}
+            />
             {movieWatchData && (
               <ThemedText className="text-gray-400 text-xs sm:text-sm">
                 Last watched {movieWatchData}
@@ -64,7 +68,9 @@ export default function MovieDetails({
                 {creators}
               </ThemedText>
             )}
-            <ThemedText className={`text-gray-400 text-md sm:text-lg mt-1 ${isScoresWaiting ? "opacity-0" : ""}`}>
+            <ThemedText
+              className={`text-gray-400 text-md sm:text-lg mt-1 ${isScoresWaiting ? "opacity-0" : ""}`}
+            >
               {overview}
             </ThemedText>
             {details?.cast?.length > 0 && (
@@ -76,6 +82,11 @@ export default function MovieDetails({
                   .join(", ")}
                 {details.cast.length > 3 && ", and more..."}
               </ThemedText>
+            )}
+            {scores && (
+              <View className="mt-2">
+                <MediaScores scores={scores} />
+              </View>
             )}
             <View className="flex-row gap-3 mt-3">
               <TVFocusButtonMore
@@ -112,9 +123,6 @@ export default function MovieDetails({
               />
             </View>
           </View>
-        </View>
-        <View className="absolute right-8 bottom-8">
-          <MediaScores scores={scores} variant="column" />
         </View>
       </GradientBackgroundView>
     </View>

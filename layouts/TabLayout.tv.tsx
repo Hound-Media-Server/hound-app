@@ -11,11 +11,13 @@ import { useServerInfo } from "@/services/internalService";
 function TVTabBar({
   state,
   descriptors,
-  navigation,
+  emitter,
+  navigateToTab,
 }: {
   state: any;
   descriptors: any;
-  navigation: any;
+  emitter: any;
+  navigateToTab: (routeKey: string) => void;
 }) {
   const scale = useTVScale();
   const tabRefs = useRef<any[]>([]);
@@ -64,13 +66,13 @@ function TVTabBar({
             const onPress = () => {
               if (isSelected) return;
 
-              const event = navigation.emit({
+              const event = emitter.emit({
                 type: "tabPress",
                 target: route.key,
                 canPreventDefault: true,
               });
               if (!event.defaultPrevented) {
-                navigation.navigate(route.name);
+                navigateToTab(route.key);
               }
             };
 
