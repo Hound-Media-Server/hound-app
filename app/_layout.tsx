@@ -155,7 +155,7 @@ export default function RootLayout() {
     <TVScaleProvider>
       <SafeAreaProvider>
         <SessionProvider>
-          <StatusBar style="light" translucent backgroundColor="transparent" />
+          <StatusBar style="light" />
           <RootLayoutNav />
           <ToastManager theme="dark" showProgressBar={false} useModal={false} />
         </SessionProvider>
