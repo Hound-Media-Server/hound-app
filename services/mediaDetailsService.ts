@@ -37,6 +37,25 @@ export interface MediaScores {
   imdb_score?: number;
   rt_score?: number;
   metacritic_score?: number;
+  mdblist_score?: number;
+  mdblist_score_average?: number;
+  trakt_score?: number;
+  letterboxd_score?: number;
+  tmdb_score?: number;
+  rt_audience_score?: number;
+  metacritic_user_score?: number;
+  rogerebert_score?: number | null;
+  mal_score?: number | null;
+  imdb_votes?: number;
+  rt_votes?: number;
+  rt_audience_votes?: number;
+  metacritic_votes?: number;
+  metacritic_user_votes?: number;
+  trakt_votes?: number;
+  tmdb_votes?: number;
+  letterboxd_votes?: number;
+  rogerebert_votes?: number | null;
+  mal_votes?: number | null;
 }
 
 const scoresQuery = (mediaType: string, id: string) => ({
