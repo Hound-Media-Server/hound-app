@@ -7,6 +7,7 @@ import { Animated, Pressable, TVFocusGuideView, View } from "react-native";
 import { useSession } from "@/services/ctx";
 import { ServerVersionGTE } from "@/utils/version";
 import { useServerInfo } from "@/services/internalService";
+import { useFocusStore } from "@/stores/focusStore";
 
 function TVTabBar({
   state,
@@ -30,6 +31,9 @@ function TVTabBar({
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const { session } = useSession();
   const router = useRouter();
+  const hidden = useFocusStore(
+    (s) => s.navbarHidden && state.routes[state.index].name === "index",
+  );
 
   useEffect(() => {
     const node = tabRefs.current[state.index] ?? null;
@@ -61,11 +65,11 @@ function TVTabBar({
 
   useEffect(() => {
     Animated.timing(fadeAnimation, {
-      toValue: tabBarFocused ? 1 : 0.4,
+      toValue: tabBarFocused ? 1 : hidden ? 0 : 0.4,
       duration: 180,
       useNativeDriver: true,
     }).start();
-  }, [tabBarFocused, fadeAnimation]);
+  }, [tabBarFocused, hidden, fadeAnimation]);
 
   const initial = session?.username
     ? session.username.charAt(0).toUpperCase()
@@ -113,7 +117,7 @@ function TVTabBar({
                     isSelected ? "bg-white/20" : "bg-white/0"
                   } group-focus:bg-white`}
                 >
-                  <ThemedText className="text-white group-focus:text-black text-sm">
+                  <ThemedText className="text-white group-focus:text-black text-lg">
                     {title === "Search" ? (
                       <Ionicons
                         name="search-outline"

@@ -21,10 +21,14 @@ type FocusState = {
   focusedItem: FocusItem | null;
   setFocusedItem: (item: FocusItem) => void;
   clearFocusedItem: () => void;
+  navbarHidden: boolean;
+  setNavbarHidden: (hidden: boolean) => void;
 };
 
 export const useFocusStore = create<FocusState>((set) => ({
   focusedItem: null,
   setFocusedItem: (item) => set({ focusedItem: item }),
   clearFocusedItem: () => set({ focusedItem: null }),
+  navbarHidden: false,
+  setNavbarHidden: (hidden) => set({ navbarHidden: hidden }),
 }));

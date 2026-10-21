@@ -18,6 +18,7 @@ import { ServerVersionGTE } from "@/utils/version";
 import { Toast } from "toastify-react-native";
 import { useMobileTabContentPadding } from "@/hooks/useMobileTabContentPadding";
 import { prefetchMediaDetails } from "@/services/mediaDetailsService";
+import { useFocusStore } from "@/stores/focusStore";
 
 export default function Index() {
   const bottomPadding = useMobileTabContentPadding();
@@ -48,6 +49,7 @@ export default function Index() {
     useNewCatalogAPI,
   );
   const verticalListRef = useRef<FlatList>(null);
+  const setNavbarHidden = useFocusStore((s) => s.setNavbarHidden);
 
   // hide splash screen after all queries done, this helps with focus handling as well
   let isAllReady = false;
@@ -177,6 +179,10 @@ export default function Index() {
               hasPreferredFocus={isAllReady && item.key === preferredRowKey}
               onRowFocus={(rowIndex: number) => {
                 if (!Platform.isTV) return;
+                setNavbarHidden(
+                  rows.findIndex((row) => row.key === preferredRowKey) !==
+                    rowIndex,
+                );
                 verticalListRef.current?.scrollToIndex({
                   index: rowIndex,
                   viewPosition: 0.5,

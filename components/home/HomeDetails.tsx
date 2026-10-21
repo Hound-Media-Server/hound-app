@@ -89,7 +89,10 @@ function TVHomeDetails({
           height: 300 * scale,
         }}
       />
-      <View className="absolute left-0 bottom-0 ps-10 pe-10 mb-5 w-4/5">
+      <View
+        className="absolute left-0 bottom-0 mb-5 w-4/5"
+        style={{ paddingHorizontal: 40 * scale }}
+      >
         {logoUri ? (
           <Image
             source={logoUri}
@@ -149,7 +152,10 @@ function PlaceholderHero({ height: heroHeight }: { height: number }) {
   const opacity = usePlaceholderOpacity();
   return (
     <View className="relative" style={{ height: heroHeight }}>
-      <View className="absolute left-0 bottom-0 ps-10 pe-10 mb-5 w-4/5">
+      <View
+        className="absolute left-0 bottom-0 mb-5 w-4/5"
+        style={{ paddingHorizontal: 40 * scale }}
+      >
         <Animated.View
           className="bg-gray-700 rounded-lg"
           style={{ width: 200 * scale, height: 30 * scale, opacity }}
