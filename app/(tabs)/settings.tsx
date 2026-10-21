@@ -13,7 +13,7 @@ import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSession } from "@/services/ctx";
 import { useRouter } from "expo-router";
-import { getSetting, setSetting } from "@/stores/settingsStore";
+import { getSetting, setSetting, useSetting } from "@/stores/settingsStore";
 import * as Updates from "expo-updates";
 import { ThemedText } from "@/components/ThemedText";
 import { useModalStore } from "@/stores/modalStore";
@@ -46,6 +46,7 @@ export default function Settings() {
   const [autoplayNextEpisode, setAutoplayNextEpisode] = useState<boolean>(true);
   const [enableExternalSubtitles, setEnableExternalSubtitles] =
     useState<boolean>(false);
+  const hideLiveTV = useSetting("hideLiveTV");
   const openModal = useModalStore((s) => s.open);
 
   async function onFetchUpdateAsync() {
@@ -227,6 +228,11 @@ export default function Settings() {
         <PressableSetting onPress={() => handleToggleAutoplay()}>
           <ThemedText className="text-white">
             Autoplay Next Episode: {autoplayNextEpisode ? "On" : "Off"}
+          </ThemedText>
+        </PressableSetting>
+        <PressableSetting onPress={() => setSetting("hideLiveTV", !hideLiveTV)}>
+          <ThemedText className="text-white">
+            Hide Live TV: {hideLiveTV ? "On" : "Off"}
           </ThemedText>
         </PressableSetting>
         <PressableSetting onPress={() => router.push("/profile-select")}>

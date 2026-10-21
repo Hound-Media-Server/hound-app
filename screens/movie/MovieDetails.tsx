@@ -1,4 +1,5 @@
-import { View, ImageBackground, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity } from "react-native";
+import { Image } from "expo-image";
 import { ThemedText } from "@/components/ThemedText";
 import HorizontalList from "@/components/HorizontalList";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
@@ -32,10 +33,10 @@ export default function MovieDetails({
           headerHeight={300}
           headerImage={
             details?.backdrop_uri ? (
-              <ImageBackground
+              <Image
                 source={{ uri: details?.backdrop_uri }}
                 className="absolute w-full h-96"
-                resizeMode="cover"
+                contentFit="cover"
               />
             ) : (
               <View className="absolute w-full h-96 bg-zinc-900 border-b border-zinc-800" />

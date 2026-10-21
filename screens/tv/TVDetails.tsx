@@ -5,7 +5,7 @@ import HorizontalList from "@/components/HorizontalList";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import SeasonSection from "@/components/media_page/SeasonSection";
 import { getAddToCollectionUrl } from "@/utils/navigation";
-import { ImageBackground } from "expo-image";
+import { Image } from "expo-image";
 import { useModalStore } from "@/stores/modalStore";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
 import { TVDetailsProps } from "@/app/tv/[id]";
@@ -39,7 +39,7 @@ export default function TVDetails({
           headerHeight={300}
           headerImage={
             details?.backdrop_uri ? (
-              <ImageBackground
+              <Image
                 source={{ uri: details?.backdrop_uri }}
                 className="absolute w-full h-96"
                 contentFit="cover"

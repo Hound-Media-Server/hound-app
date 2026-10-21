@@ -1,4 +1,4 @@
-import { ImageBackground } from "expo-image";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { View, ViewProps, StyleSheet } from "react-native";
@@ -17,7 +17,7 @@ export default function GradientBackgroundView({
     <View className="flex-1" {...props}>
       <View className="absolute inset-0">
         {uri && (
-          <ImageBackground
+          <Image
             source={{ uri: uri }}
             className="absolute w-full h-full bg-primary"
             contentFit="cover"

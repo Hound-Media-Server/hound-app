@@ -5,18 +5,19 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, usePathname, useRouter } from "expo-router";
 import { Pressable, View } from "react-native";
+import { useSetting } from "@/stores/settingsStore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabLayoutMobile() {
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
+  const hideLiveTV = useSetting("hideLiveTV");
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000000" }}>
       <Tabs
         safeAreaInsets={{ bottom: 0 }}
-        initialRouteName="index"
         screenOptions={{
           tabBarShowLabel: true,
           tabBarActiveTintColor: "#FF3B30",
@@ -59,7 +60,7 @@ export default function TabLayoutMobile() {
               <Ionicons
                 size={24}
                 name={focused ? "home" : "home-outline"}
-                color={color}
+                color={color ?? undefined}
               />
             ),
           }}
@@ -73,7 +74,7 @@ export default function TabLayoutMobile() {
               <Ionicons
                 size={24}
                 name={focused ? "albums" : "albums-outline"}
-                color={color}
+                color={color ?? undefined}
               />
             ),
           }}
@@ -87,7 +88,7 @@ export default function TabLayoutMobile() {
               <Ionicons
                 size={24}
                 name={focused ? "list" : "list-outline"}
-                color={color}
+                color={color ?? undefined}
               />
             ),
           }}
@@ -105,11 +106,12 @@ export default function TabLayoutMobile() {
           options={{
             title: "Live TV",
             headerShown: false,
+            href: hideLiveTV ? null : undefined,
             tabBarIcon: ({ focused, color }) => (
               <Ionicons
                 size={24}
                 name={focused ? "tv" : "tv-outline"}
-                color={color}
+                color={color ?? undefined}
               />
             ),
           }}
@@ -123,7 +125,7 @@ export default function TabLayoutMobile() {
               <Ionicons
                 size={24}
                 name={focused ? "settings" : "settings-outline"}
-                color={color}
+                color={color ?? undefined}
               />
             ),
           }}

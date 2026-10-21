@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import { createMMKV } from "react-native-mmkv";
 /*
   playAction: whether pressing play should show select-stream or directly play top stream
@@ -12,6 +13,7 @@ export type SettingsSchema = {
   subtitleSize?: number;
   autoplayNextEpisode?: boolean;
   enableExternalSubtitles?: boolean;
+  hideLiveTV?: boolean;
 };
 
 const DEFAULTS: SettingsSchema = {
@@ -24,6 +26,7 @@ const DEFAULTS: SettingsSchema = {
   subtitleSize: 24,
   autoplayNextEpisode: true,
   enableExternalSubtitles: false,
+  hideLiveTV: false,
 };
 
 const STORAGE_KEY = "@app_settings";
@@ -47,6 +50,21 @@ export function getSetting<K extends keyof SettingsSchema>(
 ): SettingsSchema[K] {
   const settings = load();
   return settings[key];
+}
+
+// reactive version of getSetting
+export function useSetting<K extends keyof SettingsSchema>(
+  key: K
+): SettingsSchema[K] {
+  return useSyncExternalStore(
+    (onChange) => {
+      const listener = storage.addOnValueChangedListener((k) => {
+        if (k === STORAGE_KEY) onChange();
+      });
+      return () => listener.remove();
+    },
+    () => load()[key]
+  );
 }
 
 /**
