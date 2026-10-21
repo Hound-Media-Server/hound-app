@@ -9,9 +9,11 @@ import { ThemedText } from "@/components/ThemedText";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMobileTabContentPadding } from "@/hooks/useMobileTabContentPadding";
+import { useTVScale } from "@/hooks/useTVScale";
 
 export default function Collections() {
   const bottomPadding = useMobileTabContentPadding();
+  const scale = useTVScale();
   const {
     data: collections,
     isLoading: isCollectionsLoading,
@@ -23,6 +25,11 @@ export default function Collections() {
     error: isPublicCollectionsError,
   } = usePublicCollections();
 
+  const ownIDs = new Set(collections?.map((c) => c.collection_id));
+  const publicOnly = publicCollections?.filter(
+    (c) => !ownIDs.has(c.collection_id),
+  );
+
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -31,6 +38,33 @@ export default function Collections() {
       queryClient.invalidateQueries({ queryKey: ["collections"] });
       queryClient.invalidateQueries({ queryKey: ["public-collections"] });
     }, [queryClient]),
+  );
+
+  const renderCollection = ({
+    item,
+  }: {
+    item: NonNullable<typeof collections>[number];
+  }) => (
+    <Pressable
+      className="bg-white/10 p-4 rounded-xl active:bg-white/20 border-2 focus:border-white"
+      style={
+        Platform.isTV ? { width: 220 * scale, height: 100 * scale } : undefined
+      }
+      onPress={() => router.push(`/collections/${item.collection_id}` as any)}
+      focusable={Platform.isTV}
+    >
+      <ThemedText
+        className="text-xl font-semibold text-white"
+        numberOfLines={1}
+      >
+        {item.collection_title}
+      </ThemedText>
+      {item.description ? (
+        <ThemedText className="text-gray-400 mt-1" numberOfLines={2}>
+          {item.description}
+        </ThemedText>
+      ) : null}
+    </Pressable>
   );
 
   return (
@@ -52,33 +86,16 @@ export default function Collections() {
               Your Collections
             </ThemedText>
             <FlatList
-              style={!Platform.isTV ? { flex: 1 } : undefined}
+              horizontal={Platform.isTV}
+              style={Platform.isTV ? { flexGrow: 0 } : { flex: 1 }}
+              showsHorizontalScrollIndicator={false}
               data={collections}
               contentContainerStyle={{
-                paddingBottom: publicCollections?.length ? 0 : bottomPadding,
+                gap: 12 * scale,
+                paddingBottom: publicOnly?.length ? 0 : bottomPadding,
               }}
               keyExtractor={(item) => item.collection_id.toString()}
-              renderItem={({ item }) => (
-                <Pressable
-                  className="bg-white/10 p-4 rounded-xl mb-3 active:bg-white/20 border-2 focus:border-white"
-                  onPress={() =>
-                    router.push(`/collections/${item.collection_id}` as any)
-                  }
-                  focusable={Platform.isTV}
-                >
-                  <ThemedText className="text-xl font-semibold text-white">
-                    {item.collection_title}
-                  </ThemedText>
-                  {item.description ? (
-                    <ThemedText
-                      className="text-gray-400 mt-1"
-                      numberOfLines={2}
-                    >
-                      {item.description}
-                    </ThemedText>
-                  ) : null}
-                </Pressable>
-              )}
+              renderItem={renderCollection}
             />
           </>
         )}
@@ -90,37 +107,22 @@ export default function Collections() {
             )}
           </View>
         )}
-        {!!publicCollections?.length && (
+        {!!publicOnly?.length && (
           <>
             <ThemedText className="ps-2 text-2xl text-white mb-3 mt-3">
               Public Collections
             </ThemedText>
             <FlatList
-              style={!Platform.isTV ? { flex: 1 } : undefined}
-              data={publicCollections}
-              contentContainerStyle={{ paddingBottom: bottomPadding }}
+              horizontal={Platform.isTV}
+              style={Platform.isTV ? { flexGrow: 0 } : { flex: 1 }}
+              showsHorizontalScrollIndicator={false}
+              data={publicOnly}
+              contentContainerStyle={{
+                gap: 12 * scale,
+                paddingBottom: bottomPadding,
+              }}
               keyExtractor={(item) => item.collection_id.toString()}
-              renderItem={({ item }) => (
-                <Pressable
-                  className="bg-white/10 p-4 rounded-xl mb-3 active:bg-white/20 border-2 focus:border-white"
-                  onPress={() =>
-                    router.push(`/collections/${item.collection_id}` as any)
-                  }
-                  focusable={Platform.isTV}
-                >
-                  <ThemedText className="text-xl font-semibold text-white">
-                    {item.collection_title}
-                  </ThemedText>
-                  {item.description ? (
-                    <ThemedText
-                      className="text-gray-400 mt-1"
-                      numberOfLines={2}
-                    >
-                      {item.description}
-                    </ThemedText>
-                  ) : null}
-                </Pressable>
-              )}
+              renderItem={renderCollection}
             />
           </>
         )}
