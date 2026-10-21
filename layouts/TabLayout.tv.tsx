@@ -73,7 +73,7 @@ function TVTabBar({
 
   return (
     <View
-      className="absolute top-5 left-10 right-10 z-50 flex-row justify-center items-center"
+      className="absolute top-3 left-10 right-10 z-50 flex-row justify-center items-center"
       onFocus={() => {
         setTabBarFocused(true);
       }}

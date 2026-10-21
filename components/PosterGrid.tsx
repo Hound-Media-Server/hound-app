@@ -110,6 +110,7 @@ export default function PosterGrid({
             width: totalGridWidth,
             alignSelf: "center",
             zIndex: 10,
+            minHeight: 40 * scale,
           }}
         >
           {header && (
@@ -132,6 +133,7 @@ export default function PosterGrid({
           item.media_type + "-" + item.media_source + "-" + item.source_id
         }
         contentContainerStyle={{
+          paddingTop: 10 * scale,
           paddingBottom: Platform.isTV ? 140 * scale : bottomPadding,
           alignSelf: "center",
           width: totalGridWidth,
