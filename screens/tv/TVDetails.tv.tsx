@@ -132,13 +132,6 @@ export default function TVDetails({
                         : "Add to Watchlist"
                       : "Add to Collection"
                   }
-                  icon={
-                    watchlist.supported
-                      ? watchlist.inWatchlist
-                        ? "bookmark"
-                        : "bookmark-outline"
-                      : undefined
-                  }
                 />
               </View>
             </View>

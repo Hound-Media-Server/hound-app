@@ -5,7 +5,6 @@ import HorizontalList from "@/components/HorizontalList";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { router } from "expo-router";
 import { getAddToCollectionUrl } from "@/utils/navigation";
-import { Ionicons } from "@expo/vector-icons";
 import { useModalStore } from "@/stores/modalStore";
 import { useWatchlist } from "@/services/collectionService";
 import { MediaTypeMovie } from "@/constants/MediaTypes";
@@ -120,22 +119,13 @@ export default function MovieDetails({
                 activeOpacity={0.75}
                 className="p-2 mt-3 bg-white rounded-2xl w-[120px] sm:w-[150px] items-center"
               >
-                <View className="flex-row items-center gap-1">
-                  {watchlist.supported && (
-                    <Ionicons
-                      name={watchlist.inWatchlist ? "bookmark" : "bookmark-outline"}
-                      size={16}
-                      color="black"
-                    />
-                  )}
-                  <ThemedText className="text-primary text-md sm:text-lg">
-                    {watchlist.supported
-                      ? watchlist.inWatchlist
-                        ? "In Watchlist"
-                        : "Add to Watchlist"
-                      : "Add to Collection"}
-                  </ThemedText>
-                </View>
+                <ThemedText className="text-primary text-md sm:text-lg">
+                  {watchlist.supported
+                    ? watchlist.inWatchlist
+                      ? "In Watchlist"
+                      : "Add to Watchlist"
+                    : "Add to Collection"}
+                </ThemedText>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() =>

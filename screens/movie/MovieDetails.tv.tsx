@@ -131,13 +131,6 @@ export default function MovieDetails({
                       : "Add to Watchlist"
                     : "Add to Collection"
                 }
-                icon={
-                  watchlist.supported
-                    ? watchlist.inWatchlist
-                      ? "bookmark"
-                      : "bookmark-outline"
-                    : undefined
-                }
               />
             </View>
           </View>
