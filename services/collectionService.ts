@@ -1,6 +1,9 @@
 import { apiClient } from "./apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { MediaTypeMovie, MediaTypeTVShow, MediaType } from "../constants/MediaTypes";
+import { Toast } from "toastify-react-native";
+import { useServerInfo } from "./internalService";
+import { ServerVersionGTE } from "../utils/version";
 
 interface CollectionMeta {
   collection_id: number;
@@ -190,4 +193,40 @@ export const useDeleteFromCollection = () => {
       });
     },
   });
+};
+export const useWatchlist = (item: any, enabled: boolean = true) => {
+  const queryClient = useQueryClient();
+  const { data: serverInfo } = useServerInfo();
+  const supported = ServerVersionGTE(serverInfo?.data?.version, "0.4.3-staging");
+  const params = new URLSearchParams({
+    media_type: item?.media_type,
+    media_source: item?.media_source,
+    source_id: String(item?.source_id),
+  });
+  const { data: inWatchlist } = useQuery({
+    queryKey: ["watchlist", params.toString()],
+    queryFn: () =>
+      apiClient<{ data: { contains: boolean } }>(`/collection/watchlist/contains?${params}`),
+    select: (data) => data.data.contains,
+    enabled: enabled && supported && !!item?.source_id,
+  });
+  const { mutate } = useMutation({
+    mutationFn: (add: boolean) =>
+      apiClient(`/collection/watchlist`, {
+        method: add ? "POST" : "DELETE",
+        body: JSON.stringify({
+          media_type: item.media_type,
+          media_source: item.media_source,
+          source_id: String(item.source_id),
+        }),
+      }),
+    onSuccess: (_, add) => {
+      Toast.success(add ? "Added to Watchlist" : "Removed from Watchlist");
+      queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+      queryClient.invalidateQueries({ queryKey: ["collections"] });
+      queryClient.invalidateQueries({ queryKey: ["collection-contents"] });
+    },
+    onError: (error: any) => Toast.error(error?.message || "Failed to update watchlist"),
+  });
+  return { supported, inWatchlist: !!inWatchlist, toggle: () => mutate(!inWatchlist) };
 };

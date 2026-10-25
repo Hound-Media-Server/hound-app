@@ -5,7 +5,9 @@ import HorizontalList from "@/components/HorizontalList";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { router } from "expo-router";
 import { getAddToCollectionUrl } from "@/utils/navigation";
+import { Ionicons } from "@expo/vector-icons";
 import { useModalStore } from "@/stores/modalStore";
+import { useWatchlist } from "@/services/collectionService";
 import { MediaTypeMovie } from "@/constants/MediaTypes";
 import { MovieDetailsProps } from "@/app/movie/[id]";
 import MediaPageTitle from "@/components/media_page/MediaPageTitle";
@@ -22,7 +24,11 @@ export default function MovieDetails({
   handlePlayPress,
 }: MovieDetailsProps) {
   const openModal = useModalStore((s) => s.open);
-  const { data: scores, isWaiting: isScoresWaiting } = useMediaScores(MediaTypeMovie, id);
+  const watchlist = useWatchlist(details);
+  const { data: scores, isWaiting: isScoresWaiting } = useMediaScores(
+    MediaTypeMovie,
+    id,
+  );
 
   const creators = details?.creators?.map((item: any) => item.name).join(", ");
   const metadata = formatMediaMetadata(details);
@@ -49,11 +55,6 @@ export default function MovieDetails({
                 title={details?.media_title}
                 logoUri={details?.logo_uri}
               />
-              {movieWatchData && (
-                <ThemedText className="text-gray-400 text-xs sm:text-sm">
-                  Last watched {movieWatchData}
-                </ThemedText>
-              )}
               {!!metadata && (
                 <ThemedText
                   className="text-secondary mt-1 opacity-80 sm:text-lg"
@@ -68,7 +69,9 @@ export default function MovieDetails({
                   {creators}
                 </ThemedText>
               )}
-              <ThemedText className={`text-gray-400 text-md sm:text-lg mt-1 ${isScoresWaiting ? "opacity-0" : ""}`}>
+              <ThemedText
+                className={`text-gray-400 text-md sm:text-lg mt-1 ${isScoresWaiting ? "opacity-0" : ""}`}
+              >
                 {normalizeOverview(scores?.short_overview || details?.overview)}
               </ThemedText>
               {details?.cast?.length > 0 && (
@@ -79,6 +82,11 @@ export default function MovieDetails({
                     .map((item: any) => item.name)
                     .join(", ")}
                   {details.cast.length > 3 && ", and more..."}
+                </ThemedText>
+              )}
+              {movieWatchData && (
+                <ThemedText className="text-secondary opacity-80 text-xs sm:text-sm">
+                  Last watched {movieWatchData}
                 </ThemedText>
               )}
               <View className="mt-1">
@@ -99,20 +107,35 @@ export default function MovieDetails({
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() =>
-                  router.push(
-                    getAddToCollectionUrl(
-                      MediaTypeMovie,
-                      details?.media_source,
-                      details?.source_id,
-                    ),
-                  )
+                  watchlist.supported
+                    ? watchlist.toggle()
+                    : router.push(
+                        getAddToCollectionUrl(
+                          MediaTypeMovie,
+                          details?.media_source,
+                          details?.source_id,
+                        ),
+                      )
                 }
                 activeOpacity={0.75}
                 className="p-2 mt-3 bg-white rounded-2xl w-[120px] sm:w-[150px] items-center"
               >
-                <ThemedText className="text-primary text-md sm:text-lg">
-                  Add to Collection
-                </ThemedText>
+                <View className="flex-row items-center gap-1">
+                  {watchlist.supported && (
+                    <Ionicons
+                      name={watchlist.inWatchlist ? "bookmark" : "bookmark-outline"}
+                      size={16}
+                      color="black"
+                    />
+                  )}
+                  <ThemedText className="text-primary text-md sm:text-lg">
+                    {watchlist.supported
+                      ? watchlist.inWatchlist
+                        ? "In Watchlist"
+                        : "Add to Watchlist"
+                      : "Add to Collection"}
+                  </ThemedText>
+                </View>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() =>
@@ -125,6 +148,7 @@ export default function MovieDetails({
                       },
                       modalTitle: details?.media_title,
                       autoFocus: true,
+                      showCollections: true,
                     },
                   })
                 }

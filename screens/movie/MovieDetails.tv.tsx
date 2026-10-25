@@ -9,6 +9,7 @@ import {
   TVFocusButtonText,
 } from "@/components/TVFocusButton";
 import { useModalStore } from "@/stores/modalStore";
+import { useWatchlist } from "@/services/collectionService";
 import { MediaTypeMovie } from "@/constants/MediaTypes";
 import { MovieDetailsProps } from "@/app/movie/[id]";
 import MediaPageTitle from "@/components/media_page/MediaPageTitle";
@@ -25,6 +26,7 @@ export default function MovieDetails({
   handlePlayPress,
 }: MovieDetailsProps) {
   const openModal = useModalStore((s) => s.open);
+  const watchlist = useWatchlist(details);
   const { data: scores, isWaiting: isScoresWaiting } = useMediaScores(
     MediaTypeMovie,
     id,
@@ -49,11 +51,6 @@ export default function MovieDetails({
               title={details?.media_title}
               logoUri={details?.logo_uri}
             />
-            {movieWatchData && (
-              <ThemedText className="text-gray-400 text-xs sm:text-sm">
-                Last watched {movieWatchData}
-              </ThemedText>
-            )}
             {!!metadata && (
               <ThemedText
                 className="text-secondary mt-1 opacity-80 sm:text-lg"
@@ -83,6 +80,11 @@ export default function MovieDetails({
                 {details.cast.length > 3 && ", and more..."}
               </ThemedText>
             )}
+            {movieWatchData && (
+              <ThemedText className="text-secondary opacity-80 text-xs sm:text-sm mt-1">
+                Last watched {movieWatchData}
+              </ThemedText>
+            )}
             {scores && (
               <View className="mt-2">
                 <MediaScores scores={scores} />
@@ -100,6 +102,7 @@ export default function MovieDetails({
                       },
                       modalTitle: details?.media_title,
                       autoFocus: true,
+                      showCollections: true,
                     },
                   })
                 }
@@ -111,15 +114,30 @@ export default function MovieDetails({
               />
               <TVFocusButtonText
                 onPress={() =>
-                  router.push(
-                    getAddToCollectionUrl(
-                      MediaTypeMovie,
-                      details?.media_source,
-                      details?.source_id,
-                    ),
-                  )
+                  watchlist.supported
+                    ? watchlist.toggle()
+                    : router.push(
+                        getAddToCollectionUrl(
+                          MediaTypeMovie,
+                          details?.media_source,
+                          details?.source_id,
+                        ),
+                      )
                 }
-                label="Add to Collection"
+                label={
+                  watchlist.supported
+                    ? watchlist.inWatchlist
+                      ? "In Watchlist"
+                      : "Add to Watchlist"
+                    : "Add to Collection"
+                }
+                icon={
+                  watchlist.supported
+                    ? watchlist.inWatchlist
+                      ? "bookmark"
+                      : "bookmark-outline"
+                    : undefined
+                }
               />
             </View>
           </View>

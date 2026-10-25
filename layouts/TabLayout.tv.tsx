@@ -117,7 +117,7 @@ function TVTabBar({
                     isSelected ? "bg-white/20" : "bg-white/0"
                   } group-focus:bg-white`}
                 >
-                  <ThemedText className="text-white group-focus:text-black text-lg">
+                  <ThemedText className="text-white group-focus:text-black text-base">
                     {title === "Search" ? (
                       <Ionicons
                         name="search-outline"

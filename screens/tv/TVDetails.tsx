@@ -6,7 +6,9 @@ import ParallaxScrollView from "@/components/ParallaxScrollView";
 import SeasonSection from "@/components/media_page/SeasonSection";
 import { getAddToCollectionUrl } from "@/utils/navigation";
 import { Image } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
 import { useModalStore } from "@/stores/modalStore";
+import { useWatchlist } from "@/services/collectionService";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
 import { TVDetailsProps } from "@/app/tv/[id]";
 import MediaPageTitle from "@/components/media_page/MediaPageTitle";
@@ -23,6 +25,7 @@ export default function TVDetails({
   handleRewatch,
 }: TVDetailsProps) {
   const openModal = useModalStore((s) => s.open);
+  const watchlist = useWatchlist(details);
   const { data: scores, isWaiting: isScoresWaiting } = useMediaScores(MediaTypeTVShow, id);
 
   const creators = details?.creators?.map((item: any) => item.name).join(", ");
@@ -88,20 +91,35 @@ export default function TVDetails({
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() =>
-                  router.push(
-                    getAddToCollectionUrl(
-                      MediaTypeTVShow,
-                      details?.media_source,
-                      details?.source_id,
-                    ),
-                  )
+                  watchlist.supported
+                    ? watchlist.toggle()
+                    : router.push(
+                        getAddToCollectionUrl(
+                          MediaTypeTVShow,
+                          details?.media_source,
+                          details?.source_id,
+                        ),
+                      )
                 }
                 activeOpacity={0.75}
                 className="p-2 mt-3 bg-gray-300 rounded-2xl w-[120px] sm:w-[150px] items-center"
               >
-                <ThemedText className="text-primary text-md sm:text-lg">
-                  Add to Collection
-                </ThemedText>
+                <View className="flex-row items-center gap-1">
+                  {watchlist.supported && (
+                    <Ionicons
+                      name={watchlist.inWatchlist ? "bookmark" : "bookmark-outline"}
+                      size={16}
+                      color="black"
+                    />
+                  )}
+                  <ThemedText className="text-primary text-md sm:text-lg">
+                    {watchlist.supported
+                      ? watchlist.inWatchlist
+                        ? "In Watchlist"
+                        : "Add to Watchlist"
+                      : "Add to Collection"}
+                  </ThemedText>
+                </View>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() =>
@@ -116,6 +134,7 @@ export default function TVDetails({
                       modalTitle: details?.media_title,
                       autoFocus: true,
                       showRewatch: true,
+                      showCollections: true,
                     },
                   })
                 }

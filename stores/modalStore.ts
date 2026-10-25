@@ -29,6 +29,7 @@ type ModalState =
         modalTitle: string;
         autoFocus?: boolean;
         showRewatch?: boolean;
+        showCollections?: boolean;
       };
     }
   | {

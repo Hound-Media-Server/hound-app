@@ -1,12 +1,17 @@
 import { RelativePathString, useRouter } from "expo-router";
 import { ContextModal, ModalAction } from "./Modal";
-import { getSelectStreamUrl, StreamUrlParams } from "@/utils/navigation";
+import {
+  getAddToCollectionUrl,
+  getSelectStreamUrl,
+  StreamUrlParams,
+} from "@/utils/navigation";
 import {
   useAddWatchHistory,
   useCreateRewatch,
 } from "@/services/watchDataService";
 import { Toast } from "toastify-react-native";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
+import { useWatchlist } from "@/services/collectionService";
 import { useModalStore } from "@/stores/modalStore";
 
 export default function PlayOptionsModal({
@@ -16,6 +21,7 @@ export default function PlayOptionsModal({
   onClose,
   autoFocus,
   showRewatch = false,
+  showCollections = false,
 }: {
   mediaItem: any;
   modalTitle: string;
@@ -23,6 +29,7 @@ export default function PlayOptionsModal({
   onClose: () => void;
   autoFocus?: boolean;
   showRewatch?: boolean;
+  showCollections?: boolean;
 }) {
   const router = useRouter();
   const openModal = useModalStore((s) => s.open);
@@ -30,6 +37,7 @@ export default function PlayOptionsModal({
     useAddWatchHistory();
   const { mutateAsync: rewatchMutation, isPending: isCreatingRewatch } =
     useCreateRewatch();
+  const watchlist = useWatchlist(mediaItem, showCollections);
 
   if (!mediaItem) return null;
   const targetSeason =
@@ -175,6 +183,30 @@ export default function PlayOptionsModal({
             });
           }}
         />
+      )}
+      {showCollections && watchlist.supported && (
+        <>
+          <ModalAction
+            label={watchlist.inWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
+            onPress={() => {
+              watchlist.toggle();
+              onClose();
+            }}
+          />
+          <ModalAction
+            label="Add to Collection"
+            onPress={() => {
+              router.navigate(
+                getAddToCollectionUrl(
+                  mediaItem.media_type,
+                  mediaItem.media_source,
+                  mediaItem.source_id,
+                ) as RelativePathString,
+              );
+              onClose();
+            }}
+          />
+        </>
       )}
     </ContextModal>
   );

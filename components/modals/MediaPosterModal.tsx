@@ -2,7 +2,7 @@ import { RelativePathString, useRouter, usePathname } from "expo-router";
 import { ContextModal, ModalAction } from "./Modal";
 import { getAddToCollectionUrl, getMediaPageUrl } from "@/utils/navigation";
 import { MediaTypeMovie } from "@/constants/MediaTypes";
-import { useDeleteFromCollection } from "@/services/collectionService";
+import { useDeleteFromCollection, useWatchlist } from "@/services/collectionService";
 import { Toast } from "toastify-react-native";
 
 export default function MediaPosterModal({
@@ -23,6 +23,7 @@ export default function MediaPosterModal({
   const router = useRouter();
   const pathname = usePathname();
   const { mutate: deleteFromCollection, isPending } = useDeleteFromCollection();
+  const watchlist = useWatchlist(mediaItem);
   return (
     <ContextModal
       visible={visible}
@@ -45,6 +46,15 @@ export default function MediaPosterModal({
           onClose();
         }}
       />
+      {watchlist.supported && (
+        <ModalAction
+          label={watchlist.inWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
+          onPress={() => {
+            watchlist.toggle();
+            onClose();
+          }}
+        />
+      )}
       <ModalAction
         label="Add to Collection"
         onPress={() => {
