@@ -117,7 +117,7 @@ function RootLayoutNav() {
           name="(modals)/seasons"
           options={{
             headerShown: false,
-            presentation: "modal",
+            presentation: Platform.OS === "ios" && Platform.isTV ? "card" : "modal",
             animation: "fade",
           }}
         />

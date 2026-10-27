@@ -33,6 +33,9 @@ module.exports = {
         "grid-gap": nativeRem(20),
         "list-min-height": nativeRem(100),
       },
+      borderWidth: {
+        2: nativeRem(2),
+      },
       lineHeight: {
         title: nativeRem(36),
         subtitle: nativeRem(32),

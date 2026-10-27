@@ -25,6 +25,7 @@ import { MediaTypeTVShow } from "@/constants/MediaTypes";
 import { normalizeOverview } from "@/utils/mediaMetadata";
 
 const isTV = Platform.isTV;
+const isTVOS = Platform.OS === "ios" && Platform.isTV;
 
 export default function SeasonSection({
   sourceID,
@@ -197,7 +198,7 @@ function EpisodeSection({
   // pagination since it's not good UX to have to scroll through too many episodes anyway
   // having trouble handling initial focus with flashlist, todo:revisit later
   return (
-    <View focusable className={isTV ? "opacity-50 focus:opacity-100" : ""}>
+    <View focusable={!isTVOS} className={isTV ? "opacity-50 focus:opacity-100" : ""}>
       {seasonDetails?.episodes.length <= 100 && Platform.isTV ? (
         <FlatList
           ref={flatlistRef}
