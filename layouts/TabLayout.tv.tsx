@@ -3,7 +3,13 @@ import { ThemedText } from "@/components/ThemedText";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Pressable, TVFocusGuideView, View } from "react-native";
+import {
+  Animated,
+  Platform,
+  Pressable,
+  TVFocusGuideView,
+  View,
+} from "react-native";
 import { useSession } from "@/services/ctx";
 import { ServerVersionGTE } from "@/utils/version";
 import { useServerInfo } from "@/services/internalService";
@@ -89,6 +95,12 @@ function TVTabBar({
       <TVFocusGuideView
         autoFocus
         destinations={selectedTabNode ? [selectedTabNode] : undefined}
+        // tvOS, guide must expand full width to intercept focus events
+        style={
+          Platform.OS === "ios"
+            ? { flex: 1, flexDirection: "row", justifyContent: "center" }
+            : undefined
+        }
       >
         <Animated.View
           className="self-start flex-row bg-black/40 rounded-full overflow-hidden px-1 py-0.5"
@@ -107,12 +119,12 @@ function TVTabBar({
                 onPress={() => goTo(index, route)}
                 onFocus={() => {
                   setFocusedIndex(index);
-                  goTo(index, route);
+                  if (tabBarFocused || Platform.OS !== "ios") goTo(index, route);
                 }}
               >
                 <View
                   className={`flex-1 justify-center rounded-full py-1 overflow-hidden ${
-                    title === "Search" ? "w-7 items-center" : "px-3"
+                    title === "Search" ? "w-8 items-center" : "px-3"
                   } ${
                     isSelected ? "bg-white/20" : "bg-white/0"
                   } group-focus:bg-white`}

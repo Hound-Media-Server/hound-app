@@ -79,7 +79,10 @@ export function ContextModal({
         }}
       >
         <ModalInternalContext.Provider value={{ tvPressedOnce }}>
-          <Pressable style={styles.modalContent}>
+          <Pressable
+            style={styles.modalContent}
+            focusable={!(Platform.OS === "ios" && Platform.isTV)}
+          >
             <ThemedText numberOfLines={1} style={styles.modalTitle}>
               {modalTitle}
             </ThemedText>

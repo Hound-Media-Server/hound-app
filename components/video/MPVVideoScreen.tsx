@@ -1,9 +1,4 @@
-import {
-  Alert,
-  Platform,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { Alert, Platform, useWindowDimensions, View } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
 import { StatusBar } from "expo-status-bar";
 import { useLayoutEffect, useRef, useState, useEffect, useMemo } from "react";
@@ -207,7 +202,11 @@ export default function MPVVideoScreen(props: {
       try {
         // different font scale for mpv, this seems to work best for now
         const size = appSettings?.subtitleSize || 24;
-        const scale = (720 / windowHeight) * 1.25;
+        // android scale is half of tvos, scale up for tvos
+        const scale =
+          (720 / windowHeight) *
+          1.25 *
+          (Platform.OS === "ios" && Platform.isTV ? 2 : 1);
         await videoRef.current?.setSubtitleFontSize(Math.round(size * scale));
       } catch (error) {
         console.error("Error applying subtitle size:", error);
@@ -556,9 +555,7 @@ export default function MPVVideoScreen(props: {
           onProgress={handleProgress}
           onError={(error) => handleError(error, props.startTime || 0)}
           onTracksReady={handleTracksReady}
-          onPictureInPictureChange={(e) =>
-            onPipChange(e.nativeEvent.isActive)
-          }
+          onPictureInPictureChange={(e) => onPipChange(e.nativeEvent.isActive)}
         />
         {isPip ? null : Platform.isTV ? (
           <VideoControlsTV

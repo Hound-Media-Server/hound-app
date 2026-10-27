@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import React, { useEffect, useMemo } from "react";
@@ -90,7 +91,7 @@ function RootLayoutNav() {
           name="stream/[encoded_data]"
           options={{
             headerShown: false,
-            presentation: "modal",
+            presentation: Platform.isTV ? "card" : "modal",
             animation: "fade",
           }}
         />

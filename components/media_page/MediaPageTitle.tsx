@@ -14,7 +14,7 @@ export default function MediaPageTitle({
 
   if (!logoUri) {
     return (
-      <ThemedText className="text-white text-3xl leading-[36px]">
+      <ThemedText className="text-white text-3xl leading-title">
         {title}
       </ThemedText>
     );

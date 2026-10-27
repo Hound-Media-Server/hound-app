@@ -12,6 +12,7 @@ import {
   HWEvent,
   TVFocusGuideView,
   Animated,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getName as getLanguageName } from "@cospired/i18n-iso-languages";
@@ -56,6 +57,8 @@ interface VideoControlsProps {
   streamData?: any;
 }
 
+const isTVOS = Platform.OS === "ios" && Platform.isTV;
+
 export default function VideoControlsTV({
   videoRef,
   player,
@@ -94,6 +97,7 @@ export default function VideoControlsTV({
   const [autoplayCanceled, setAutoplayCanceled] = useState(false);
   const autoplayStarted = useRef(false);
   const skipButtonRef = useRef<View>(null);
+  const playPauseRef = useRef<View>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const hideControlsTimeoutRef = useRef<any>(null);
@@ -141,6 +145,10 @@ export default function VideoControlsTV({
         "right",
         "longLeft",
         "longRight",
+        "swipeUp",
+        "swipeDown",
+        "swipeLeft",
+        "swipeRight",
       ].includes(eventType)
     ) {
       controlsOpenTimer();
@@ -209,6 +217,10 @@ export default function VideoControlsTV({
   useEffect(() => {
     if (showSkip && !controlsVisible) skipButtonRef.current?.requestTVFocus();
   }, [showSkip, controlsVisible, skipSegment?.start, skipSegment?.end]);
+  useEffect(() => {
+    if (isTVOS && controlsVisible && !isModalOpen)
+      playPauseRef.current?.requestTVFocus();
+  }, [controlsVisible, isModalOpen]);
   const skipButton = showSkip && skipSegment && (
     <Pressable
       key={`${skipSegment.start}-${skipSegment.end}`}
@@ -320,6 +332,7 @@ export default function VideoControlsTV({
                 <Ionicons name="play-back" size={25 * scale} color="white" />
               </FocusablePressable>
               <FocusablePressable
+                ref={playPauseRef}
                 focusable={controlsVisible && !isModalOpen}
                 onPress={onPlayPause}
                 hasTVPreferredFocus={controlsVisible && !isModalOpen}
@@ -457,6 +470,7 @@ export default function VideoControlsTV({
       >
         <Pressable
           style={styles.modalOverlay}
+          focusable={!isTVOS}
           onPress={() => setShowSubtitlesModal(false)}
         >
           <View style={styles.modalContent}>
@@ -529,6 +543,7 @@ export default function VideoControlsTV({
       >
         <Pressable
           style={styles.modalOverlay}
+          focusable={!isTVOS}
           onPress={() => setShowAudioModal(false)}
         >
           <View style={styles.modalContent}>
@@ -587,6 +602,7 @@ export default function VideoControlsTV({
       >
         <Pressable
           style={styles.modalOverlay}
+          focusable={!isTVOS}
           onPress={() => setShowInfoModal(false)}
         >
           <View style={styles.modalContent}>
@@ -632,6 +648,7 @@ export default function VideoControlsTV({
       >
         <Pressable
           style={styles.modalOverlay}
+          focusable={!isTVOS}
           onPress={() => setShowSettingsModal(false)}
         >
           <View style={styles.modalContent}>
