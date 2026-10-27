@@ -197,7 +197,7 @@ export const useDeleteFromCollection = () => {
 export const useWatchlist = (item: any, enabled: boolean = true) => {
   const queryClient = useQueryClient();
   const { data: serverInfo } = useServerInfo();
-  const supported = ServerVersionGTE(serverInfo?.data?.version, "0.4.3-staging");
+  const supported = ServerVersionGTE(serverInfo?.data?.version, "0.4.2");
   const params = new URLSearchParams({
     media_type: item?.media_type,
     media_source: item?.media_source,
