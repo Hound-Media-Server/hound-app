@@ -1,5 +1,6 @@
 import { View, TouchableOpacity } from "react-native";
 import { Image } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import HorizontalList from "@/components/HorizontalList";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
@@ -117,42 +118,18 @@ export default function MovieDetails({
                       )
                 }
                 activeOpacity={0.75}
-                className="p-2 mt-3 bg-white rounded-2xl w-[120px] sm:w-[150px] items-center"
+                className="p-2 mt-3 bg-white rounded-2xl w-11 h-11 items-center justify-center"
               >
-                <ThemedText className="text-primary text-md sm:text-lg">
-                  {watchlist.supported
-                    ? watchlist.inWatchlist
-                      ? "In Watchlist"
-                      : "Add to Watchlist"
-                    : "Add to Collection"}
-                </ThemedText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() =>
-                  openModal({
-                    type: "playOptions",
-                    props: {
-                      mediaItem: {
-                        ...details,
-                        watch_progress: continueWatching?.watch_progress,
-                      },
-                      modalTitle: details?.media_title,
-                      autoFocus: true,
-                      showCollections: true,
-                    },
-                  })
-                }
-                activeOpacity={0.75}
-                className="p-2 mt-3 bg-gray-600 rounded-2xl w-[120px] sm:w-[150px] items-center"
-              >
-                <ThemedText className="text-white text-md sm:text-lg">
-                  More
-                </ThemedText>
+                <Ionicons
+                  name={watchlist.inWatchlist ? "bookmark" : "bookmark-outline"}
+                  size={20}
+                  color="black"
+                />
               </TouchableOpacity>
             </View>
             {details?.cast?.length > 0 && (
               <View className="mt-2">
-                <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
+                <ThemedText className="text-gray-200 mt-1 mb-2 text-2xl sm:text-3xl sm:pb-2">
                   Cast
                 </ThemedText>
                 <View className="-mx-5">
@@ -166,6 +143,26 @@ export default function MovieDetails({
             )}
           </View>
         </ParallaxScrollView>
+        <TouchableOpacity
+          onPress={() =>
+            openModal({
+              type: "playOptions",
+              props: {
+                mediaItem: {
+                  ...details,
+                  watch_progress: continueWatching?.watch_progress,
+                },
+                modalTitle: details?.media_title,
+                autoFocus: true,
+                showCollections: true,
+              },
+            })
+          }
+          activeOpacity={0.75}
+          className="absolute top-12 right-4 z-50 p-2"
+        >
+          <Ionicons name="ellipsis-vertical" size={24} color="white" />
+        </TouchableOpacity>
       </View>
     </>
   );

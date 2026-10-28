@@ -6,6 +6,7 @@ import ParallaxScrollView from "@/components/ParallaxScrollView";
 import SeasonSection from "@/components/media_page/SeasonSection";
 import { getAddToCollectionUrl } from "@/utils/navigation";
 import { Image } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
 import { useModalStore } from "@/stores/modalStore";
 import { useWatchlist } from "@/services/collectionService";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
@@ -25,7 +26,10 @@ export default function TVDetails({
 }: TVDetailsProps) {
   const openModal = useModalStore((s) => s.open);
   const watchlist = useWatchlist(details);
-  const { data: scores, isWaiting: isScoresWaiting } = useMediaScores(MediaTypeTVShow, id);
+  const { data: scores, isWaiting: isScoresWaiting } = useMediaScores(
+    MediaTypeTVShow,
+    id,
+  );
 
   const creators = details?.creators?.map((item: any) => item.name).join(", ");
   const metadata = formatMediaMetadata(details);
@@ -71,7 +75,9 @@ export default function TVDetails({
                   {creators}
                 </ThemedText>
               )}
-              <ThemedText className={`text-gray-400 text-md sm:text-lg mt-1 ${isScoresWaiting ? "opacity-0" : ""}`}>
+              <ThemedText
+                className={`text-gray-400 text-md sm:text-lg mt-1 ${isScoresWaiting ? "opacity-0" : ""}`}
+              >
                 {normalizeOverview(scores?.short_overview || details?.overview)}
               </ThemedText>
               <MediaScores scores={scores} />
@@ -101,39 +107,13 @@ export default function TVDetails({
                       )
                 }
                 activeOpacity={0.75}
-                className="p-2 mt-3 bg-gray-300 rounded-2xl w-[120px] sm:w-[150px] items-center"
+                className="p-2 mt-3 bg-gray-300 rounded-2xl w-11 h-11 items-center justify-center"
               >
-                <ThemedText className="text-primary text-md sm:text-lg">
-                  {watchlist.supported
-                    ? watchlist.inWatchlist
-                      ? "In Watchlist"
-                      : "Add to Watchlist"
-                    : "Add to Collection"}
-                </ThemedText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() =>
-                  openModal({
-                    type: "playOptions",
-                    props: {
-                      mediaItem: {
-                        ...details,
-                        watch_progress: continueWatching?.watch_progress,
-                        next_episode: continueWatching?.next_episode,
-                      },
-                      modalTitle: details?.media_title,
-                      autoFocus: true,
-                      showRewatch: true,
-                      showCollections: true,
-                    },
-                  })
-                }
-                activeOpacity={0.75}
-                className="p-2 mt-3 bg-gray-600 rounded-2xl w-[120px] sm:w-[150px] items-center"
-              >
-                <ThemedText className="text-white text-md sm:text-lg">
-                  More
-                </ThemedText>
+                <Ionicons
+                  name={watchlist.inWatchlist ? "bookmark" : "bookmark-outline"}
+                  size={20}
+                  color="black"
+                />
               </TouchableOpacity>
             </View>
             {!!details?.seasons?.length && (
@@ -165,6 +145,28 @@ export default function TVDetails({
             )}
           </View>
         </ParallaxScrollView>
+        <TouchableOpacity
+          onPress={() =>
+            openModal({
+              type: "playOptions",
+              props: {
+                mediaItem: {
+                  ...details,
+                  watch_progress: continueWatching?.watch_progress,
+                  next_episode: continueWatching?.next_episode,
+                },
+                modalTitle: details?.media_title,
+                autoFocus: true,
+                showRewatch: true,
+                showCollections: true,
+              },
+            })
+          }
+          activeOpacity={0.75}
+          className="absolute top-12 right-4 z-50 p-2"
+        >
+          <Ionicons name="ellipsis-vertical" size={24} color="white" />
+        </TouchableOpacity>
         <View className="ms-5 me-5 sm:px-8 md:px-24"></View>
       </View>
     </>
