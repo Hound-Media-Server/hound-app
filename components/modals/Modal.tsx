@@ -1,5 +1,11 @@
 import { useTVScale } from "@/hooks/useTVScale";
-import { Modal, Platform, Pressable, StyleSheet } from "react-native";
+import {
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+} from "react-native";
 import { ThemedText } from "../ThemedText";
 import { useEffect, useState } from "react";
 import React, { createContext, useContext } from "react";
@@ -86,7 +92,9 @@ export function ContextModal({
             <ThemedText numberOfLines={1} style={styles.modalTitle}>
               {modalTitle}
             </ThemedText>
-            {children}
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {children}
+            </ScrollView>
           </Pressable>
         </ModalInternalContext.Provider>
       </Pressable>
@@ -140,7 +148,7 @@ const createStyles = (scale: number) =>
       padding: 20 * scale,
       width: "80%",
       maxWidth: 460 * scale,
-      maxHeight: "70%",
+      maxHeight: "80%",
     },
     modalTitle: {
       color: "white",

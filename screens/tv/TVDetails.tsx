@@ -12,6 +12,8 @@ import { useWatchlist } from "@/services/collectionService";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
 import { TVDetailsProps } from "@/app/tv/[id]";
 import MediaPageTitle from "@/components/media_page/MediaPageTitle";
+import SectionHeader from "@/components/media_page/SectionHeader";
+import OverviewSkeleton from "@/components/media_page/OverviewSkeleton";
 import MediaScores from "@/components/media_page/MediaScores";
 import { useMediaScores } from "@/services/mediaDetailsService";
 import { formatMediaMetadata, normalizeOverview } from "@/utils/mediaMetadata";
@@ -55,7 +57,7 @@ export default function TVDetails({
             )
           }
         >
-          <View className="px-5 sm:px-8 md:px-24">
+          <View className="px-5 sm:px-8 md:px-24 pb-8">
             <View className="me-5">
               <MediaPageTitle
                 title={details?.media_title}
@@ -75,11 +77,15 @@ export default function TVDetails({
                   {creators}
                 </ThemedText>
               )}
-              <ThemedText
-                className={`text-gray-400 text-md sm:text-lg mt-1 ${isScoresWaiting ? "opacity-0" : ""}`}
-              >
-                {normalizeOverview(scores?.short_overview || details?.overview)}
-              </ThemedText>
+              {isScoresWaiting ? (
+                <OverviewSkeleton />
+              ) : (
+                <ThemedText className="text-gray-400 text-md sm:text-lg mt-1">
+                  {normalizeOverview(
+                    scores?.short_overview || details?.overview,
+                  )}
+                </ThemedText>
+              )}
               <MediaScores scores={scores} />
             </View>
             <View className="flex-row gap-3">
@@ -116,11 +122,21 @@ export default function TVDetails({
                 />
               </TouchableOpacity>
             </View>
+            {!!details?.cast?.length && (
+              <View className="mt-2">
+                <SectionHeader>Cast</SectionHeader>
+                <View className="-mx-5">
+                  <HorizontalList
+                    itemData={details?.cast}
+                    itemType="cast"
+                    showDescription={true}
+                  />
+                </View>
+              </View>
+            )}
             {!!details?.seasons?.length && (
               <View className="mt-2">
-                <ThemedText className="text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
-                  Seasons
-                </ThemedText>
+                <SectionHeader>Episodes</SectionHeader>
                 <SeasonSection
                   sourceID={id as string}
                   seasons={seasonsData}
@@ -129,16 +145,15 @@ export default function TVDetails({
                 />
               </View>
             )}
-            {!!details?.cast?.length && (
+            {details?.recommendations?.length > 0 && (
               <View className="mt-2">
-                <ThemedText className=" text-gray-200 mt-1 mb-2 text-xl sm:text-3xl sm:pb-2">
-                  Cast
-                </ThemedText>
+                <SectionHeader>
+                  Similar Shows
+                </SectionHeader>
                 <View className="-mx-5">
                   <HorizontalList
-                    itemData={details?.cast}
-                    itemType="cast"
-                    showDescription={true}
+                    itemData={details.recommendations}
+                    itemType="compact"
                   />
                 </View>
               </View>

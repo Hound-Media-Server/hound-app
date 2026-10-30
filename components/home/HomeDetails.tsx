@@ -100,9 +100,9 @@ function TVHomeDetails({
             contentPosition="left bottom"
             transition={300}
             style={{
-              width: 300 * scale,
+              width: 340 * scale,
               height: 85 * scale,
-              marginBottom: 10 * scale,
+              marginBottom: 12 * scale,
             }}
           />
         ) : (

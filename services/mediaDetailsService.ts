@@ -3,6 +3,7 @@ import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { MediaTypeMovie, MediaTypeTVShow } from '@/constants/MediaTypes';
 import { useServerInfo } from './internalService';
+import { ServerVersionGTE } from '@/utils/version';
 
 /*
     id is in format tmdb-1234, etc.
@@ -130,12 +131,24 @@ export const useShowDetails = (id: string, enabled: boolean = true) => {
   });
 };
 
+export const useMovieCollection = (collectionID?: string) => {
+  const { data: serverInfo } = useServerInfo();
+  return useQuery({
+    queryKey: ['movie-collection', collectionID],
+    queryFn: () => apiClient<{ data: any[] }>(`/movie/collection/tmdb-${collectionID}`),
+    staleTime: 1000 * 60 * 30,
+    enabled:
+      !!collectionID && ServerVersionGTE(serverInfo?.data?.version, '0.4.3'),
+    select: (data: any) => data.data,
+  });
+};
+
 export const useSeasonDetails = (id: string, seasonNum: number, enabled: boolean = true) => {
   return useQuery({
     queryKey: ['season-details', id, seasonNum],
     queryFn: () => fetchSeasonDetails(id, seasonNum),
     staleTime: 1000 * 60 * 5,
-    enabled: enabled && !!id && !!seasonNum,
+    enabled: enabled && !!id && seasonNum != null,
     select: (data: any) => data.data
   });
 };

@@ -98,7 +98,7 @@ export default function TabLayoutMobile() {
           options={{
             title: "Search",
             headerShown: false,
-            href: null,
+            tabBarItemStyle: { display: "none" },
           }}
         />
         <Tabs.Screen

@@ -27,7 +27,7 @@ export default function MediaPageTitle({
       contentPosition="left bottom"
       transition={300}
       style={{
-        width: Platform.isTV ? 300 * scale : "100%",
+        width: Platform.isTV ? 350 * scale : "100%",
         maxWidth: Platform.isTV ? undefined : 320,
         height: Platform.isTV ? 140 * scale : 140,
         marginBottom: 8 * scale,

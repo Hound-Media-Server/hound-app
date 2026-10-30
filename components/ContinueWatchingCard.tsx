@@ -1,4 +1,10 @@
-import { Animated, View, Text, TouchableHighlight, Platform } from "react-native";
+import {
+  Animated,
+  View,
+  Text,
+  TouchableHighlight,
+  Platform,
+} from "react-native";
 import React from "react";
 import { Image } from "expo-image";
 import { Route, useRouter } from "expo-router";

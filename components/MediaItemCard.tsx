@@ -18,6 +18,7 @@ export default function MediaItemCard({
   onFocus,
   width = 120,
   hasTVPreferredFocus,
+  circular,
 }: {
   mediaItem: any;
   collectionID?: number; // for collection view, to delete items from collection
@@ -28,16 +29,20 @@ export default function MediaItemCard({
   onFocus?: () => void;
   width?: number;
   hasTVPreferredFocus?: boolean;
+  circular?: boolean; // cast
 }) {
   if (!mediaItem) return;
   const router = useRouter();
   const openModal = useModalStore((s) => s.open);
 
   let imgSource = mediaItem.thumbnail_uri;
+  const imgHeight = circular ? width : width * 1.5;
+  const rounding = circular ? "rounded-full" : "rounded-lg";
+  const textAlign = circular ? "text-center" : "text-start";
   return (
     <>
       <TouchableHighlight
-        className={"rounded-lg" + (Platform.isTV ? " group" : "")}
+        className={rounding + (Platform.isTV ? " group" : "")}
         focusable
         hasTVPreferredFocus={hasTVPreferredFocus || false}
         onFocus={() => {
@@ -70,23 +75,27 @@ export default function MediaItemCard({
             <Image
               source={imgSource}
               className={
-                "rounded-lg" +
+                rounding +
                 (Platform.isTV
                   ? " group-focus:border-white border-2 border-transparent"
                   : "")
               }
-              style={{ width: width, height: width * 1.5 }}
+              style={{ width: width, height: imgHeight }}
               contentFit="cover"
+              contentPosition={
+                circular ? { left: "50%", top: "30%" } : undefined
+              }
             />
           ) : (
             <View
               className={
-                "rounded-lg p-2 bg-gray-300 flex items-center justify-center" +
+                rounding +
+                " p-2 bg-gray-300 flex items-center justify-center" +
                 (Platform.isTV
                   ? " group-focus:border-white border-2 border-transparent"
                   : "")
               }
-              style={{ width: width, height: width * 1.5 }}
+              style={{ width: width, height: imgHeight }}
             >
               <ThemedText className="text-black mt-2 text-base text-start">
                 {imgAlt}
@@ -95,8 +104,8 @@ export default function MediaItemCard({
           )}
           {showDescription && !!title && (
             <ThemedText
-              className="text-gray-200 mt-2 text-start px-1"
-              numberOfLines={2}
+              className={`text-gray-200 mt-2 ${textAlign} px-1`}
+              numberOfLines={circular ? 1 : 2}
               style={{ width: width }}
             >
               {title}
@@ -104,7 +113,7 @@ export default function MediaItemCard({
           )}
           {showDescription && !!subtitle && (
             <ThemedText
-              className="text-gray-400 text-sm text-start px-1"
+              className={`text-gray-400 text-sm ${textAlign} px-1`}
               numberOfLines={1}
               style={{ width: width }}
             >

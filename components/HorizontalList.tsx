@@ -10,6 +10,7 @@ import {
 import React, { useRef } from "react";
 import MediaItemCard, { MediaItemCardPlaceholder } from "./MediaItemCard";
 import { ThemedText } from "./ThemedText";
+import SectionHeader from "./media_page/SectionHeader";
 import ContinueWatchingCard, {
   ContinueWatchingCardPlaceholder,
 } from "./ContinueWatchingCard";
@@ -61,12 +62,17 @@ export default function HorizontalList({
       viewOffset: horizontalPadding,
     });
   };
+  const headerElement = Platform.isTV ? (
+    <ThemedText className="text-white text-2xl mb-3">{header}</ThemedText>
+  ) : (
+    <SectionHeader>{header}</SectionHeader>
+  );
   const { width: winWidth } = useWindowDimensions();
   let posterWidth = Platform.isTV ? 120 * scale : winWidth / 4;
   if (!Platform.isTV) {
     posterWidth = Math.min(Math.max(posterWidth, 120), 150);
   }
-  let landscapeWidth = Platform.isTV ? 200 * scale : posterWidth * 2;
+  let landscapeWidth = Platform.isTV ? 245 * scale : posterWidth * 2;
   if (!Platform.isTV) {
     landscapeWidth = Math.max(landscapeWidth, 200);
   }
@@ -77,11 +83,7 @@ export default function HorizontalList({
     if (error) {
       return (
         <View className="me-5 md:me-10 flex-1">
-          {!!header && (
-            <ThemedText className="text-white text-2xl mb-3">
-              {header}
-            </ThemedText>
-          )}
+          {!!header && headerElement}
           <View className="w-full h-list-min-height justify-center items-center">
             <ThemedText className="text-white bg-black">
               Error fetching {header}: {error.message}
@@ -97,9 +99,7 @@ export default function HorizontalList({
   if (isLoading) {
     return (
       <View className="flex-1" style={{ paddingHorizontal: horizontalPadding }}>
-        {!!header && (
-          <ThemedText className="text-white text-2xl mb-3">{header}</ThemedText>
-        )}
+        {!!header && headerElement}
         <View className="flex-row gap-list-gap">
           {[...Array(7)].map((_, index) =>
             itemType === "episode" ? (
@@ -126,12 +126,9 @@ export default function HorizontalList({
     <View>
       <View className="min-h-list-min-height">
         {!!header && data && (
-          <ThemedText
-            className="text-white text-2xl mb-3"
-            style={{ paddingHorizontal: horizontalPadding }}
-          >
-            {header}
-          </ThemedText>
+          <View style={{ paddingHorizontal: horizontalPadding }}>
+            {headerElement}
+          </View>
         )}
         <FlatList
           keyExtractor={(item: any) => {
@@ -156,7 +153,17 @@ export default function HorizontalList({
                   title={item.name}
                   subtitle={item.character}
                   showDescription={showDescription}
-                  width={posterWidth}
+                  width={100}
+                  circular
+                />
+              );
+            }
+            if (itemType === "compact") {
+              return (
+                <MediaItemCard
+                  mediaItem={item}
+                  imgAlt={getMediaTitle(item)}
+                  width={posterWidth * 0.8}
                 />
               );
             }

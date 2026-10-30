@@ -24,6 +24,7 @@ import { useModalStore } from "@/stores/modalStore";
 import { MediaTypeTVShow } from "@/constants/MediaTypes";
 import { normalizeOverview } from "@/utils/mediaMetadata";
 
+const INITIAL_EPISODES = 3;
 const isTV = Platform.isTV;
 const isTVOS = Platform.OS === "ios" && Platform.isTV;
 
@@ -105,15 +106,17 @@ export default function SeasonSection({
                     isTV && setSelectedSeasonNum(item.season_number)
                   }
                   className={
-                    "items-center justify-center rounded-xl p-2" +
+                    "items-center justify-center rounded-xl py-2 px-3" +
                     (item?.season_number === selectedSeasonNum
                       ? isTV
-                        ? " bg-secondary/50"
-                        : " bg-secondary"
+                        ? " bg-gray-400"
+                        : " bg-white opacity-95"
                       : isTV
                         ? " bg-gray-600"
-                        : " bg-gray-400") +
-                    (isTV ? " h-season-height w-season-width focus:bg-secondary" : "")
+                        : " bg-gray-500") +
+                    (isTV
+                      ? " h-season-height w-season-width focus:bg-white"
+                      : "")
                   }
                   activeOpacity={isTV ? 1 : 0.75}
                 >
@@ -191,6 +194,8 @@ function EpisodeSection({
 }) {
   const flashlistRef = useRef<FlashListRef<any>>(null);
   const flatlistRef = useRef<FlatList<any>>(null);
+  const [showAll, setShowAll] = useState(false);
+  const episodes = seasonDetails?.episodes;
 
   // flashlist nagivation seems  less smooth on react-native-tvos (?), so we default to flatlist for now
   // for tv devices
@@ -198,7 +203,10 @@ function EpisodeSection({
   // pagination since it's not good UX to have to scroll through too many episodes anyway
   // having trouble handling initial focus with flashlist, todo:revisit later
   return (
-    <View focusable={!isTVOS} className={isTV ? "opacity-50 focus:opacity-100" : ""}>
+    <View
+      focusable={!isTVOS}
+      className={isTV ? "opacity-50 focus:opacity-100" : ""}
+    >
       {seasonDetails?.episodes.length <= 100 && Platform.isTV ? (
         <FlatList
           ref={flatlistRef}
@@ -227,7 +235,9 @@ function EpisodeSection({
       ) : (
         <FlashList
           ref={flashlistRef}
-          data={seasonDetails?.episodes}
+          data={
+            isTV || showAll ? episodes : episodes?.slice(0, INITIAL_EPISODES)
+          }
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
           removeClippedSubviews={false}
@@ -250,6 +260,15 @@ function EpisodeSection({
           )}
           keyExtractor={(item) => item.source_id}
         />
+      )}
+      {!isTV && episodes?.length > INITIAL_EPISODES && (
+        <TouchableOpacity onPress={() => setShowAll(!showAll)}>
+          <ThemedText className="text-secondary opacity-90 text-center py-2">
+            {showAll
+              ? "Show Less"
+              : `+${episodes.length - INITIAL_EPISODES} more episodes...`}
+          </ThemedText>
+        </TouchableOpacity>
       )}
       {isTV && (
         <View className="h-episode-info mt-3">
@@ -363,7 +382,7 @@ function EpisodeCard({
                 transition={1000}
               />
             ) : (
-              <View className="w-episode-width h-episode-height md:w-episode-width-wide md:h-episode-height-wide rounded-md bg-gray-800" />
+              <View className="w-episode-width h-episode-height md:w-episode-width-wide md:h-episode-height-wide rounded-full bg-gray-800" />
             )}
             {watchProgress && (
               <>
@@ -420,7 +439,7 @@ function EpisodeCard({
         )}
       </View>
       {!isTV && (
-        <ThemedText className="text-gray-400 mb-4 text-sm">
+        <ThemedText className="text-gray-400 mb-4 text-sm" numberOfLines={5}>
           {normalizeOverview(episode?.overview)}
         </ThemedText>
       )}
@@ -447,7 +466,7 @@ function EpisodeInfo({
   }
   return (
     <View>
-      <ThemedText>
+      <ThemedText className="md:mb-1">
         <ThemedText className="text-secondary text-lg md:text-2xl">
           {episode?.episode_number + " • "}
         </ThemedText>
@@ -464,7 +483,7 @@ function EpisodeInfo({
         </ThemedText>
       ) : null}
       {isTV && (
-        <ThemedText className="text-gray-400 mb-4 text-base md:text-xl">
+        <ThemedText className="text-gray-400 mb-4 text-base md:text-xl md:w-3/4 line-clamp-4">
           {normalizeOverview(episode?.overview)}
         </ThemedText>
       )}

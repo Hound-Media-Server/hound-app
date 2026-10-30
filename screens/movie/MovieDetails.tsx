@@ -11,8 +11,10 @@ import { useWatchlist } from "@/services/collectionService";
 import { MediaTypeMovie } from "@/constants/MediaTypes";
 import { MovieDetailsProps } from "@/app/movie/[id]";
 import MediaPageTitle from "@/components/media_page/MediaPageTitle";
+import SectionHeader from "@/components/media_page/SectionHeader";
+import OverviewSkeleton from "@/components/media_page/OverviewSkeleton";
 import MediaScores from "@/components/media_page/MediaScores";
-import { useMediaScores } from "@/services/mediaDetailsService";
+import { useMediaScores, useMovieCollection } from "@/services/mediaDetailsService";
 import { formatMediaMetadata, normalizeOverview } from "@/utils/mediaMetadata";
 
 export default function MovieDetails({
@@ -25,6 +27,8 @@ export default function MovieDetails({
 }: MovieDetailsProps) {
   const openModal = useModalStore((s) => s.open);
   const watchlist = useWatchlist(details);
+  const collection = details?.extra_data?.collection;
+  const { data: collectionParts } = useMovieCollection(collection?.id);
   const { data: scores, isWaiting: isScoresWaiting } = useMediaScores(
     MediaTypeMovie,
     id,
@@ -49,7 +53,7 @@ export default function MovieDetails({
             )
           }
         >
-          <View className="px-5 sm:px-8 md:px-24">
+          <View className="px-5 sm:px-8 md:px-24 pb-8">
             <View className="me-5">
               <MediaPageTitle
                 title={details?.media_title}
@@ -69,11 +73,15 @@ export default function MovieDetails({
                   {creators}
                 </ThemedText>
               )}
-              <ThemedText
-                className={`text-gray-400 text-md sm:text-lg mt-1 ${isScoresWaiting ? "opacity-0" : ""}`}
-              >
-                {normalizeOverview(scores?.short_overview || details?.overview)}
-              </ThemedText>
+              {isScoresWaiting ? (
+                <OverviewSkeleton />
+              ) : (
+                <ThemedText className="text-gray-400 text-md sm:text-lg mt-1">
+                  {normalizeOverview(
+                    scores?.short_overview || details?.overview,
+                  )}
+                </ThemedText>
+              )}
               {details?.cast?.length > 0 && (
                 <ThemedText className="italic text-gray-200 text-sm mt-1">
                   Starring{" "}
@@ -129,14 +137,43 @@ export default function MovieDetails({
             </View>
             {details?.cast?.length > 0 && (
               <View className="mt-2">
-                <ThemedText className="text-gray-200 mt-1 mb-2 text-2xl sm:text-3xl sm:pb-2">
+                <SectionHeader>
                   Cast
-                </ThemedText>
+                </SectionHeader>
                 <View className="-mx-5">
                   <HorizontalList
                     itemData={details?.cast}
                     showDescription={true}
                     itemType="cast"
+                  />
+                </View>
+              </View>
+            )}
+            {collectionParts?.length > 1 && (
+              <View className="mt-2">
+                <SectionHeader>{collection.name}</SectionHeader>
+                <View className="-mx-5">
+                  <HorizontalList
+                    itemData={collectionParts}
+                    itemType="compact"
+                  />
+                </View>
+              </View>
+            )}
+            {details?.recommendations?.length > 0 && (
+              <View className="mt-2">
+                <SectionHeader>
+                  Similar Movies
+                </SectionHeader>
+                <View className="-mx-5">
+                  <HorizontalList
+                    itemData={details.recommendations.filter(
+                      (item: any) =>
+                        !collectionParts?.some(
+                          (part: any) => part.source_id === item.source_id,
+                        ),
+                    )}
+                    itemType="compact"
                   />
                 </View>
               </View>
