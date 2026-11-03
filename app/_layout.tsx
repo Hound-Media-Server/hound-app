@@ -91,8 +91,9 @@ function RootLayoutNav() {
           name="stream/[encoded_data]"
           options={{
             headerShown: false,
-            presentation: Platform.isTV ? "card" : "modal",
+            presentation: "card",
             animation: "fade",
+            orientation: Platform.isTV ? undefined : "landscape",
           }}
         />
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
@@ -117,7 +118,8 @@ function RootLayoutNav() {
           name="(modals)/seasons"
           options={{
             headerShown: false,
-            presentation: Platform.OS === "ios" && Platform.isTV ? "card" : "modal",
+            presentation:
+              Platform.OS === "ios" && Platform.isTV ? "card" : "modal",
             animation: "fade",
           }}
         />

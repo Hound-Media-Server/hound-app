@@ -8,6 +8,7 @@ import {
   ScrollView,
   Platform,
   StyleSheet,
+  Animated,
   TouchableWithoutFeedback,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -83,6 +84,8 @@ export default function VideoControls({
   streamData,
 }: VideoControlsProps) {
   const [showControls, setShowControls] = useState(true);
+  const [renderControls, setRenderControls] = useState(true);
+  const controlsOpacity = useRef(new Animated.Value(1)).current;
   const [showSubtitlesModal, setShowSubtitlesModal] = useState(false);
   const [showAudioModal, setShowAudioModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -108,6 +111,17 @@ export default function VideoControls({
       }
     };
   }, [showControls, paused, isSeeking]);
+
+  useEffect(() => {
+    if (showControls) setRenderControls(true);
+    Animated.timing(controlsOpacity, {
+      toValue: showControls ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished && !showControls) setRenderControls(false);
+    });
+  }, [showControls, controlsOpacity]);
 
   // Autoplay
   const remainingTime = Math.floor(duration - currentTime);
@@ -164,7 +178,7 @@ export default function VideoControls({
   const skipButton = showSkip && skipSegment && (
     <Pressable
       className="bg-black/40 py-3 px-4 rounded-full"
-      style={showControls ? styles.skipButtonInline : styles.skipButtonFloating}
+      style={renderControls ? styles.skipButtonInline : styles.skipButtonFloating}
       onPress={() => {
         if (skipSegment.nextEpisode) onNextEpisode?.();
         else onSeek(skipSegment.end);
@@ -182,8 +196,11 @@ export default function VideoControls({
         onPress={handleScreenPress}
         accessible={false}
       >
-        {showControls && (
-          <View style={styles.controlsContainer}>
+        {renderControls && (
+          <Animated.View
+            style={[styles.controlsContainer, { opacity: controlsOpacity }]}
+            pointerEvents={showControls ? "auto" : "none"}
+          >
             {/* Top Bar */}
             <View style={styles.topBar}>
               <TouchableOpacity
@@ -307,11 +324,11 @@ export default function VideoControls({
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </Animated.View>
         )}
       </Pressable>
 
-      {!showControls && skipButton}
+      {!renderControls && skipButton}
 
       {/* Autoplay Overlay */}
       {showAutoplay && (

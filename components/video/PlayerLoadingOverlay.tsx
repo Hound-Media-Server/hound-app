@@ -100,7 +100,7 @@ export default function PlayerLoadingOverlay({
           )}
         </Animated.View>
         <ThemedText
-          className="text-white text-right"
+          className="text-gray-400 text-right"
           style={{ marginTop: 12 * scale, fontSize: 14 * scale }}
         >
           {message}

@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import { Stack } from "expo-router";
 
 export default function LiveTVLayout() {
@@ -5,6 +6,7 @@ export default function LiveTVLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
+        orientation: Platform.isTV ? undefined : "landscape",
       }}
     />
   );

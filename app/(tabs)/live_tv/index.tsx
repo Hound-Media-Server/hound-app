@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useState,
-} from "react";
-import { lockLandscape, unlockOrientation } from "@/utils/screenOrientation";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/ThemedText";
 import {
@@ -13,8 +7,6 @@ import {
   useXtreamCategories,
 } from "@/services/iptvService";
 import IPTVScreenTV from "@/screens/live_tv/IPTVScreen.tv";
-import { useFocusEffect } from "expo-router";
-import { Platform } from "react-native";
 
 export interface LiveTVProps {
   iptvProviders: IPTVProvider[] | undefined;
@@ -32,17 +24,6 @@ export default function LiveTV() {
   const { data: xtreamCategories } = useXtreamCategories(
     selectedProvider?.iptv_provider_id,
     selectedProvider?.iptv_provider_type,
-  );
-
-  // use landscape for non-tv devices
-  useFocusEffect(
-    useCallback(() => {
-      if (Platform.isTV) return;
-      lockLandscape();
-      return () => {
-        unlockOrientation();
-      };
-    }, []),
   );
 
   useEffect(() => {

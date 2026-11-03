@@ -47,7 +47,7 @@ export default function MPVVideoScreen(props: {
   externalSubtitles?: { title: string; lang: string; url: string }[];
   streamData?: any;
 }) {
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight } = useWindowDimensions();
   const videoRef = useRef<MpvPlayerViewRef>(null);
   const updatePlaybackProgress = useUpdatePlaybackProgress();
   const [paused, setPaused] = useState(false);
@@ -536,8 +536,8 @@ export default function MPVVideoScreen(props: {
       <StatusBar hidden />
       <View
         style={{
-          width: windowWidth,
-          height: windowHeight,
+          width: "100%",
+          height: "100%",
           backgroundColor: "black",
         }}
       >
@@ -549,7 +549,7 @@ export default function MPVVideoScreen(props: {
             autoplay: true,
             externalSubtitles: props.externalSubtitles?.map((s) => s.url),
           }}
-          style={{ width: windowWidth, height: windowHeight }}
+          style={{ width: "100%", height: "100%" }}
           onLoad={handleLoad}
           onPlaybackStateChange={handlePlaybackStateChange}
           onProgress={handleProgress}

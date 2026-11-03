@@ -1,7 +1,6 @@
 import { Platform, View } from "react-native";
 import React, { useState, useMemo, useRef, useCallback } from "react";
 import { useEffect } from "react";
-import { lockLandscape, unlockOrientation } from "@/utils/screenOrientation";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSession } from "@/services/ctx";
 import MPVVideoScreen from "@/components/video/MPVVideoScreen";
@@ -54,10 +53,6 @@ export default function Stream() {
     mediaType === MediaTypeTVShow,
   );
   useKeepAwake();
-  useEffect(() => {
-    lockLandscape();
-    return () => unlockOrientation();
-  }, []);
 
   return (
     <View className="flex-1 bg-black">

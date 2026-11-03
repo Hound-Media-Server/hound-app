@@ -1,7 +1,6 @@
 import {
   Alert,
   Platform,
-  useWindowDimensions,
   View,
 } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
@@ -62,7 +61,6 @@ export default function ExoplayerVideoScreen(props: {
   externalSubtitles?: { title: string; lang: string; url: string }[];
   streamData?: any;
 }) {
-  const { width, height } = useWindowDimensions();
   const videoRef = useRef<VideoRef>(null);
   const updatePlaybackProgress = useUpdatePlaybackProgress();
   const [paused, setPaused] = useState(false);
@@ -362,7 +360,7 @@ export default function ExoplayerVideoScreen(props: {
   return (
     <>
       <StatusBar hidden />
-      <View style={{ width, height, backgroundColor: "black" }}>
+      <View style={{ width: "100%", height: "100%", backgroundColor: "black" }}>
         <Video
           ref={videoRef}
           source={{
@@ -374,7 +372,7 @@ export default function ExoplayerVideoScreen(props: {
               uri: s.url + "?convert=vtt",
             })),
           }}
-          style={{ width, height }}
+          style={{ width: "100%", height: "100%" }}
           paused={paused}
           resizeMode={isZoomedToFill ? ResizeMode.COVER : ResizeMode.CONTAIN}
           onLoad={handleLoad}
