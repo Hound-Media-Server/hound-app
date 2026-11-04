@@ -9,12 +9,13 @@ import {
   Platform,
   StyleSheet,
   Animated,
+  PanResponder,
+  LayoutChangeEvent,
   TouchableWithoutFeedback,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getName as getLanguageName } from "@cospired/i18n-iso-languages";
 import { useRouter } from "expo-router";
-import Slider from "@react-native-community/slider";
 import {
   MpvPlayerViewRef,
   SubtitleTrack,
@@ -54,6 +55,62 @@ interface VideoControlsProps {
   skipSegment?: SegmentAction | null;
   playbackBusy?: boolean;
   streamData?: any;
+}
+
+function SeekBar({
+  value,
+  max,
+  onChange,
+  onComplete,
+  style,
+}: {
+  value: number;
+  max: number;
+  onChange: (value: number) => void;
+  onComplete: () => void;
+  style?: any;
+}) {
+  const width = useRef(0);
+  const startX = useRef(0);
+  const latest = useRef({ max, onChange, onComplete });
+  latest.current = { max, onChange, onComplete };
+  const seekTo = (x: number) => {
+    if (!width.current) return;
+    const ratio = Math.min(Math.max(x / width.current, 0), 1);
+    latest.current.onChange(ratio * latest.current.max);
+  };
+  const pan = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: (e) => {
+        startX.current = e.nativeEvent.locationX;
+        seekTo(startX.current);
+      },
+      onPanResponderMove: (_, g) => seekTo(startX.current + g.dx),
+      onPanResponderRelease: () => latest.current.onComplete(),
+      onPanResponderTerminate: () => latest.current.onComplete(),
+    }),
+  ).current;
+  return (
+    <View
+      style={[styles.seekBarTouch, style]}
+      onLayout={(e: LayoutChangeEvent) => {
+        width.current = e.nativeEvent.layout.width;
+      }}
+      {...pan.panHandlers}
+    >
+      <View style={styles.seekBarTrack} pointerEvents="none">
+        <View
+          style={[
+            styles.seekBarFill,
+            { width: `${Math.min((value / (max || 1)) * 100, 100)}%` },
+          ]}
+        />
+      </View>
+    </View>
+  );
 }
 
 export default function VideoControls({
@@ -114,6 +171,10 @@ export default function VideoControls({
 
   useEffect(() => {
     if (showControls) setRenderControls(true);
+  }, [showControls]);
+
+  useEffect(() => {
+    if (showControls && !renderControls) return;
     Animated.timing(controlsOpacity, {
       toValue: showControls ? 1 : 0,
       duration: 200,
@@ -121,7 +182,7 @@ export default function VideoControls({
     }).start(({ finished }) => {
       if (finished && !showControls) setRenderControls(false);
     });
-  }, [showControls, controlsOpacity]);
+  }, [showControls, renderControls, controlsOpacity]);
 
   // Autoplay
   const remainingTime = Math.floor(duration - currentTime);
@@ -178,7 +239,9 @@ export default function VideoControls({
   const skipButton = showSkip && skipSegment && (
     <Pressable
       className="bg-black/40 py-3 px-4 rounded-full"
-      style={renderControls ? styles.skipButtonInline : styles.skipButtonFloating}
+      style={
+        renderControls ? styles.skipButtonInline : styles.skipButtonFloating
+      }
       onPress={() => {
         if (skipSegment.nextEpisode) onNextEpisode?.();
         else onSeek(skipSegment.end);
@@ -278,16 +341,12 @@ export default function VideoControls({
                 <Text style={[styles.timeText, styles.currentTimeText]}>
                   {formatTime(currentTime)}
                 </Text>
-                <Slider
+                <SeekBar
                   style={styles.slider}
-                  minimumValue={0}
-                  maximumValue={duration || 1}
+                  max={duration || 1}
                   value={currentTime}
-                  onValueChange={handleSliderChange}
-                  onSlidingComplete={handleSliderComplete}
-                  minimumTrackTintColor="#FF6B6B"
-                  maximumTrackTintColor="rgba(255,255,255,0.3)"
-                  thumbTintColor="#FF6B6B"
+                  onChange={handleSliderChange}
+                  onComplete={handleSliderComplete}
                 />
                 <Text style={[styles.timeText, styles.durationTimeText]}>
                   {formatTime(duration)}
@@ -603,6 +662,20 @@ const styles = StyleSheet.create({
   slider: {
     flex: 1,
     marginHorizontal: 10,
+  },
+  seekBarTouch: {
+    height: 30,
+    justifyContent: "center",
+  },
+  seekBarTrack: {
+    height: 7,
+    borderRadius: 4,
+    overflow: "hidden",
+    backgroundColor: "rgba(255,255,255,0.3)",
+  },
+  seekBarFill: {
+    height: "100%",
+    backgroundColor: "white",
   },
   timeText: {
     color: "white",
