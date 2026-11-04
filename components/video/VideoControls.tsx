@@ -6,7 +6,6 @@ import {
   Pressable,
   Modal,
   ScrollView,
-  Platform,
   StyleSheet,
   Animated,
   PanResponder,
@@ -70,6 +69,7 @@ function SeekBar({
   onComplete: () => void;
   style?: any;
 }) {
+  const [dragValue, setDragValue] = useState<number | null>(null);
   const width = useRef(0);
   const startX = useRef(0);
   const latest = useRef({ max, onChange, onComplete });
@@ -77,7 +77,13 @@ function SeekBar({
   const seekTo = (x: number) => {
     if (!width.current) return;
     const ratio = Math.min(Math.max(x / width.current, 0), 1);
-    latest.current.onChange(ratio * latest.current.max);
+    const next = ratio * latest.current.max;
+    setDragValue(next);
+    latest.current.onChange(next);
+  };
+  const finish = () => {
+    setDragValue(null);
+    latest.current.onComplete();
   };
   const pan = useRef(
     PanResponder.create({
@@ -89,8 +95,8 @@ function SeekBar({
         seekTo(startX.current);
       },
       onPanResponderMove: (_, g) => seekTo(startX.current + g.dx),
-      onPanResponderRelease: () => latest.current.onComplete(),
-      onPanResponderTerminate: () => latest.current.onComplete(),
+      onPanResponderRelease: () => finish(),
+      onPanResponderTerminate: () => finish(),
     }),
   ).current;
   return (
@@ -105,7 +111,7 @@ function SeekBar({
         <View
           style={[
             styles.seekBarFill,
-            { width: `${Math.min((value / (max || 1)) * 100, 100)}%` },
+            { width: `${Math.min(((dragValue ?? value) / (max || 1)) * 100, 100)}%` },
           ]}
         />
       </View>
@@ -628,7 +634,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: 20,
-    paddingTop: Platform.OS === "ios" ? 50 : 20,
   },
   topBarRight: {
     flexDirection: "row",
@@ -643,7 +648,6 @@ const styles = StyleSheet.create({
   },
   bottomBar: {
     padding: 20,
-    paddingBottom: Platform.OS === "ios" ? 40 : 20,
   },
   skipButtonInline: {
     alignSelf: "flex-end",
@@ -652,7 +656,7 @@ const styles = StyleSheet.create({
   skipButtonFloating: {
     position: "absolute",
     right: 20,
-    bottom: Platform.OS === "ios" ? 40 : 20,
+    bottom: 20,
   },
   progressContainer: {
     flexDirection: "row",
@@ -681,7 +685,7 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 14,
     fontWeight: "600",
-    width: 50,
+    minWidth: 60,
   },
   currentTimeText: {
     textAlign: "right",
