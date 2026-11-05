@@ -311,8 +311,9 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
             
             // Subtitle settings
             mpv?.setOptionString("sub-scale-with-window", "no")
-            // Portrait/PiP-safe default; MpvPlayerView enables margins in landscape.
-            mpv?.setOptionString("sub-use-margins", "no")
+            mpv?.setOptionString("sub-use-margins", "yes")
+            mpv?.setOptionString("sub-ass-force-margins", "yes")
+            mpv?.setOptionString("sub-ass-scale-with-window", "no")
             mpv?.setOptionString("subs-match-os-language", "yes")
             mpv?.setOptionString("subs-fallback", "yes")
             mpv?.setOptionString("sub-vsfilter-bidi-compat", "yes")
@@ -898,18 +899,6 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
     
     fun setSubtitleMarginY(margin: Int) {
         mpv?.setPropertyInt("sub-margin-y", margin)
-    }
-
-    fun setSubtitleUseMargins(useMargins: Boolean) {
-        if (isRunning) {
-            mpv?.setPropertyString("sub-use-margins", if (useMargins) "yes" else "no")
-        }
-    }
-
-    fun setSubtitleScaleWithWindow(enabled: Boolean) {
-        if (isRunning) {
-            mpv?.setPropertyString("sub-scale-with-window", if (enabled) "yes" else "no")
-        }
     }
     
     fun setSubtitleAlignX(alignment: String) {
